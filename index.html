@@ -37,6 +37,8 @@ body{font-family:-apple-system,'Segoe UI',system-ui,sans-serif;background:var(--
 .sched-pill{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:20px;border:1.5px solid rgba(255,255,255,.4);background:rgba(255,255,255,.15);cursor:pointer;font-size:11px;transition:background .1s}
 .sched-pill:hover{background:rgba(255,255,255,.25)}
 .sched-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.track-pill{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:20px;border:1.5px solid rgba(255,255,255,.4);background:rgba(255,255,255,.15);cursor:pointer;font-size:10px;transition:background .1s}
+.track-pill:hover{background:rgba(255,255,255,.25)}
 .hdr-right{display:flex;flex-direction:column;gap:7px;align-items:flex-end;flex-shrink:0}
 .stats{display:flex;gap:7px}
 .stat{background:rgba(0,0,0,.22);border-radius:7px;padding:5px 11px;text-align:center}
@@ -46,6 +48,7 @@ body{font-family:-apple-system,'Segoe UI',system-ui,sans-serif;background:var(--
 .hbtn{padding:3px 9px;border-radius:5px;border:1px solid rgba(255,255,255,.4);background:rgba(255,255,255,.15);color:#fff;cursor:pointer;font-size:11px;transition:background .1s;white-space:nowrap}
 .hbtn:hover{background:rgba(255,255,255,.28)}
 .hbtn.ghost{background:transparent;border-color:rgba(255,255,255,.25);color:rgba(255,255,255,.65)}
+.hbtn:disabled{opacity:.4;cursor:not-allowed}
 .pbar{height:3px;background:rgba(255,255,255,.25);border-radius:2px;margin-top:10px}
 .pfill{height:100%;background:var(--gold);border-radius:2px;transition:width .5s}
 .nav{background:var(--surface);border-bottom:1px solid var(--border);padding:8px 20px;display:flex;gap:5px;align-items:center;flex-wrap:wrap;position:sticky;top:0;z-index:10}
@@ -58,16 +61,23 @@ body{font-family:-apple-system,'Segoe UI',system-ui,sans-serif;background:var(--
 .nsm:hover{background:var(--border)}
 .nsm.p{background:var(--accent);color:#fff;border-color:var(--accent)}
 .nsm.p:hover{background:var(--accent-d)}
-/* Compare banner */
+.tab-warn{background:#7A4A00;color:#fff;padding:6px 16px;font-size:11px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+.tab-warn button{padding:3px 9px;background:rgba(255,255,255,.2);color:#fff;border:none;border-radius:5px;cursor:pointer;font-size:10px}
+.seltb{background:#1A2A4A;color:#fff;padding:7px 16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.seltb b{font-size:12px}
+.seltb button{padding:3px 9px;background:rgba(255,255,255,.18);color:#fff;border:1px solid rgba(255,255,255,.3);border-radius:5px;cursor:pointer;font-size:11px}
+.seltb button:hover{background:rgba(255,255,255,.28)}
+.seltb select{padding:3px 8px;background:rgba(255,255,255,.18);color:#fff;border:1px solid rgba(255,255,255,.3);border-radius:5px;font-size:11px}
+.seltb select option{background:#1A2A4A;color:#fff}
 .cmp-bar{background:#1A2A4A;color:#fff;padding:9px 20px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;border-bottom:2px solid #2A4A8A}
 .cmp-tag{padding:3px 9px;border-radius:4px;font-size:11px;font-weight:600}
 .cmp-sum{font-size:10px;opacity:.65;margin-left:4px}
 .cmp-exit{margin-left:auto;padding:4px 11px;border-radius:5px;border:1px solid rgba(255,255,255,.3);background:transparent;color:#fff;cursor:pointer;font-size:11px}
 .cmp-exit:hover{background:rgba(255,255,255,.1)}
-/* Edit panel */
 .ep{background:var(--surface);border-bottom:1px solid var(--border);padding:14px 20px}
 .ep h3{font-size:13px;font-weight:600;margin-bottom:12px}
 .fg{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
+.fg.three{grid-template-columns:1fr 1fr 1fr}
 .fld{display:flex;flex-direction:column;gap:3px}
 .fld.full{margin-bottom:8px}
 .fld label{font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:.4px}
@@ -77,15 +87,14 @@ body{font-family:-apple-system,'Segoe UI',system-ui,sans-serif;background:var(--
 .bdel{padding:5px 11px;background:#FEE;color:#C00;border:1px solid #FCC;border-radius:6px;cursor:pointer;font-size:11px}
 .bcancel{padding:5px 11px;border:1px solid var(--border2);border-radius:6px;cursor:pointer;font-size:11px;background:transparent;color:var(--text2)}
 .bsave{padding:5px 14px;background:var(--accent);color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:11px;font-weight:600}
-/* Main layout */
 .main{padding:14px 20px}
 .yr-lbl{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:2px;margin:4px 0 6px}
 .sem-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
 .sem-row.full{grid-template-columns:1fr}
 @media(max-width:600px){.sem-row{grid-template-columns:1fr}}
-/* Semester card */
 .sc{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;transition:border .12s,background .12s}
 .sc.dov{border:2px dashed var(--accent)!important;background:var(--surface2)}
+.sc.off{background:repeating-linear-gradient(45deg,var(--surface),var(--surface) 8px,var(--surface2) 8px,var(--surface2) 16px)}
 .sh{padding:7px 11px;background:var(--surface2);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:8px}
 .sh-l{display:flex;align-items:baseline;gap:6px;min-width:0;flex:1}
 .sh-title{font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -99,11 +108,14 @@ body{font-family:-apple-system,'Segoe UI',system-ui,sans-serif;background:var(--
 .sprgf{height:100%;background:var(--green);transition:width .4s}
 .cl{padding:7px;display:flex;flex-direction:column;gap:4px;min-height:36px}
 .empty{text-align:center;padding:12px;color:var(--text3);font-size:11px;font-style:italic}
-/* Course card */
-.cc{display:flex;align-items:flex-start;gap:6px;padding:5px 8px;border-radius:6px;cursor:grab;border:1px solid transparent;transition:transform .1s,box-shadow .1s;user-select:none}
+.off-note{padding:14px;text-align:center;color:var(--text3);font-size:11px;font-style:italic}
+.dl-list{padding:5px 9px;background:var(--surface2);border-top:1px solid var(--border);font-size:10px;color:var(--text2)}
+.dl-list b{color:var(--text);font-weight:600}
+.cc{display:flex;align-items:flex-start;gap:6px;padding:5px 8px;border-radius:6px;cursor:grab;border:1px solid transparent;transition:transform .1s,box-shadow .1s;user-select:none;position:relative}
 .cc:active{cursor:grabbing}
 .cc:hover{transform:translateX(2px);box-shadow:0 2px 6px rgba(0,0,0,.1)}
 .cc.done{opacity:.5}
+.cc.sel{outline:2px solid var(--accent);outline-offset:1px}
 .chk{width:15px;height:15px;border-radius:3px;border:1.5px solid;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;transition:all .15s;margin-top:1px}
 .dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-top:3px}
 .ci{flex:1;min-width:0}
@@ -112,9 +124,9 @@ body{font-family:-apple-system,'Segoe UI',system-ui,sans-serif;background:var(--
 .cnote{font-size:9px;color:var(--text3);font-style:italic;display:block;margin-top:1px}
 .cc.done .ccode,.cc.done .cname{text-decoration:line-through}
 .crdt{font-size:9px;color:var(--text3);flex-shrink:0;margin-top:2px}
+.cgrade{font-size:9px;font-weight:700;padding:1px 5px;border-radius:3px;background:var(--surface2);color:var(--text2);margin-top:1px}
 .ebtn{display:none;width:18px;height:18px;border-radius:3px;border:1px solid var(--border2);background:var(--surface2);cursor:pointer;font-size:11px;color:var(--text2);align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
 .cc:hover .ebtn{display:flex}
-/* Compare semester card */
 .csc{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:12px}
 .csc-hdr{padding:8px 12px;background:var(--surface2);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .csc-title{font-size:12px;font-weight:600}
@@ -146,11 +158,10 @@ body{font-family:-apple-system,'Segoe UI',system-ui,sans-serif;background:var(--
 .ccc-cr{font-size:9px;color:var(--text3);flex-shrink:0;margin-top:2px}
 .csc-div{width:1px;background:var(--border)}
 .csc-mt{padding:10px;color:var(--text3);font-size:10px;font-style:italic;text-align:center}
-/* Add sem form */
-.asf{border:1px dashed var(--border2);border-radius:10px;padding:9px 12px;background:var(--surface2);display:flex;gap:7px;align-items:center;margin-bottom:14px}
-.asf input{flex:1;padding:5px 9px;border:1px solid var(--border2);border-radius:6px;font-size:12px;background:var(--surface);color:var(--text);outline:none}
+.asf{border:1px dashed var(--border2);border-radius:10px;padding:9px 12px;background:var(--surface2);display:flex;gap:7px;align-items:center;margin-bottom:14px;flex-wrap:wrap}
+.asf input{flex:1;min-width:160px;padding:5px 9px;border:1px solid var(--border2);border-radius:6px;font-size:12px;background:var(--surface);color:var(--text);outline:none}
+.asf select{padding:5px 9px;border:1px solid var(--border2);border-radius:6px;font-size:11px;background:var(--surface);color:var(--text);outline:none}
 .asf button{padding:5px 11px;font-size:11px;border-radius:6px;cursor:pointer}
-/* Modal */
 .mbk{position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;z-index:100;padding:20px}
 .modal{background:var(--surface);border-radius:14px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.3);max-height:90vh;display:flex;flex-direction:column}
 .mhdr{padding:16px 20px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
@@ -158,7 +169,7 @@ body{font-family:-apple-system,'Segoe UI',system-ui,sans-serif;background:var(--
 .mclose{width:26px;height:26px;border-radius:6px;border:1px solid var(--border2);background:transparent;cursor:pointer;color:var(--text2);font-size:16px;display:flex;align-items:center;justify-content:center}
 .mbody{padding:16px 20px;overflow-y:auto;flex:1}
 .mfooter{padding:12px 20px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end;align-items:center;flex-shrink:0}
-/* Schedule list */
+.mfooter .left{margin-right:auto;font-size:11px;color:var(--text3)}
 .slist{display:flex;flex-direction:column;gap:8px}
 .si{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--border);border-radius:8px;background:var(--surface2)}
 .si.act{border-color:var(--accent);background:var(--surface)}
@@ -173,7 +184,6 @@ body{font-family:-apple-system,'Segoe UI',system-ui,sans-serif;background:var(--
 .sa.act-badge{background:var(--accent);color:#fff;border-color:var(--accent);cursor:default}
 .sa.d{color:#C00;border-color:#FCC}
 .sa.d:hover{background:#FEE}
-/* Compare pick */
 .cpg{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .cpi{padding:12px;border:2px solid var(--border);border-radius:8px;cursor:pointer;transition:border-color .1s;text-align:center}
 .cpi:hover{border-color:var(--border2)}
@@ -181,18 +191,81 @@ body{font-family:-apple-system,'Segoe UI',system-ui,sans-serif;background:var(--
 .cpi-dot{width:12px;height:12px;border-radius:50%;margin:0 auto 6px}
 .cpi-name{font-size:12px;font-weight:600}
 .cpi-meta{font-size:10px;color:var(--text3);margin-top:3px}
-/* Share */
 .sta{width:100%;height:90px;padding:9px;border:1px solid var(--border2);border-radius:7px;font-family:monospace;font-size:10px;background:var(--surface2);color:var(--text);resize:vertical;outline:none;margin-bottom:10px}
 .copied{font-size:11px;color:var(--green);display:none}
 .copied.show{display:block}
+.share-tabs{display:flex;gap:5px;margin-bottom:10px}
+.share-tab{padding:4px 10px;border-radius:6px;border:1px solid var(--border2);background:transparent;color:var(--text2);cursor:pointer;font-size:11px}
+.share-tab.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+.gpa-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}
+.gpa-stat{padding:11px 14px;border-radius:8px;background:var(--surface2);border:1px solid var(--border);text-align:center}
+.gpa-stat .v{font-size:22px;font-weight:700;color:var(--accent);line-height:1.1}
+.gpa-stat .l{font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:.4px;margin-top:3px}
+.gpa-target{padding:10px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;margin-bottom:14px}
+.gpa-target label{font-size:11px;color:var(--text2);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.gpa-target input{width:80px;padding:4px 8px;border:1px solid var(--border2);border-radius:5px;font-size:13px;background:var(--surface);color:var(--text);outline:none}
+.gpa-target .res{margin-top:7px;font-size:12px;color:var(--text)}
+.gpa-row{display:flex;align-items:center;gap:8px;padding:7px 10px;border-bottom:1px solid var(--border);font-size:11px}
+.gpa-row:last-child{border-bottom:none}
+.gpa-row .gcode{font-weight:700;flex:0 0 80px}
+.gpa-row .gname{flex:1;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gpa-row .gcr{flex:0 0 32px;text-align:right;color:var(--text3);font-size:10px}
+.gpa-row select{padding:3px 6px;border:1px solid var(--border2);border-radius:4px;font-size:11px;background:var(--surface);color:var(--text);outline:none;flex:0 0 70px}
+.gpa-sec{font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;padding:8px 10px 4px;border-bottom:1px solid var(--border);background:var(--surface2)}
+.sres{display:flex;flex-direction:column;gap:5px;margin-top:10px;max-height:380px;overflow-y:auto}
+.sres-row{padding:8px 11px;border:1px solid var(--border);border-radius:7px;background:var(--surface2);cursor:pointer;display:flex;gap:8px;align-items:center}
+.sres-row:hover{background:var(--border)}
+.sres-row .sr-code{font-weight:700;font-size:12px;flex:0 0 90px}
+.sres-row .sr-name{flex:1;font-size:11px;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sres-row .sr-loc{font-size:10px;color:var(--text3);flex-shrink:0}
+.sres-empty{padding:18px;text-align:center;color:var(--text3);font-size:11px}
+.hist-row{padding:9px 12px;border:1px solid var(--border);border-radius:7px;background:var(--surface2);margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+.hist-row .hr-when{font-size:11px;font-weight:600}
+.hist-row .hr-sum{font-size:10px;color:var(--text3);margin-top:2px}
+.hist-row button{padding:4px 10px;font-size:10px;border-radius:5px;border:1px solid var(--border2);background:var(--surface);color:var(--text2);cursor:pointer}
+.hist-row button:hover{background:var(--accent);color:#fff;border-color:var(--accent)}
+.tk-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+@media(max-width:600px){.tk-grid{grid-template-columns:1fr}}
+.tk-card{padding:10px 12px;border:2px solid var(--border);border-radius:8px;cursor:pointer;background:var(--surface2)}
+.tk-card:hover{border-color:var(--border2)}
+.tk-card.sel{border-color:var(--accent);background:var(--surface)}
+.tk-name{font-size:12px;font-weight:600}
+.tk-grad{font-size:10px;color:var(--text3);margin-top:2px}
+.tk-prog{padding:10px 12px;background:var(--surface2);border-radius:8px;border:1px solid var(--border);margin-bottom:10px}
+.tk-prog .tp-bar{height:5px;background:var(--border);border-radius:3px;margin-top:6px;overflow:hidden}
+.tk-prog .tp-fill{height:100%;background:var(--green)}
+.tk-list{font-size:11px;color:var(--text2);line-height:1.7}
+.tk-list .ok{color:var(--green);font-weight:600}
+.tk-list .miss{color:var(--text3)}
+.tk-h{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;color:var(--text2);margin:10px 0 5px}
+.kb-row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);font-size:12px}
+.kb-row:last-child{border-bottom:none}
+.kb-key{font-family:monospace;font-size:11px;background:var(--surface2);padding:2px 7px;border-radius:4px;border:1px solid var(--border2)}
+#confetti{position:fixed;inset:0;pointer-events:none;z-index:200}
 ::-webkit-scrollbar{width:6px;height:6px}
 ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+@media print{
+  body{background:#fff;color:#000}
+  .hdr{background:#fff;color:#000;border-bottom:2px solid #000;padding:8px 0}
+  .hdr-btns,.hbtn,.sched-pill,.track-pill,.nav,.cmp-bar,.ep,.mbk,.tab-warn,.seltb,.ebtn,.sbtn,.cmp-exit,.asf,#confetti{display:none!important}
+  .main{padding:0}
+  .sc{border:1px solid #999;page-break-inside:avoid;break-inside:avoid;margin-bottom:8px}
+  .sh{background:#f0f0f0;border-bottom:1px solid #999}
+  .cc{break-inside:avoid;border:1px solid #ddd}
+  .stat{background:#f0f0f0;color:#000}
+  .pbar,.sprg{display:none}
+  .yr-lbl{color:#000;border-bottom:1px solid #000;padding-bottom:2px;margin-top:10px}
+  .sem-row{display:grid!important;grid-template-columns:1fr 1fr!important}
+  .sem-row.full{grid-template-columns:1fr!important}
+}
 </style>
 </head>
 <body>
 <div id="root"></div>
+<canvas id="confetti"></canvas>
 <script>
+// ─── Static data ──────────────────────────────────────────────────────────────
 const CATS={
   ECE:     {name:'ECE',     bg:'var(--ece-bg)',brd:'var(--ece-brd)',txt:'var(--ece-txt)'},
   MATH:    {name:'Math',    bg:'var(--math-bg)',brd:'var(--math-brd)',txt:'var(--math-txt)'},
@@ -290,6 +363,65 @@ const DS=[
   ]},
 ];
 
+// ECE Technical Component tracks (Chandra Dept Tech Core Packet, Dec 2025).
+// Each track: required cores + approved electives. ECB students take fewer electives.
+const TRACKS={
+  CSPNS:{name:'Communication, Signal Processing, Networks and Systems',short:'Comm/SigProc',grad:'DICE',
+    cores:[{code:'M 427L',name:'Adv Calculus for Applications II'},{code:'ECE 351M',name:'Digital Signal Processing',alt:'or ECE 325'},{code:'ECE 362K',name:'Intro to Automatic Control',alt:'or ECE 371Q / 360K / 372N'},{code:'ECE 445S',name:'Real-Time DSP Lab',alt:'or ECE 471C'}],
+    pickECB:3,pickAll:4,
+    electives:['ECE 325','ECE 325K','ECE 351M','ECE 360C','ECE 360K','ECE 362K','ECE 363M','ECE 371P','ECE 371Q','ECE 372N','ECE 374N','ECE 379K','ECE 445S','ECE 460J','ECE 461P','ECE 471C']},
+  EIC:{name:'Electronics and Integrated Circuits',short:'Electronics/IC',grad:'ICS',
+    cores:[{code:'M 427L',name:'Adv Calculus for Applications II'},{code:'ECE 325',name:'Electromagnetic Engineering'},{code:'ECE 339',name:'Solid-State Electronic Devices'},{code:'ECE 438',name:'Electronic Circuits I Lab'},{code:'ECE 316',name:'Digital Logic Design (required elective)'}],
+    pickECB:2,pickAll:3,
+    electives:['ECE 338L','ECE 362M','ECE 363M','ECE 374K','ECE 374L','ECE 379K','ECE 438K','ECE 440','ECE 445L','ECE 445S','ECE 460M','ECE 460N','ECE 460R']},
+  ESRE:{name:'Energy Systems and Renewable Energy',short:'Energy/Renewable',grad:'PEPS',
+    cores:[{code:'M 427L',name:'Adv Calculus for Applications II'},{code:'ECE 325',name:'Electromagnetic Engineering'},{code:'ECE 368L',name:'Power Systems Apparatus & Lab',alt:'or ECE 369'},{code:'ECE 462L',name:'Power Electronics Lab',alt:'or ECE 368L/468L'},{code:'ECE 362K',name:'Intro to Automatic Control (required elective)'}],
+    pickECB:2,pickAll:3,
+    electives:['ECE 339','ECE 339S','ECE 341','ECE 362G','ECE 362M','ECE 362Q','ECE 362R','ECE 362S','ECE 369','ECE 379K','ECE 462L','ECE 468L','ME 337C']},
+  FWES:{name:'Fields, Waves, and Electromagnetic Systems',short:'Fields/Waves',grad:'Electromagnetics & Acoustics',
+    cores:[{code:'M 427L',name:'Adv Calculus for Applications II'},{code:'ECE 325',name:'Electromagnetic Engineering'},{code:'ECE 339',name:'Solid-State Electronic Devices'},{code:'ECE 438',name:'Electronic Circuits I Lab',alt:'or ECE 462L / 368L'},{code:'ECE 325K',name:'Antennas & Wireless Propagation (req elec)',alt:'or ECE 363M'}],
+    pickECB:2,pickAll:3,
+    electives:['ECE 325K','ECE 334K','ECE 341','ECE 347','ECE 348','ECE 361R','ECE 363M','ECE 363N','ECE 369','ECE 374K','ECE 374L','ECE 379K']},
+  NN:{name:'Nanoelectronics and Nanotechnology',short:'Nanotech',grad:'Electronics, Photonics & Quantum',
+    cores:[{code:'M 427L',name:'Adv Calculus for Applications II'},{code:'ECE 325',name:'Electromagnetic Engineering'},{code:'ECE 339',name:'Solid-State Electronic Devices'},{code:'ECE 440',name:'Integrated Circuits Nanomanufacturing'}],
+    pickECB:3,pickAll:4,
+    electives:['ECE 334K','ECE 338L','ECE 339S','ECE 340P','ECE 347','ECE 348','ECE 379K','ECE 438','ECE 460R']},
+  CAES:{name:'Computer Architecture and Embedded Systems',short:'Comp Arch/Embedded',grad:'ACSES',
+    cores:[{code:'M 325K',name:'Discrete Mathematics'},{code:'ECE 316',name:'Digital Logic Design'},{code:'ECE 460N',name:'Computer Architecture'},{code:'ECE 445L',name:'Embedded Systems Design Lab'},{code:'ECE 360C',name:'Algorithms (required elective)'}],
+    pickECB:2,pickAll:3,
+    electives:['ECE 360G','ECE 360P','ECE 361C','ECE 361E','ECE 361G','ECE 361N','ECE 362K','ECE 372N','ECE 379K','ECE 422C','ECE 445M','ECE 445S','ECE 460J','ECE 460M','ECE 460R','ECE 461S','ECE 461T']},
+  DSIP:{name:'Data Science and Information Processing',short:'Data Sci',grad:'DICE',
+    cores:[{code:'M 325K',name:'Discrete Mathematics'},{code:'ECE 461P',name:'Data Science Principles'},{code:'ECE 360C',name:'Algorithms'},{code:'ECE 460J',name:'Data Science Lab'},{code:'ECE 351M',name:'Digital Signal Processing (req elec)'},{code:'ECE 316',name:'Required elective',alt:'or ECE 445S / 471C'}],
+    pickECB:1,pickAll:2,
+    electives:['ECE 316','ECE 360G','ECE 360P','ECE 361C','ECE 361E','ECE 361N','ECE 362K','ECE 371R','ECE 372N','ECE 374N','ECE 379K','ECE 422C','ECE 445S','ECE 461L','ECE 471C']},
+  SED:{name:'Software Engineering and Design',short:'Software Eng',grad:'SES',
+    cores:[{code:'M 325K',name:'Discrete Mathematics'},{code:'ECE 422C',name:'Software Design & Implementation II'},{code:'ECE 360C',name:'Algorithms'},{code:'ECE 461L',name:'Software Engineering & Design Lab'},{code:'ECE 316',name:'Digital Logic Design (req elec)',alt:'or ECE 445L'}],
+    pickECB:2,pickAll:3,
+    electives:['ECE 316','ECE 360G','ECE 360P','ECE 360T','ECE 361C','ECE 361G','ECE 361Q','ECE 361M','ECE 361N','ECE 371P','ECE 372N','ECE 379K','ECE 445L','ECE 445M','ECE 460J','ECE 460N','ECE 461P','ECE 461S','ECE 461T']},
+};
+
+// UT grade points (A+ counts as 4.0 per UT policy). CR/NC/Q/W/IP excluded from GPA.
+const GRADE_PTS={'A+':4.0,'A':4.0,'A-':3.67,'B+':3.33,'B':3.0,'B-':2.67,'C+':2.33,'C':2.0,'C-':1.67,'D+':1.33,'D':1.0,'D-':0.67,'F':0,'CR':null,'NC':null,'Q':null,'W':null,'IP':null};
+const GRADE_OPTS=['','A+','A','A-','B+','B','B-','C+','C','C-','D+','D','D-','F','CR','NC','Q','W','IP'];
+
+// Generic UT week-based deadlines (most fall/spring terms). Update from registrar each year.
+const UT_DEADLINES=[
+  {week:'Class day 12',what:'Last day to add/drop without dean approval'},
+  {week:'Mid-term Q-drop',what:'Last day to drop a course with no academic penalty'},
+  {week:'Last class week',what:'Last day to withdraw from the University'},
+];
+
+const SEM_TEMPLATES={
+  'normal':{label:'Custom semester',courses:[]},
+  'internship':{label:'Internship / Co-op',courses:[],isOff:true,offNote:'No classes — internship or co-op term'},
+  'abroad':{label:'Study Abroad',courses:[
+    {code:'TRANSFER',name:'Transfer Credit (course 1)',cat:'OTHER',credits:3,note:'Map to UT equivalent after return'},
+    {code:'TRANSFER',name:'Transfer Credit (course 2)',cat:'OTHER',credits:3,note:''},
+    {code:'TRANSFER',name:'Transfer Credit (course 3)',cat:'OTHER',credits:3,note:''},
+    {code:'TRANSFER',name:'Transfer Credit (course 4)',cat:'OTHER',credits:3,note:''},
+  ]},
+};
+
 // ─── State ────────────────────────────────────────────────────────────────────
 let _c=300;
 const uid=()=>'c'+(++_c);
@@ -302,27 +434,33 @@ const S={
   compareMode:false,compareId:null,cmpPickId:null,
   edit:null,form:{},filter:null,
   dragSrc:null,dragOver:null,
-  showAddSem:false,
-  modal:null,
+  showAddSem:false,addSemKind:'normal',
+  modal:null,modalTab:null,
   renamingId:null,
+  selection:new Set(),selectionSem:null,
+  searchQ:'',gpaTarget:'',
+  lastPct:0,
+  tabConflict:false,
 };
+
+const HISTORY={past:[],future:[],MAX:50};
 
 const getAct=()=>S.schedules.find(s=>s.id===S.activeId);
 const getAS=()=>getAct()?.sems??[];
-const getCS=()=>S.schedules.find(s=>s.id===S.compareId)?.sems??[];
 function setAS(sems){S.schedules=S.schedules.map(s=>s.id!==S.activeId?s:{...s,sems,updatedAt:Date.now()});}
 function nextColor(){return COLORS[S.schedules.length%COLORS.length];}
 function nextName(){
   const used=new Set(S.schedules.map(s=>s.name));
   for(const l of'ABCDEFGHIJ'){const n=`Plan ${l}`;if(!used.has(n))return n;}
-  return'Plan '+Date.now();
+  return`Plan ${Date.now().toString(36)}`;
 }
 
 // ─── Storage ──────────────────────────────────────────────────────────────────
-const SK='cp-v3';
+const SK='cp-v3',SNAPK='cp-snap-v1';
 async function save(){
   const d=JSON.stringify({schedules:S.schedules,activeId:S.activeId});
   try{if(window.storage)await window.storage.set(SK,d);else localStorage.setItem(SK,d);}catch(e){}
+  try{tabCh?.postMessage({t:'save',ts:Date.now(),id:tabId});}catch(e){}
 }
 async function load(){
   try{
@@ -334,23 +472,166 @@ async function load(){
 }
 function initDefault(){
   const id=sid();
-  S.schedules=[{id,name:'Main Plan',color:COLORS[0],sems:dc(DS),createdAt:Date.now(),updatedAt:Date.now()}];
+  S.schedules=[{id,name:'Main Plan',color:COLORS[0],sems:dc(DS),createdAt:Date.now(),updatedAt:Date.now(),kind:'ecb'}];
   S.activeId=id;
 }
 function encodeShare(){return btoa(encodeURIComponent(JSON.stringify({schedules:S.schedules,activeId:S.activeId})));}
 function decodeShare(code){
   const p=JSON.parse(decodeURIComponent(atob(code.trim())));
   if(p.schedules?.length)return p;
-  if(Array.isArray(p)&&p.length){const id=sid();return{schedules:[{id,name:'Imported',color:COLORS[0],sems:p,createdAt:Date.now(),updatedAt:Date.now()}],activeId:id};}
+  if(Array.isArray(p)&&p.length){const id=sid();return{schedules:[{id,name:'Imported',color:COLORS[0],sems:p,createdAt:Date.now(),updatedAt:Date.now(),kind:'ecb'}],activeId:id};}
   throw new Error('bad');
+}
+
+// Auto snapshots — at most once per minute. Up to 20 kept.
+function loadSnapshots(){try{return JSON.parse(localStorage.getItem(SNAPK)||'[]');}catch(e){return[];}}
+function saveSnapshotNow(reason){
+  const list=loadSnapshots();
+  list.unshift({ts:Date.now(),reason:reason||'auto',data:{schedules:S.schedules,activeId:S.activeId}});
+  while(list.length>20)list.pop();
+  try{localStorage.setItem(SNAPK,JSON.stringify(list));}catch(e){}
+}
+function restoreSnapshot(ts){
+  const snap=loadSnapshots().find(s=>s.ts===ts);if(!snap)return;
+  pushHistory();
+  S.schedules=snap.data.schedules;S.activeId=snap.data.activeId||S.schedules[0]?.id;
+  S.modal=null;save();render();
+}
+function deleteSnapshot(ts){
+  const list=loadSnapshots().filter(s=>s.ts!==ts);
+  try{localStorage.setItem(SNAPK,JSON.stringify(list));}catch(e){}
+  render();
+}
+
+// Markdown export of the active schedule.
+function toMarkdown(){
+  let md=`# ${getAct()?.name||'Course Plan'}\n\n`;
+  const all=getAS().flatMap(s=>s.courses);
+  const tot=all.reduce((t,c)=>t+c.credits,0);
+  const done=all.filter(c=>c.done).reduce((t,c)=>t+c.credits,0);
+  md+=`**${done} / ${tot} credits completed.** ${all.filter(c=>c.done).length} of ${all.length} courses done.\n\n`;
+  const sems=getAS();
+  const writeSem=sem=>{
+    md+=`## ${sem.label}\n\n`;
+    if(sem.isOff){md+=`_${sem.offNote||'No classes this term.'}_\n\n`;return;}
+    if(!sem.courses.length){md+=`_No courses._\n\n`;return;}
+    for(const c of sem.courses)md+=`- ${c.done?'[x]':'[ ]'} **${c.code}** ${c.name} — ${c.credits}cr${c.grade?` (${c.grade})`:''}${c.note?`  \n  _${c.note}_`:''}\n`;
+    md+=`\n`;
+  };
+  for(const row of LAYOUT)for(const id of row.ids){const s=sems.find(x=>x.id===id);if(s)writeSem(s);}
+  for(const s of sems.filter(x=>!KNOWN.has(x.id)))writeSem(s);
+  return md;
+}
+
+// ─── Multi-tab detection ──────────────────────────────────────────────────────
+const tabId='t'+Math.random().toString(36).slice(2,9);
+let tabCh=null;
+try{
+  tabCh=new BroadcastChannel('cp-tabs');
+  tabCh.onmessage=e=>{
+    if(!e.data||e.data.id===tabId)return;
+    if(e.data.t==='hello'){tabCh.postMessage({t:'here',id:tabId});S.tabConflict=true;render();}
+    else if(e.data.t==='here'){S.tabConflict=true;render();}
+    else if(e.data.t==='save'){load().then(()=>render());}
+  };
+  tabCh.postMessage({t:'hello',id:tabId});
+}catch(e){}
+
+// ─── Undo/redo ────────────────────────────────────────────────────────────────
+function snapState(){return JSON.stringify({schedules:S.schedules,activeId:S.activeId});}
+function pushHistory(){
+  const cur=snapState();
+  if(HISTORY.past[HISTORY.past.length-1]===cur)return;
+  HISTORY.past.push(cur);
+  if(HISTORY.past.length>HISTORY.MAX)HISTORY.past.shift();
+  HISTORY.future=[];
+}
+function undo(){
+  if(!HISTORY.past.length)return;
+  HISTORY.future.push(snapState());
+  const p=JSON.parse(HISTORY.past.pop());
+  S.schedules=p.schedules;S.activeId=p.activeId;
+  save();render();
+}
+function redo(){
+  if(!HISTORY.future.length)return;
+  HISTORY.past.push(snapState());
+  const p=JSON.parse(HISTORY.future.pop());
+  S.schedules=p.schedules;S.activeId=p.activeId;
+  save();render();
+}
+
+// ─── GPA ──────────────────────────────────────────────────────────────────────
+function gpaFor(courses){
+  let pts=0,hrs=0;
+  for(const c of courses){
+    if(!c.done)continue;
+    const p=GRADE_PTS[c.grade];
+    if(c.grade==null||c.grade===''||p==null)continue;
+    pts+=p*c.credits;hrs+=c.credits;
+  }
+  return{pts,hrs,gpa:hrs?pts/hrs:null};
+}
+function gpaPanel(){
+  const all=getAS().flatMap(s=>s.courses);
+  return{
+    overall:gpaFor(all),
+    eceMajor:gpaFor(all.filter(c=>c.cat==='ECE'||c.cat==='MATH'||c.cat==='PHY'||c.cat==='ADVANCED')),
+    biz:gpaFor(all.filter(c=>c.cat==='BUSINESS')),
+    all,
+  };
+}
+function gradedRows(){
+  const out=[];
+  for(const sem of getAS()){
+    if(sem.isOff||!sem.courses.length)continue;
+    out.push({hdr:sem.label});
+    for(const c of sem.courses)out.push({sem,c});
+  }
+  return out;
+}
+
+// ─── Track progress ──────────────────────────────────────────────────────────
+function trackProgress(){
+  const tk=getAct()?.track;if(!tk||!TRACKS[tk])return null;
+  const t=TRACKS[tk];
+  const codes=new Set(getAS().flatMap(s=>s.courses).map(c=>c.code.trim().toUpperCase().replace(/H$/,'')));
+  const isECB=(getAct()?.kind||'ecb')!=='general';
+  const need=isECB?t.pickECB:t.pickAll;
+  const coreHit=t.cores.filter(c=>codes.has(c.code.toUpperCase().replace(/H$/,''))).length;
+  const electHit=t.electives.filter(e=>codes.has(e.toUpperCase().replace(/H$/,''))).length;
+  return{track:t,key:tk,need,coreHit,coreTotal:t.cores.length,electHit};
+}
+
+// ─── Confetti ─────────────────────────────────────────────────────────────────
+function fireConfetti(){
+  const canvas=document.getElementById('confetti');if(!canvas)return;
+  const ctx=canvas.getContext('2d');
+  canvas.width=window.innerWidth;canvas.height=window.innerHeight;
+  const N=160,parts=[];
+  for(let i=0;i<N;i++)parts.push({
+    x:Math.random()*canvas.width,y:-20-Math.random()*200,
+    vx:(Math.random()-.5)*4,vy:2+Math.random()*4,
+    s:4+Math.random()*5,r:Math.random()*Math.PI*2,vr:(Math.random()-.5)*.3,
+    c:['#BF3A1F','#FFC862','#2A7A47','#185FA5','#7B3FA0','#C04870'][i%6],
+  });
+  let frames=0;
+  (function step(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    for(const p of parts){p.x+=p.vx;p.y+=p.vy;p.vy+=0.08;p.r+=p.vr;ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.r);ctx.fillStyle=p.c;ctx.fillRect(-p.s/2,-p.s/2,p.s,p.s*1.6);ctx.restore();}
+    frames++;
+    if(frames<260)requestAnimationFrame(step);else ctx.clearRect(0,0,canvas.width,canvas.height);
+  })();
 }
 
 // ─── Render: course card ──────────────────────────────────────────────────────
 function rCourse(semId,c){
   const cat=CATS[c.cat]||CATS.OTHER;
   const chkBg=c.done?'#2A7A47':'transparent',chkBrd=c.done?'#2A7A47':cat.txt;
-  return `<div class="cc${c.done?' done':''}" style="background:${cat.bg};border-color:${cat.brd}"
-      draggable="true" ondragstart="wDS('${semId}','${c.id}')" ondragend="wDE()">
+  const isSel=S.selection.has(c.id)&&S.selectionSem===semId;
+  return `<div class="cc${c.done?' done':''}${isSel?' sel':''}" style="background:${cat.bg};border-color:${cat.brd}"
+      draggable="true" ondragstart="wDS('${semId}','${c.id}')" ondragend="wDE()"
+      onclick="cClick('${semId}','${c.id}',event)">
     <div class="chk" style="border-color:${chkBrd};background:${chkBg}" data-a="toggle" data-sem="${semId}" data-cid="${c.id}">
       ${c.done?`<svg width="9" height="9" viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2.5" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/></svg>`:''}
     </div>
@@ -360,18 +641,30 @@ function rCourse(semId,c){
       <span class="cname">${esc(c.name)}</span>
       ${c.note?`<span class="cnote">${esc(c.note)}</span>`:''}
     </div>
+    ${c.grade?`<span class="cgrade">${esc(c.grade)}</span>`:''}
     <span class="crdt">${c.credits}cr</span>
     <button class="ebtn" data-a="edit" data-sem="${semId}" data-cid="${c.id}">✎</button>
   </div>`;
 }
 
-// ─── Render: normal semester card ─────────────────────────────────────────────
+function rDeadlines(sem){
+  if(sem.isOff||!sem.courses.length)return'';
+  return `<div class="dl-list" title="Approximate UT academic deadlines"><b>UT deadlines:</b> ${UT_DEADLINES.map(d=>`${d.week}: ${d.what}`).join(' · ')}</div>`;
+}
+
 function rSem(sem){
   const courses=S.filter?sem.courses.filter(c=>c.cat===S.filter):sem.courses;
   const totalCr=sem.courses.reduce((t,c)=>t+c.credits,0);
   const done=sem.courses.filter(c=>c.done).length;
   const pct=sem.courses.length?done/sem.courses.length*100:0;
   const dov=S.dragOver===sem.id;
+  if(sem.isOff)return`<div class="sc off" id="sc-${sem.id}">
+    <div class="sh">
+      <div class="sh-l"><span class="sh-title">${esc(sem.label)}</span><span class="sh-meta">0cr · off term</span></div>
+      <div class="sh-r"><button class="sbtn" data-a="dsem" data-sem="${sem.id}" style="font-size:15px">×</button></div>
+    </div>
+    <div class="off-note">${esc(sem.offNote||'No classes this term.')}</div>
+  </div>`;
   return `<div class="sc${dov?' dov':''}" id="sc-${sem.id}"
       ondragover="event.preventDefault();wDO('${sem.id}')"
       ondrop="wDrop('${sem.id}')" ondragleave="wDL('${sem.id}')">
@@ -389,10 +682,10 @@ function rSem(sem){
     <div class="cl">
       ${courses.length?courses.map(c=>rCourse(sem.id,c)).join(''):'<div class="empty">Drop here · + to add</div>'}
     </div>
+    ${rDeadlines(sem)}
   </div>`;
 }
 
-// ─── Render: compare semester card ───────────────────────────────────────────
 function rCmpSem(semId,sA,sB,schA,schB){
   const codesA=new Set((sA?.courses||[]).map(c=>c.code.trim().toUpperCase()));
   const codesB=new Set((sB?.courses||[]).map(c=>c.code.trim().toUpperCase()));
@@ -401,21 +694,16 @@ function rCmpSem(semId,sA,sB,schA,schB){
   const label=sA?.label||sB?.label||semId;
   const crA=(sA?.courses||[]).reduce((t,c)=>t+c.credits,0);
   const crB=(sB?.courses||[]).reduce((t,c)=>t+c.credits,0);
-
   const rCC=(c,side)=>{
     const cat=CATS[c.cat]||CATS.OTHER;
     const isShared=(side==='a'?codesB:codesA).has(c.code.trim().toUpperCase());
     return `<div class="ccc${isShared?'':' o'+side}">
       ${!isShared?`<span class="ccc-lbl ${side}">${side.toUpperCase()}</span>`:''}
       <div style="width:6px;height:6px;border-radius:50%;background:${cat.txt};flex-shrink:0;margin-top:3px"></div>
-      <div class="ccc-info">
-        <span class="ccc-code" style="color:${cat.txt}">${esc(c.code)}</span>
-        <span class="ccc-name">${esc(c.name)}</span>
-      </div>
+      <div class="ccc-info"><span class="ccc-code" style="color:${cat.txt}">${esc(c.code)}</span><span class="ccc-name">${esc(c.name)}</span></div>
       <span class="ccc-cr">${c.credits}cr</span>
     </div>`;
   };
-
   return `<div class="csc">
     <div class="csc-hdr">
       <span class="csc-title">${esc(label)}</span>
@@ -429,25 +717,18 @@ function rCmpSem(semId,sA,sB,schA,schB){
     </div>
     <div class="csc-cols">
       <div class="csc-col">
-        <div class="csc-col-hdr" style="background:${schA.color}20;color:${schA.color}">
-          <span style="width:7px;height:7px;border-radius:50%;background:${schA.color};display:inline-block;flex-shrink:0"></span>
-          ${esc(schA.name)} · ${crA}cr
-        </div>
+        <div class="csc-col-hdr" style="background:${schA.color}20;color:${schA.color}"><span style="width:7px;height:7px;border-radius:50%;background:${schA.color};display:inline-block;flex-shrink:0"></span>${esc(schA.name)} · ${crA}cr</div>
         ${sA?.courses.length?sA.courses.map(c=>rCC(c,'a')).join(''):'<div class="csc-mt">No courses</div>'}
       </div>
       <div class="csc-div"></div>
       <div class="csc-col">
-        <div class="csc-col-hdr" style="background:${schB.color}20;color:${schB.color}">
-          <span style="width:7px;height:7px;border-radius:50%;background:${schB.color};display:inline-block;flex-shrink:0"></span>
-          ${esc(schB.name)} · ${crB}cr
-        </div>
+        <div class="csc-col-hdr" style="background:${schB.color}20;color:${schB.color}"><span style="width:7px;height:7px;border-radius:50%;background:${schB.color};display:inline-block;flex-shrink:0"></span>${esc(schB.name)} · ${crB}cr</div>
         ${sB?.courses.length?sB.courses.map(c=>rCC(c,'b')).join(''):'<div class="csc-mt">No courses</div>'}
       </div>
     </div>
   </div>`;
 }
 
-// ─── Render: compare view ─────────────────────────────────────────────────────
 function rCompareView(){
   const schA=getAct(),schB=S.schedules.find(s=>s.id===S.compareId);
   if(!schA||!schB)return'';
@@ -458,44 +739,38 @@ function rCompareView(){
   const cB=new Set(allB.map(c=>c.code.trim().toUpperCase()));
   const shAll=[...cA].filter(c=>cB.has(c)).length;
   const crA=allA.reduce((t,c)=>t+c.credits,0),crB=allB.reduce((t,c)=>t+c.credits,0);
-
   let body='';
   for(const row of LAYOUT){
     const relevant=row.ids.filter(id=>allIds.includes(id));
     if(!relevant.length)continue;
     if(row.label)body+=`<div class="yr-lbl">${row.label}</div>`;
-    for(const id of relevant){
-      body+=rCmpSem(id,semsA.find(s=>s.id===id),semsB.find(s=>s.id===id),schA,schB);
-    }
+    for(const id of relevant)body+=rCmpSem(id,semsA.find(s=>s.id===id),semsB.find(s=>s.id===id),schA,schB);
   }
   const customIds=allIds.filter(id=>!KNOWN.has(id));
   if(customIds.length){
     body+=`<div class="yr-lbl">Custom Semesters</div>`;
     for(const id of customIds)body+=rCmpSem(id,semsA.find(s=>s.id===id),semsB.find(s=>s.id===id),schA,schB);
   }
-
   return `<div class="cmp-bar">
-    <div class="cmp-tag" style="background:${schA.color}30;color:${schA.color}">
-      <span style="width:8px;height:8px;border-radius:50%;background:${schA.color};display:inline-block;margin-right:5px;vertical-align:middle"></span>
-      A: ${esc(schA.name)} — ${allA.length} courses, ${crA}cr
-    </div>
+    <div class="cmp-tag" style="background:${schA.color}30;color:${schA.color}"><span style="width:8px;height:8px;border-radius:50%;background:${schA.color};display:inline-block;margin-right:5px;vertical-align:middle"></span>A: ${esc(schA.name)} — ${allA.length} courses, ${crA}cr</div>
     <span style="font-size:10px;opacity:.5">vs</span>
-    <div class="cmp-tag" style="background:${schB.color}30;color:${schB.color}">
-      <span style="width:8px;height:8px;border-radius:50%;background:${schB.color};display:inline-block;margin-right:5px;vertical-align:middle"></span>
-      B: ${esc(schB.name)} — ${allB.length} courses, ${crB}cr
-    </div>
+    <div class="cmp-tag" style="background:${schB.color}30;color:${schB.color}"><span style="width:8px;height:8px;border-radius:50%;background:${schB.color};display:inline-block;margin-right:5px;vertical-align:middle"></span>B: ${esc(schB.name)} — ${allB.length} courses, ${crB}cr</div>
     <span class="cmp-sum">${shAll} shared · ${cA.size-shAll} unique to A · ${cB.size-shAll} unique to B</span>
     <button class="cmp-exit" onclick="S.compareMode=false;S.compareId=null;render()">✕ Exit Compare</button>
   </div>
   <div class="main">${body}</div>`;
 }
 
-// ─── Render: normal main ──────────────────────────────────────────────────────
 function rMain(){
   const sems=getAS();
   let html='';
   if(S.showAddSem)html+=`<div class="asf">
-    <input id="nsn" placeholder="Semester name, e.g. Summer Research 2025" autofocus>
+    <select onchange="S.addSemKind=this.value;render()">
+      <option value="normal"${S.addSemKind==='normal'?' selected':''}>Custom semester</option>
+      <option value="internship"${S.addSemKind==='internship'?' selected':''}>Internship / Co-op (no classes)</option>
+      <option value="abroad"${S.addSemKind==='abroad'?' selected':''}>Study Abroad (transfer credits)</option>
+    </select>
+    <input id="nsn" placeholder="${S.addSemKind==='internship'?'Internship at Acme, Summer 2026':S.addSemKind==='abroad'?'Study Abroad, Spring 2026':'Summer Research 2025'}" autofocus>
     <button data-a="addsem" style="background:var(--accent);color:#fff;border:none">Add</button>
     <button data-a="cancelsem" style="background:transparent;border:1px solid var(--border2);color:var(--text2)">Cancel</button>
   </div>`;
@@ -510,17 +785,18 @@ function rMain(){
   return `<div class="main">${html}</div>`;
 }
 
-// ─── Render: edit panel ───────────────────────────────────────────────────────
 function rEP(){
   if(!S.edit)return'';
-  const f=S.form,sems=getAS();
+  const f=S.form,sems=getAS().filter(s=>!s.isOff);
   const semOpts=sems.map(s=>`<option value="${s.id}"${f.semId===s.id?' selected':''}>${esc(s.label)}</option>`).join('');
   const catOpts=Object.entries(CATS).map(([k,v])=>`<option value="${k}"${f.cat===k?' selected':''}>${v.name}</option>`).join('');
+  const gradeOpts=GRADE_OPTS.map(g=>`<option value="${g}"${(f.grade||'')===g?' selected':''}>${g||'—'}</option>`).join('');
   return `<div class="ep">
     <h3>${S.edit.isNew?'Add Course':'Edit Course'}</h3>
-    <div class="fg">
+    <div class="fg three">
       <div class="fld"><label>Code</label><input id="f-code" value="${esc(f.code||'')}" placeholder="ECE 302H"></div>
       <div class="fld"><label>Credits</label><input id="f-credits" type="number" value="${f.credits||3}" min="0" max="20"></div>
+      <div class="fld"><label>Grade (if done)</label><select id="f-grade">${gradeOpts}</select></div>
     </div>
     <div class="fld full"><label>Course Name</label><input id="f-name" value="${esc(f.name||'')}" placeholder="Full course name"></div>
     <div class="fg">
@@ -538,24 +814,49 @@ function rEP(){
   </div>`;
 }
 
-// ─── Render: modals ───────────────────────────────────────────────────────────
+function rSelToolbar(){
+  if(!S.selection.size)return'';
+  const sems=getAS().filter(s=>!s.isOff&&s.id!==S.selectionSem);
+  const opts=sems.map(s=>`<option value="${s.id}">${esc(s.label)}</option>`).join('');
+  return `<div class="seltb">
+    <b>${S.selection.size} selected</b>
+    <select id="bulkdest"><option value="">Move to…</option>${opts}</select>
+    <button onclick="bulkMove()">Move</button>
+    <button onclick="bulkToggle(true)">Mark done</button>
+    <button onclick="bulkToggle(false)">Mark not done</button>
+    <button onclick="bulkDelete()" style="background:rgba(255,80,80,.3);border-color:rgba(255,80,80,.5)">Delete</button>
+    <button onclick="clearSel()" style="margin-left:auto">Clear</button>
+  </div>`;
+}
+
 function rModal(){
   if(!S.modal)return'';
 
-  if(S.modal==='export')return`<div class="mbk" id="mbk">
-    <div class="modal" style="max-width:480px">
-      <div class="mhdr"><h3>📤 Share all schedules</h3><button class="mclose" data-a="close-modal">×</button></div>
+  if(S.modal==='export'){
+    const tab=S.modalTab||'code';
+    const body=tab==='code'?`
+      <p style="font-size:12px;color:var(--text2);margin-bottom:10px">Includes all ${S.schedules.length} schedule(s). Anyone with the code can import your exact plans.</p>
+      <textarea class="sta" id="share-code" readonly onclick="this.select()">${esc(encodeShare())}</textarea>
+      <span class="copied" id="copy-badge">✓ Copied!</span>`:`
+      <p style="font-size:12px;color:var(--text2);margin-bottom:10px">Markdown version of the active schedule. Paste into an email, Discord, Notion, anywhere plaintext works.</p>
+      <textarea class="sta" id="md-out" readonly onclick="this.select()" style="height:240px">${esc(toMarkdown())}</textarea>
+      <span class="copied" id="copy-md-badge">✓ Copied!</span>`;
+    return`<div class="mbk" id="mbk">
+    <div class="modal" style="max-width:560px">
+      <div class="mhdr"><h3>📤 Share schedule</h3><button class="mclose" data-a="close-modal">×</button></div>
       <div class="mbody">
-        <p style="font-size:12px;color:var(--text2);margin-bottom:10px">Includes all ${S.schedules.length} schedule(s). Share this code with anyone — they can import it to get your exact plans.</p>
-        <textarea class="sta" id="share-code" readonly onclick="this.select()">${esc(encodeShare())}</textarea>
-        <span class="copied" id="copy-badge">✓ Copied!</span>
+        <div class="share-tabs">
+          <button class="share-tab${tab==='code'?' on':''}" onclick="S.modalTab='code';render()">Share code</button>
+          <button class="share-tab${tab==='md'?' on':''}" onclick="S.modalTab='md';render()">Markdown</button>
+        </div>
+        ${body}
       </div>
       <div class="mfooter">
-        <button onclick="copyCode()" style="padding:6px 14px;background:var(--accent);color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px">Copy Code</button>
+        <button onclick="${tab==='md'?`copyText('md-out','copy-md-badge')`:`copyCode()`}" style="padding:6px 14px;background:var(--accent);color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px">Copy</button>
         <button data-a="close-modal" style="padding:6px 14px;border:1px solid var(--border2);border-radius:6px;cursor:pointer;font-size:12px;background:var(--surface2);color:var(--text)">Close</button>
       </div>
-    </div>
-  </div>`;
+    </div></div>`;
+  }
 
   if(S.modal==='import')return`<div class="mbk" id="mbk">
     <div class="modal" style="max-width:480px">
@@ -569,19 +870,17 @@ function rModal(){
         <button data-a="close-modal" style="padding:6px 14px;border:1px solid var(--border2);border-radius:6px;cursor:pointer;font-size:12px;background:var(--surface2);color:var(--text)">Cancel</button>
         <button onclick="doImport()" style="padding:6px 14px;background:var(--accent);color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px">Import</button>
       </div>
-    </div>
-  </div>`;
+    </div></div>`;
 
   if(S.modal==='reset')return`<div class="mbk" id="mbk">
     <div class="modal" style="max-width:400px">
       <div class="mhdr"><h3>⚠️ Reset everything?</h3><button class="mclose" data-a="close-modal">×</button></div>
-      <div class="mbody"><p style="font-size:13px;color:var(--text2)">Deletes all schedules and restores the default ECE + Business Honors plan. Cannot be undone.</p></div>
+      <div class="mbody"><p style="font-size:13px;color:var(--text2)">Deletes all schedules and restores the default ECE + Business Honors plan. A snapshot is saved first so you can recover from version history.</p></div>
       <div class="mfooter">
         <button data-a="close-modal" style="padding:6px 14px;border:1px solid var(--border2);border-radius:6px;cursor:pointer;font-size:12px;background:var(--surface2);color:var(--text)">Cancel</button>
         <button onclick="doReset()" style="padding:6px 14px;background:#C00;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px">Reset Everything</button>
       </div>
-    </div>
-  </div>`;
+    </div></div>`;
 
   if(S.modal==='schedules'){
     const items=S.schedules.map(sch=>{
@@ -594,7 +893,7 @@ function rModal(){
           ${isRen
             ?`<div class="si-name"><input id="ren-inp" value="${esc(sch.name)}" onkeydown="if(event.key==='Enter')commitRename('${sch.id}');if(event.key==='Escape'){S.renamingId=null;render();}"></div>`
             :`<div class="si-name">${esc(sch.name)}</div>`}
-          <div class="si-meta">${all.length} courses · ${cr}cr · ${done} done</div>
+          <div class="si-meta">${all.length} courses · ${cr}cr · ${done} done${sch.track?` · track: ${TRACKS[sch.track]?.short||sch.track}`:''}</div>
         </div>
         <div class="si-acts">
           ${isRen
@@ -617,7 +916,7 @@ function rModal(){
         </div>
         <div class="mbody"><div class="slist">${items}</div></div>
         <div class="mfooter">
-          <span style="font-size:11px;color:var(--text3);margin-right:auto">${S.schedules.length} schedule(s) · click a name to rename</span>
+          <span class="left">${S.schedules.length} schedule(s)</span>
           <button data-a="close-modal" style="padding:6px 14px;border:1px solid var(--border2);border-radius:6px;cursor:pointer;font-size:12px;background:var(--surface2);color:var(--text)">Done</button>
         </div>
       </div>
@@ -636,7 +935,6 @@ function rModal(){
         <div class="mfooter"><button data-a="close-modal" style="padding:6px 14px;border:1px solid var(--border2);border-radius:6px;cursor:pointer;font-size:12px;background:var(--surface2);color:var(--text)">Cancel</button></div>
       </div>
     </div>`;
-
     const active=getAct();
     const items=others.map(s=>{
       const all=s.sems.flatMap(x=>x.courses);
@@ -649,20 +947,195 @@ function rModal(){
         ${sel?'<div style="font-size:16px;margin-top:5px;color:var(--accent)">✓</div>':''}
       </div>`;
     }).join('');
-
     return `<div class="mbk" id="mbk">
       <div class="modal" style="max-width:520px">
         <div class="mhdr"><h3>⇄ Compare with…</h3><button class="mclose" data-a="close-modal">×</button></div>
         <div class="mbody">
-          <p style="font-size:12px;color:var(--text2);margin-bottom:12px">
-            <strong>${esc(active?.name)}</strong> is schedule <span style="color:var(--accent);font-weight:600">A</span>. Pick one to compare against:
-          </p>
+          <p style="font-size:12px;color:var(--text2);margin-bottom:12px"><strong>${esc(active?.name)}</strong> is schedule <span style="color:var(--accent);font-weight:600">A</span>. Pick one to compare against:</p>
           <div class="cpg">${items}</div>
         </div>
         <div class="mfooter">
           <button data-a="close-modal" style="padding:6px 14px;border:1px solid var(--border2);border-radius:6px;cursor:pointer;font-size:12px;background:var(--surface2);color:var(--text)">Cancel</button>
           <button onclick="startCmp()" style="padding:6px 16px;background:${S.cmpPickId?'var(--accent)':'var(--border2)'};color:${S.cmpPickId?'#fff':'var(--text3)'};border:none;border-radius:6px;cursor:pointer;font-size:12px">Compare →</button>
         </div>
+      </div>
+    </div>`;
+  }
+
+  if(S.modal==='gpa'){
+    const p=gpaPanel();
+    const fmt=g=>g.gpa==null?'—':g.gpa.toFixed(3);
+    const target=parseFloat(S.gpaTarget);
+    const remainCr=p.all.filter(c=>!c.done).reduce((t,c)=>t+c.credits,0);
+    let targetRes='';
+    if(!isNaN(target)&&target>=0&&target<=4){
+      if(remainCr===0)targetRes='No remaining graded credits to project against.';
+      else{
+        const needed=(target*(p.overall.hrs+remainCr)-p.overall.pts)/remainCr;
+        if(needed<=0)targetRes=`You are already at or above ${target.toFixed(2)}. Remaining courses can be any grade.`;
+        else if(needed>4)targetRes=`Not reachable. Would need a ${needed.toFixed(2)} GPA across the remaining ${remainCr} credits.`;
+        else targetRes=`Need a <b>${needed.toFixed(3)}</b> GPA across the remaining ${remainCr} credits to reach <b>${target.toFixed(2)}</b>.`;
+      }
+    }
+    const rows=gradedRows().map(r=>{
+      if(r.hdr)return`<div class="gpa-sec">${esc(r.hdr)}</div>`;
+      const{sem,c}=r;
+      const gOpts=GRADE_OPTS.map(g=>`<option value="${g}"${(c.grade||'')===g?' selected':''}>${g||'—'}</option>`).join('');
+      return`<div class="gpa-row">
+        <span class="gcode" style="color:${(CATS[c.cat]||CATS.OTHER).txt}">${esc(c.code)}</span>
+        <span class="gname">${esc(c.name)}</span>
+        <span class="gcr">${c.credits}cr</span>
+        <select onchange="setGrade('${sem.id}','${c.id}',this.value)" ${c.done?'':'disabled title="Mark course done first"'}>${gOpts}</select>
+      </div>`;
+    }).join('');
+    return`<div class="mbk" id="mbk">
+      <div class="modal" style="max-width:720px">
+        <div class="mhdr"><h3>📊 GPA Calculator</h3><button class="mclose" data-a="close-modal">×</button></div>
+        <div class="mbody">
+          <div class="gpa-stats">
+            <div class="gpa-stat"><div class="v">${fmt(p.overall)}</div><div class="l">Overall GPA</div><div style="font-size:9px;color:var(--text3);margin-top:2px">${p.overall.hrs} credits graded</div></div>
+            <div class="gpa-stat"><div class="v">${fmt(p.eceMajor)}</div><div class="l">ECE / Tech GPA</div><div style="font-size:9px;color:var(--text3);margin-top:2px">${p.eceMajor.hrs} credits</div></div>
+            <div class="gpa-stat"><div class="v">${fmt(p.biz)}</div><div class="l">Business GPA</div><div style="font-size:9px;color:var(--text3);margin-top:2px">${p.biz.hrs} credits</div></div>
+          </div>
+          <div class="gpa-target">
+            <label>Target overall GPA: <input type="number" min="0" max="4" step="0.01" value="${esc(S.gpaTarget)}" oninput="S.gpaTarget=this.value;updateTarget()"> <span style="font-size:10px;color:var(--text3)">UT scale: A=4.0, A-=3.67, B+=3.33…</span></label>
+            <div class="res" id="gpa-target-res">${targetRes||'<span style=\"color:var(--text3)\">Enter a target to see what GPA your remaining courses need.</span>'}</div>
+          </div>
+          <div style="border:1px solid var(--border);border-radius:8px;overflow:hidden">${rows||'<div class="empty">No courses to grade yet.</div>'}</div>
+        </div>
+        <div class="mfooter">
+          <span class="left">Grades count toward GPA only when the course is marked done. CR/NC/Q/W/IP are excluded.</span>
+          <button data-a="close-modal" style="padding:6px 14px;border:1px solid var(--border2);border-radius:6px;cursor:pointer;font-size:12px;background:var(--surface2);color:var(--text)">Close</button>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  if(S.modal==='search'){
+    const q=(S.searchQ||'').trim().toLowerCase();
+    let results=[];
+    if(q)for(const sch of S.schedules)for(const sem of sch.sems)for(const c of sem.courses)if(c.code.toLowerCase().includes(q)||c.name.toLowerCase().includes(q))results.push({sch,sem,c});
+    const body=q?(results.length?`<div class="sres">${results.slice(0,80).map(r=>`
+      <div class="sres-row" onclick="jumpTo('${r.sch.id}','${r.sem.id}','${r.c.id}')">
+        <span class="sr-code" style="color:${(CATS[r.c.cat]||CATS.OTHER).txt}">${esc(r.c.code)}</span>
+        <span class="sr-name">${esc(r.c.name)}</span>
+        <span class="sr-loc">${esc(r.sch.name)} · ${esc(r.sem.label)}</span>
+      </div>`).join('')}</div>`:'<div class="sres-empty">No matches.</div>'):'<div class="sres-empty">Type a course code or name above.</div>';
+    return`<div class="mbk" id="mbk">
+      <div class="modal" style="max-width:600px">
+        <div class="mhdr"><h3>🔎 Search across all schedules</h3><button class="mclose" data-a="close-modal">×</button></div>
+        <div class="mbody">
+          <input id="search-inp" autofocus placeholder="ECE 411, Operations Management…" value="${esc(S.searchQ)}" oninput="onSearchInput(this.value)" style="width:100%;padding:9px 12px;font-size:13px;border:1px solid var(--border2);border-radius:7px;background:var(--surface2);color:var(--text);outline:none">
+          ${body}
+        </div>
+        <div class="mfooter"><button data-a="close-modal" style="padding:6px 14px;border:1px solid var(--border2);border-radius:6px;cursor:pointer;font-size:12px;background:var(--surface2);color:var(--text)">Close</button></div>
+      </div>
+    </div>`;
+  }
+
+  if(S.modal==='history'){
+    const snaps=loadSnapshots();
+    const body=snaps.length?snaps.map(s=>{
+      const tot=s.data.schedules.reduce((t,sch)=>t+sch.sems.flatMap(x=>x.courses).length,0);
+      const d=new Date(s.ts);
+      return`<div class="hist-row">
+        <div>
+          <div class="hr-when">${d.toLocaleString()}</div>
+          <div class="hr-sum">${s.data.schedules.length} schedule(s), ${tot} courses · ${esc(s.reason||'auto')}</div>
+        </div>
+        <div style="display:flex;gap:5px">
+          <button onclick="restoreSnapshot(${s.ts})">Restore</button>
+          <button onclick="deleteSnapshot(${s.ts})" style="color:#C00;border-color:#FCC">Delete</button>
+        </div>
+      </div>`;
+    }).join(''):'<div class="sres-empty">No snapshots yet. They get saved automatically as you make changes.</div>';
+    return`<div class="mbk" id="mbk">
+      <div class="modal" style="max-width:560px">
+        <div class="mhdr">
+          <h3>🕒 Version History</h3>
+          <div style="display:flex;gap:8px;align-items:center">
+            <button onclick="saveSnapshotNow('manual');render()" style="padding:4px 11px;background:var(--accent);color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:11px">Save Snapshot Now</button>
+            <button class="mclose" data-a="close-modal">×</button>
+          </div>
+        </div>
+        <div class="mbody">${body}</div>
+        <div class="mfooter">
+          <span class="left">Up to 20 snapshots kept. For finer rewind, press Ctrl+Z to undo.</span>
+          <button data-a="close-modal" style="padding:6px 14px;border:1px solid var(--border2);border-radius:6px;cursor:pointer;font-size:12px;background:var(--surface2);color:var(--text)">Close</button>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  if(S.modal==='track'){
+    const cur=getAct();const sel=cur?.track||'';
+    const prog=trackProgress();
+    const kind=cur?.kind||'ecb';
+    const cards=Object.entries(TRACKS).map(([k,t])=>`
+      <div class="tk-card${sel===k?' sel':''}" onclick="setTrack('${k}')">
+        <div class="tk-name">${esc(t.name)}</div>
+        <div class="tk-grad">Grad track: ${esc(t.grad)} · ECB needs ${t.pickECB} electives, General/Honors ${t.pickAll}</div>
+      </div>`).join('');
+    const codes=new Set(getAS().flatMap(s=>s.courses).map(x=>x.code.trim().toUpperCase().replace(/H$/,'')));
+    const progBox=prog?`
+      <div class="tk-prog">
+        <div style="display:flex;justify-content:space-between;align-items:center"><b style="font-size:12px">${esc(prog.track.short)}</b><span style="font-size:11px;color:var(--text2)">${prog.coreHit}/${prog.coreTotal} cores · ${prog.electHit}/${prog.need} electives</span></div>
+        <div class="tp-bar"><div class="tp-fill" style="width:${Math.min(100,(prog.coreHit+Math.min(prog.electHit,prog.need))/(prog.coreTotal+prog.need)*100)}%"></div></div>
+        <div class="tk-h">Required cores</div>
+        <div class="tk-list">${prog.track.cores.map(c=>{
+          const hit=codes.has(c.code.toUpperCase().replace(/H$/,''));
+          return`<div class="${hit?'ok':'miss'}">${hit?'✓':'○'} ${esc(c.code)} — ${esc(c.name)}${c.alt?` <span style=\"color:var(--text3)\">(${esc(c.alt)})</span>`:''}</div>`;
+        }).join('')}</div>
+        <div class="tk-h">Approved electives (pick ${prog.need})</div>
+        <div class="tk-list" style="columns:2;column-gap:18px">${prog.track.electives.map(e=>{
+          const hit=codes.has(e.toUpperCase().replace(/H$/,''));
+          return`<div class="${hit?'ok':'miss'}">${hit?'✓':'○'} ${esc(e)}</div>`;
+        }).join('')}</div>
+      </div>`:'';
+    return`<div class="mbk" id="mbk">
+      <div class="modal" style="max-width:720px">
+        <div class="mhdr"><h3>🎯 ECE Technical Component Track</h3><button class="mclose" data-a="close-modal">×</button></div>
+        <div class="mbody">
+          <div style="display:flex;gap:10px;align-items:center;margin-bottom:12px;font-size:12px;color:var(--text2);flex-wrap:wrap">
+            <span>Student type:</span>
+            <label><input type="radio" name="kind" value="ecb" ${kind==='ecb'?'checked':''} onchange="setKind('ecb')"> ECB Dual Degree</label>
+            <label><input type="radio" name="kind" value="general" ${kind==='general'?'checked':''} onchange="setKind('general')"> General / Honors</label>
+          </div>
+          ${progBox}
+          <div class="tk-h">Pick a track</div>
+          <div class="tk-grid">${cards}</div>
+          ${sel?`<button onclick="setTrack('')" style="margin-top:8px;padding:5px 11px;font-size:11px;background:transparent;border:1px solid var(--border2);border-radius:6px;color:var(--text2);cursor:pointer">Clear track</button>`:''}
+        </div>
+        <div class="mfooter">
+          <span class="left">Data from Chandra Dept Tech Core Packet (Dec 2025). Always confirm with your faculty advisor.</span>
+          <button data-a="close-modal" style="padding:6px 14px;border:1px solid var(--border2);border-radius:6px;cursor:pointer;font-size:12px;background:var(--surface2);color:var(--text)">Close</button>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  if(S.modal==='kbhelp'){
+    const rows=[
+      ['N','Add course to first available semester'],
+      ['C','Compare schedules'],
+      ['S','Search across schedules'],
+      ['G','Open GPA calculator'],
+      ['T','ECE track picker'],
+      ['H','Version history'],
+      ['L','Saved schedules list'],
+      ['P','Print or save as PDF'],
+      ['Ctrl + Z','Undo'],
+      ['Ctrl + Shift + Z','Redo'],
+      ['Shift + click','Add course to multi-select'],
+      ['1 to 4','Jump to year section'],
+      ['Esc','Close modal or clear selection'],
+      ['?','Show this help'],
+    ];
+    return`<div class="mbk" id="mbk">
+      <div class="modal" style="max-width:480px">
+        <div class="mhdr"><h3>⌨️ Keyboard Shortcuts</h3><button class="mclose" data-a="close-modal">×</button></div>
+        <div class="mbody">${rows.map(r=>`<div class="kb-row"><span>${r[1]}</span><span class="kb-key">${r[0]}</span></div>`).join('')}</div>
+        <div class="mfooter"><button data-a="close-modal" style="padding:6px 14px;border:1px solid var(--border2);border-radius:6px;cursor:pointer;font-size:12px;background:var(--surface2);color:var(--text)">Close</button></div>
       </div>
     </div>`;
   }
@@ -678,25 +1151,35 @@ function render(){
   const totalCr=all.reduce((t,c)=>t+c.credits,0),doneCr=all.filter(c=>c.done).reduce((t,c)=>t+c.credits,0);
   const pct=total?Math.round(done/total*100):0;
 
+  if(pct===100&&S.lastPct<100)setTimeout(fireConfetti,50);
+  S.lastPct=pct;
+
   const fbtns=`<button class="fbtn${!S.filter?' on':''}" data-a="filter" data-cat="">All</button>`+
     Object.entries(CATS).map(([k,v])=>{
       const on=S.filter===k;
       return `<button class="fbtn${on?' on':''}" data-a="filter" data-cat="${k}" style="${on?`background:${v.txt};color:${v.bg};border-color:${v.txt}`:`border-color:${v.txt};color:${v.txt}`}">${v.name}</button>`;
     }).join('');
 
+  const prog=trackProgress();
+  const trackPill=act?`<div class="track-pill" onclick="S.modal='track';render()" title="ECE Technical Component">
+      🎯 ${prog?`${esc(prog.track.short)} <span style="opacity:.7">${prog.coreHit}/${prog.coreTotal}c · ${prog.electHit}/${prog.need}e</span>`:'Pick a track'}
+    </div>`:'';
+
   document.getElementById('root').innerHTML=`
     ${rModal()}
+    ${S.tabConflict?`<div class="tab-warn">⚠ Another tab has this planner open. Whichever tab saves last wins. <button onclick="S.tabConflict=false;render()">Got it</button></div>`:''}
     <div class="hdr">
       <div class="hdr-top">
         <div>
           <div class="hdr-sub">UT Austin · ECE + Business Honors</div>
           <h1>Course Planner <span style="font-size:11px;opacity:.5;font-weight:400">2024–2026</span></h1>
-          <div style="margin-top:4px;display:flex;align-items:center;gap:7px">
+          <div style="margin-top:4px;display:flex;align-items:center;gap:7px;flex-wrap:wrap">
             <div class="sched-pill" onclick="S.modal='schedules';render()">
               <div class="sched-dot" style="background:${act?.color||'#FFF'}"></div>
               <span style="font-weight:600;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(act?.name||'')}</span>
               <span style="opacity:.7;font-size:10px">▾</span>
             </div>
+            ${trackPill}
             ${S.schedules.length>1?`<span style="font-size:10px;opacity:.6">${S.schedules.length} schedules</span>`:''}
           </div>
         </div>
@@ -707,16 +1190,25 @@ function render(){
             <div class="stat"><div class="v">${pct}%</div><div class="l">Progress</div></div>
           </div>
           <div class="hdr-btns">
-            <button class="hbtn" onclick="S.modal='schedules';render()">📋 Schedules</button>
-            <button class="hbtn" onclick="S.cmpPickId=null;S.modal='compare-pick';render()">⇄ Compare</button>
-            <button class="hbtn" onclick="S.modal='export';render()">📤 Share</button>
-            <button class="hbtn" onclick="S.modal='import';render()">📥 Import</button>
-            <button class="hbtn ghost" onclick="S.modal='reset';render()">↺</button>
+            <button class="hbtn" onclick="S.modal='schedules';render()" title="Saved schedules (L)">📋 Schedules</button>
+            <button class="hbtn" onclick="S.cmpPickId=null;S.modal='compare-pick';render()" title="Compare (C)">⇄ Compare</button>
+            <button class="hbtn" onclick="S.modal='gpa';render()" title="GPA calculator (G)">📊 GPA</button>
+            <button class="hbtn" onclick="S.modal='track';render()" title="Track (T)">🎯 Track</button>
+            <button class="hbtn" onclick="S.modal='search';render()" title="Search (S)">🔎 Search</button>
+            <button class="hbtn" onclick="S.modal='history';render()" title="Version history (H)">🕒 History</button>
+            <button class="hbtn" onclick="window.print()" title="Print or save as PDF (P)">🖨️ Print</button>
+            <button class="hbtn" onclick="S.modalTab='code';S.modal='export';render()" title="Share">📤 Share</button>
+            <button class="hbtn" onclick="S.modal='import';render()" title="Import">📥 Import</button>
+            <button class="hbtn ghost" onclick="undo()" title="Undo (Ctrl+Z)" ${HISTORY.past.length?'':'disabled'}>↶</button>
+            <button class="hbtn ghost" onclick="redo()" title="Redo (Ctrl+Shift+Z)" ${HISTORY.future.length?'':'disabled'}>↷</button>
+            <button class="hbtn ghost" onclick="S.modal='kbhelp';render()" title="Keyboard shortcuts">?</button>
+            <button class="hbtn ghost" onclick="S.modal='reset';render()" title="Reset">↺</button>
           </div>
         </div>
       </div>
       <div class="pbar"><div class="pfill" style="width:${pct}%"></div></div>
     </div>
+    ${rSelToolbar()}
     <nav class="nav">
       <span class="nav-lbl">Filter:</span>${fbtns}
       <div class="nav-right">${S.compareMode?'':`<button class="nsm p" data-a="show-add-sem">+ Add Semester</button>`}</div>
@@ -724,13 +1216,20 @@ function render(){
     ${S.compareMode?rCompareView():`${rEP()}${rMain()}`}`;
 
   if(S.renamingId&&S.modal==='schedules')setTimeout(()=>{const el=document.getElementById('ren-inp');if(el){el.focus();el.select();}},50);
+  if(S.modal==='search')setTimeout(()=>{const i=document.getElementById('search-inp');if(i&&document.activeElement!==i)i.focus();},0);
 }
 
 // ─── Event delegation ─────────────────────────────────────────────────────────
-function mutate(fn){fn();save();render();}
+function mutate(fn,opts){
+  pushHistory();
+  fn();
+  const last=loadSnapshots()[0];
+  if(!last||Date.now()-last.ts>60000)saveSnapshotNow(opts?.reason||'auto');
+  save();render();
+}
 
 document.addEventListener('click',e=>{
-  if(e.target.id==='mbk'){S.modal=null;S.renamingId=null;render();return;}
+  if(e.target.id==='mbk'){S.modal=null;S.modalTab=null;S.renamingId=null;render();return;}
   const el=e.target.closest('[data-a]');if(!el)return;
   const a=el.dataset.a,sem=el.dataset.sem,cid=el.dataset.cid;
   if(a==='filter')mutate(()=>S.filter=el.dataset.cat||null);
@@ -740,7 +1239,7 @@ document.addEventListener('click',e=>{
     const sems=getAS();const s=sems.find(x=>x.id===sem);const c=s?.courses.find(x=>x.id===cid);
     if(c){S.edit={semId:sem,courseId:cid,isNew:false};S.form={...c,semId:sem};render();window.scrollTo(0,0);}
   }
-  else if(a==='add'){S.edit={semId:sem,isNew:true};S.form={id:uid(),code:'',name:'',cat:'ECE',credits:3,done:false,note:'',semId:sem};render();window.scrollTo(0,0);}
+  else if(a==='add'){S.edit={semId:sem,isNew:true};S.form={id:uid(),code:'',name:'',cat:'ECE',credits:3,done:false,note:'',grade:'',semId:sem};render();window.scrollTo(0,0);}
   else if(a==='cancel'){S.edit=null;S.form={};render();}
   else if(a==='save'){
     const code=document.getElementById('f-code').value.trim();
@@ -750,7 +1249,8 @@ document.addEventListener('click',e=>{
     const cat=document.getElementById('f-cat').value;
     const toSem=document.getElementById('f-sem').value;
     const note=document.getElementById('f-note').value.trim();
-    const updated={id:S.form.id,code,name,credits,cat,done:S.form.done||false,note};
+    const grade=document.getElementById('f-grade').value;
+    const updated={id:S.form.id,code,name,credits,cat,done:S.form.done||false,note,grade};
     mutate(()=>{
       let sems=getAS();const from=S.edit.semId;
       if(S.edit.isNew){sems=sems.map(s=>s.id!==toSem?s:{...s,courses:[...s.courses,updated]});}
@@ -762,22 +1262,55 @@ document.addEventListener('click',e=>{
   else if(a==='del'){const{semId,courseId}=S.edit;mutate(()=>{setAS(getAS().map(s=>s.id!==semId?s:{...s,courses:s.courses.filter(c=>c.id!==courseId)}));S.edit=null;S.form={};});}
   else if(a==='dsem'){mutate(()=>{setAS(getAS().filter(s=>s.id!==sem));if(S.edit?.semId===sem){S.edit=null;S.form={};}});}
   else if(a==='show-add-sem'){S.showAddSem=true;render();}
-  else if(a==='addsem'){const n=document.getElementById('nsn')?.value.trim();if(n)mutate(()=>{setAS([...getAS(),{id:'sem_'+Date.now(),label:n,courses:[]}]);S.showAddSem=false;});else{S.showAddSem=false;render();}}
+  else if(a==='addsem'){
+    const n=document.getElementById('nsn')?.value.trim();
+    if(!n){S.showAddSem=false;render();return;}
+    const tpl=SEM_TEMPLATES[S.addSemKind]||SEM_TEMPLATES.normal;
+    const newSem={id:'sem_'+Date.now(),label:n,courses:tpl.courses.map(c=>({...c,id:uid(),done:false})),isOff:!!tpl.isOff,offNote:tpl.offNote||''};
+    mutate(()=>{setAS([...getAS(),newSem]);S.showAddSem=false;S.addSemKind='normal';});
+  }
   else if(a==='cancelsem'){S.showAddSem=false;render();}
-  else if(a==='close-modal'){S.modal=null;S.renamingId=null;render();}
+  else if(a==='close-modal'){S.modal=null;S.modalTab=null;S.renamingId=null;render();}
 });
+
+// ─── Course click (selection) ────────────────────────────────────────────────
+window.cClick=(semId,cid,e)=>{
+  if(e.target.closest('[data-a]')||e.target.closest('.ebtn'))return;
+  if(e.shiftKey){
+    e.preventDefault();
+    if(S.selectionSem&&S.selectionSem!==semId)S.selection.clear();
+    S.selectionSem=semId;
+    if(S.selection.has(cid))S.selection.delete(cid);else S.selection.add(cid);
+    render();
+  }else if(S.selection.size){
+    clearSel();
+  }
+};
+window.clearSel=()=>{S.selection.clear();S.selectionSem=null;render();};
+window.bulkToggle=v=>{const ids=[...S.selection];const sem=S.selectionSem;mutate(()=>{setAS(getAS().map(s=>s.id!==sem?s:{...s,courses:s.courses.map(c=>ids.includes(c.id)?{...c,done:v}:c)}));clearSel();});};
+window.bulkDelete=()=>{const ids=[...S.selection];const sem=S.selectionSem;mutate(()=>{setAS(getAS().map(s=>s.id!==sem?s:{...s,courses:s.courses.filter(c=>!ids.includes(c.id))}));clearSel();});};
+window.bulkMove=()=>{
+  const dest=document.getElementById('bulkdest')?.value;if(!dest)return;
+  const ids=[...S.selection];const from=S.selectionSem;
+  mutate(()=>{
+    let moving=[];
+    let sems=getAS().map(s=>{if(s.id===from){moving=s.courses.filter(c=>ids.includes(c.id));return{...s,courses:s.courses.filter(c=>!ids.includes(c.id))};}return s;});
+    sems=sems.map(s=>s.id!==dest?s:{...s,courses:[...s.courses,...moving]});
+    setAS(sems);clearSel();
+  });
+};
 
 // ─── Schedule actions ─────────────────────────────────────────────────────────
 window.switchSched=id=>mutate(()=>{S.activeId=id;S.compareMode=false;S.edit=null;S.form={};S.modal=null;});
 window.newSched=()=>mutate(()=>{
   const id=sid();
-  S.schedules.push({id,name:nextName(),color:nextColor(),sems:dc(DS),createdAt:Date.now(),updatedAt:Date.now()});
+  S.schedules.push({id,name:nextName(),color:nextColor(),sems:dc(DS),createdAt:Date.now(),updatedAt:Date.now(),kind:'ecb'});
   S.activeId=id;S.modal=null;S.edit=null;S.form={};
 });
 window.dupSched=srcId=>mutate(()=>{
   const src=S.schedules.find(s=>s.id===srcId);if(!src)return;
   const id=sid();
-  S.schedules.push({id,name:src.name+' (copy)',color:nextColor(),sems:dc(src.sems),createdAt:Date.now(),updatedAt:Date.now()});
+  S.schedules.push({id,name:src.name+' (copy)',color:nextColor(),sems:dc(src.sems),createdAt:Date.now(),updatedAt:Date.now(),track:src.track,kind:src.kind||'ecb'});
   S.activeId=id;S.modal=null;
 });
 window.delSched=id=>{if(S.schedules.length<=1)return;mutate(()=>{S.schedules=S.schedules.filter(s=>s.id!==id);if(S.activeId===id)S.activeId=S.schedules[0].id;if(S.compareId===id){S.compareId=null;S.compareMode=false;}});};
@@ -785,37 +1318,123 @@ window.startRename=id=>{S.renamingId=id;render();};
 window.commitRename=id=>{const val=document.getElementById('ren-inp')?.value.trim();if(val)mutate(()=>{S.schedules=S.schedules.map(s=>s.id!==id?s:{...s,name:val});S.renamingId=null;});else{S.renamingId=null;render();}};
 window.startCmp=()=>{if(!S.cmpPickId)return;S.compareId=S.cmpPickId;S.compareMode=true;S.modal=null;S.edit=null;render();};
 
-// ─── Share ────────────────────────────────────────────────────────────────────
-window.copyCode=()=>{
-  const ta=document.getElementById('share-code');if(!ta)return;ta.select();
-  try{navigator.clipboard.writeText(ta.value).then(()=>{const b=document.getElementById('copy-badge');if(b){b.classList.add('show');setTimeout(()=>b.classList.remove('show'),2500);}});}catch(e){try{document.execCommand('copy');}catch(e2){}}
+// ─── GPA / track ──────────────────────────────────────────────────────────────
+window.setGrade=(semId,cid,g)=>mutate(()=>{
+  setAS(getAS().map(s=>s.id!==semId?s:{...s,courses:s.courses.map(c=>c.id!==cid?c:{...c,grade:g})}));
+});
+window.updateTarget=()=>{
+  const el=document.getElementById('gpa-target-res');if(!el)return;
+  const p=gpaPanel();const target=parseFloat(S.gpaTarget);
+  const remainCr=p.all.filter(c=>!c.done).reduce((t,c)=>t+c.credits,0);
+  if(isNaN(target)){el.innerHTML='<span style="color:var(--text3)">Enter a target to see what GPA your remaining courses need.</span>';return;}
+  if(remainCr===0){el.textContent='No remaining graded credits to project against.';return;}
+  const needed=(target*(p.overall.hrs+remainCr)-p.overall.pts)/remainCr;
+  if(needed<=0)el.textContent=`You are already at or above ${target.toFixed(2)}. Remaining courses can be any grade.`;
+  else if(needed>4)el.textContent=`Not reachable. Would need a ${needed.toFixed(2)} GPA across the remaining ${remainCr} credits.`;
+  else el.innerHTML=`Need a <b>${needed.toFixed(3)}</b> GPA across the remaining ${remainCr} credits to reach <b>${target.toFixed(2)}</b>.`;
+};
+window.setTrack=key=>mutate(()=>{
+  S.schedules=S.schedules.map(s=>s.id!==S.activeId?s:{...s,track:key||null});
+});
+window.setKind=k=>mutate(()=>{
+  S.schedules=S.schedules.map(s=>s.id!==S.activeId?s:{...s,kind:k});
+});
+
+// ─── Search ───────────────────────────────────────────────────────────────────
+window.onSearchInput=v=>{S.searchQ=v;render();};
+window.jumpTo=(schId,semId,cid)=>{
+  S.modal=null;S.activeId=schId;S.compareMode=false;
+  const sems=getAS();const s=sems.find(x=>x.id===semId);const c=s?.courses.find(x=>x.id===cid);
+  if(c){S.edit={semId,courseId:cid,isNew:false};S.form={...c,semId};}
+  render();window.scrollTo(0,0);
+};
+
+// ─── Share / import / reset ──────────────────────────────────────────────────
+window.copyCode=()=>copyText('share-code','copy-badge');
+window.copyText=(taId,badgeId)=>{
+  const ta=document.getElementById(taId);if(!ta)return;ta.select();
+  try{navigator.clipboard.writeText(ta.value).then(()=>{const b=document.getElementById(badgeId);if(b){b.classList.add('show');setTimeout(()=>b.classList.remove('show'),2500);}});}catch(e){try{document.execCommand('copy');}catch(e2){}}
 };
 window.doImport=()=>{
   const raw=document.getElementById('import-code')?.value;if(!raw)return;
-  try{const p=decodeShare(raw);mutate(()=>{S.schedules=p.schedules;S.activeId=p.activeId||p.schedules[0].id;S.compareMode=false;S.compareId=null;S.modal=null;S.edit=null;S.form={};});}
+  try{const p=decodeShare(raw);mutate(()=>{S.schedules=p.schedules;S.activeId=p.activeId||p.schedules[0].id;S.compareMode=false;S.compareId=null;S.modal=null;S.edit=null;S.form={};},{reason:'import'});}
   catch(ex){const err=document.getElementById('import-err');if(err)err.style.display='block';}
 };
-window.doReset=()=>mutate(()=>{initDefault();S.compareMode=false;S.compareId=null;S.modal=null;S.edit=null;S.form={};});
+window.doReset=()=>{saveSnapshotNow('pre-reset');mutate(()=>{initDefault();S.compareMode=false;S.compareId=null;S.modal=null;S.edit=null;S.form={};},{reason:'reset'});};
 
 // ─── Drag & Drop ──────────────────────────────────────────────────────────────
-window.wDS=(semId,courseId)=>{S.dragSrc={semId,courseId};};
+window.wDS=(semId,courseId)=>{
+  if(S.selection.has(courseId)&&S.selectionSem===semId){
+    S.dragSrc={semId,courseId,bulk:true,ids:[...S.selection]};
+  }else{
+    S.dragSrc={semId,courseId,bulk:false};
+  }
+};
 window.wDE=()=>{S.dragOver=null;document.querySelectorAll('.sc.dov').forEach(e=>e.classList.remove('dov'));};
 window.wDO=semId=>{if(S.dragOver!==semId){S.dragOver=semId;document.querySelectorAll('.sc.dov').forEach(e=>e.classList.remove('dov'));document.getElementById('sc-'+semId)?.classList.add('dov');}};
 window.wDL=semId=>{document.getElementById('sc-'+semId)?.classList.remove('dov');if(S.dragOver===semId)S.dragOver=null;};
 window.wDrop=targetSemId=>{
   document.querySelectorAll('.sc.dov').forEach(e=>e.classList.remove('dov'));S.dragOver=null;
   if(!S.dragSrc||S.dragSrc.semId===targetSemId){S.dragSrc=null;return;}
-  const{semId:from,courseId}=S.dragSrc;let moved;
+  const{semId:from,courseId,bulk,ids}=S.dragSrc;
   mutate(()=>{
-    let sems=getAS();
-    sems=sems.map(s=>{if(s.id===from){moved=s.courses.find(c=>c.id===courseId);return{...s,courses:s.courses.filter(c=>c.id!==courseId)};}return s;});
-    if(moved)sems=sems.map(s=>s.id!==targetSemId?s:{...s,courses:[...s.courses,moved]});
-    setAS(sems);S.dragSrc=null;
+    if(bulk){
+      let moving=[];
+      let sems=getAS().map(s=>{if(s.id===from){moving=s.courses.filter(c=>ids.includes(c.id));return{...s,courses:s.courses.filter(c=>!ids.includes(c.id))};}return s;});
+      sems=sems.map(s=>s.id!==targetSemId?s:{...s,courses:[...s.courses,...moving]});
+      setAS(sems);clearSel();
+    }else{
+      let moved;
+      let sems=getAS().map(s=>{if(s.id===from){moved=s.courses.find(c=>c.id===courseId);return{...s,courses:s.courses.filter(c=>c.id!==courseId)};}return s;});
+      if(moved)sems=sems.map(s=>s.id!==targetSemId?s:{...s,courses:[...s.courses,moved]});
+      setAS(sems);
+    }
+    S.dragSrc=null;
   });
 };
 
+// ─── Undo/redo, snapshots exposed ────────────────────────────────────────────
+window.undo=undo;window.redo=redo;
+window.restoreSnapshot=restoreSnapshot;window.deleteSnapshot=deleteSnapshot;
+window.saveSnapshotNow=saveSnapshotNow;
+
+// ─── Keyboard shortcuts ───────────────────────────────────────────────────────
+document.addEventListener('keydown',e=>{
+  const t=e.target;const tag=t?.tagName;
+  const inField=tag==='INPUT'||tag==='TEXTAREA'||tag==='SELECT'||t?.isContentEditable;
+  if(e.key==='Escape'){
+    if(S.modal){S.modal=null;S.modalTab=null;S.renamingId=null;render();}
+    else if(S.selection.size)clearSel();
+    else if(S.edit){S.edit=null;S.form={};render();}
+    return;
+  }
+  if((e.ctrlKey||e.metaKey)&&!e.shiftKey&&e.key.toLowerCase()==='z'){e.preventDefault();undo();return;}
+  if((e.ctrlKey||e.metaKey)&&(e.key.toLowerCase()==='y'||(e.shiftKey&&e.key.toLowerCase()==='z'))){e.preventDefault();redo();return;}
+  if(inField)return;
+  const k=e.key.toLowerCase();
+  if(k==='n'){const sems=getAS().filter(s=>!s.isOff);const target=sems[0];if(target){S.edit={semId:target.id,isNew:true};S.form={id:uid(),code:'',name:'',cat:'ECE',credits:3,done:false,note:'',grade:'',semId:target.id};render();window.scrollTo(0,0);}e.preventDefault();}
+  else if(k==='c'){S.cmpPickId=null;S.modal='compare-pick';render();e.preventDefault();}
+  else if(k==='s'){S.modal='search';render();e.preventDefault();}
+  else if(k==='g'){S.modal='gpa';render();e.preventDefault();}
+  else if(k==='t'){S.modal='track';render();e.preventDefault();}
+  else if(k==='h'){S.modal='history';render();e.preventDefault();}
+  else if(k==='l'){S.modal='schedules';render();e.preventDefault();}
+  else if(k==='p'){window.print();e.preventDefault();}
+  else if(e.key==='?'){S.modal='kbhelp';render();e.preventDefault();}
+  else if(k>='1'&&k<='4'){
+    const yrIdx=parseInt(k);const rowIds=LAYOUT.find(r=>r.label===`Year ${yrIdx}`)?.ids;
+    if(rowIds){const el=document.getElementById('sc-'+rowIds[0]);if(el)el.scrollIntoView({behavior:'smooth',block:'start'});}
+    e.preventDefault();
+  }
+});
+
 // ─── Init ─────────────────────────────────────────────────────────────────────
-(async()=>{const ok=await load();if(!ok)initDefault();render();})();
+(async()=>{
+  const ok=await load();
+  if(!ok)initDefault();
+  S.schedules=S.schedules.map(s=>({kind:'ecb',...s}));
+  render();
+})();
 </script>
 </body>
 </html>
