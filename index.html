@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Course Planner — UT Austin ECE + Business Honors</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#F7F4F0;--surface:#FFFFFF;--surface2:#F2EDE8;--border:rgba(0,0,0,.1);--border2:rgba(0,0,0,.18);
+  --text:#1A1A1A;--text2:#666;--text3:#999;
+  --accent:#BF3A1F;--accent-d:#8A2010;--gold:#FFC862;--green:#2A7A47;
+  --ece-bg:#FAECE7;--ece-brd:#F5C4B3;--ece-txt:#993C1D;
+  --math-bg:#E6F1FB;--math-brd:#B5D4F4;--math-txt:#185FA5;
+  --biz-bg:#EEEDFE;--biz-brd:#CECBF6;--biz-txt:#534AB7;
+  --core-bg:#FAEEDA;--core-brd:#FAC775;--core-txt:#854F0B;
+  --adv-bg:#EAF3DE;--adv-brd:#C0DD97;--adv-txt:#3B6D11;
+  --phy-bg:#E1F5EE;--phy-brd:#9FE1CB;--phy-txt:#0F6E56;
+  --oth-bg:#F1EFE8;--oth-brd:#D3D1C7;--oth-txt:#5F5E5A;
+}
+@media(prefers-color-scheme:dark){:root{
+  --bg:#181614;--surface:#262220;--surface2:#302C2A;--border:rgba(255,255,255,.1);--border2:rgba(255,255,255,.18);
+  --text:#E8E4DF;--text2:#9A9490;--text3:#666;
+  --ece-bg:#4A1B0C;--ece-brd:#993C1D;--ece-txt:#F0997B;
+  --math-bg:#042C53;--math-brd:#185FA5;--math-txt:#85B7EB;
+  --biz-bg:#26215C;--biz-brd:#534AB7;--biz-txt:#AFA9EC;
+  --core-bg:#412402;--core-brd:#854F0B;--core-txt:#EF9F27;
+  --adv-bg:#173404;--adv-brd:#3B6D11;--adv-txt:#97C459;
+  --phy-bg:#04342C;--phy-brd:#0F6E56;--phy-txt:#5DCAA5;
+  --oth-bg:#2C2C2A;--oth-brd:#5F5E5A;--oth-txt:#B4B2A9;
+}}
+body{font-family:-apple-system,'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+.hdr{background:var(--accent);color:#fff;padding:12px 20px}
+.hdr-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+.hdr-sub{font-size:10px;opacity:.75;text-transform:uppercase;letter-spacing:1.2px}
+.hdr h1{font-size:17px;font-weight:600;margin:2px 0 4px}
+.sched-pill{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:20px;border:1.5px solid rgba(255,255,255,.4);background:rgba(255,255,255,.15);cursor:pointer;font-size:11px;transition:background .1s}
+.sched-pill:hover{background:rgba(255,255,255,.25)}
+.sched-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.hdr-right{display:flex;flex-direction:column;gap:7px;align-items:flex-end;flex-shrink:0}
+.stats{display:flex;gap:7px}
+.stat{background:rgba(0,0,0,.22);border-radius:7px;padding:5px 11px;text-align:center}
+.stat .v{font-size:15px;font-weight:600;line-height:1.2}
+.stat .l{font-size:9px;opacity:.7;text-transform:uppercase;letter-spacing:.4px}
+.hdr-btns{display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end}
+.hbtn{padding:3px 9px;border-radius:5px;border:1px solid rgba(255,255,255,.4);background:rgba(255,255,255,.15);color:#fff;cursor:pointer;font-size:11px;transition:background .1s;white-space:nowrap}
+.hbtn:hover{background:rgba(255,255,255,.28)}
+.hbtn.ghost{background:transparent;border-color:rgba(255,255,255,.25);color:rgba(255,255,255,.65)}
+.pbar{height:3px;background:rgba(255,255,255,.25);border-radius:2px;margin-top:10px}
+.pfill{height:100%;background:var(--gold);border-radius:2px;transition:width .5s}
+.nav{background:var(--surface);border-bottom:1px solid var(--border);padding:8px 20px;display:flex;gap:5px;align-items:center;flex-wrap:wrap;position:sticky;top:0;z-index:10}
+.nav-lbl{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-right:2px}
+.fbtn{padding:3px 9px;border-radius:10px;border:1px solid var(--border2);background:transparent;color:var(--text2);cursor:pointer;font-size:11px;transition:all .1s}
+.fbtn:hover{background:var(--surface2)}
+.fbtn.on{background:var(--text);color:var(--surface);border-color:var(--text)}
+.nav-right{margin-left:auto;display:flex;gap:5px}
+.nsm{padding:4px 10px;border-radius:6px;font-size:11px;cursor:pointer;border:1px solid var(--border2);background:var(--surface2);color:var(--text2);white-space:nowrap}
+.nsm:hover{background:var(--border)}
+.nsm.p{background:var(--accent);color:#fff;border-color:var(--accent)}
+.nsm.p:hover{background:var(--accent-d)}
+/* Compare banner */
+.cmp-bar{background:#1A2A4A;color:#fff;padding:9px 20px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;border-bottom:2px solid #2A4A8A}
+.cmp-tag{padding:3px 9px;border-radius:4px;font-size:11px;font-weight:600}
+.cmp-sum{font-size:10px;opacity:.65;margin-left:4px}
+.cmp-exit{margin-left:auto;padding:4px 11px;border-radius:5px;border:1px solid rgba(255,255,255,.3);background:transparent;color:#fff;cursor:pointer;font-size:11px}
+.cmp-exit:hover{background:rgba(255,255,255,.1)}
+/* Edit panel */
+.ep{background:var(--surface);border-bottom:1px solid var(--border);padding:14px 20px}
+.ep h3{font-size:13px;font-weight:600;margin-bottom:12px}
+.fg{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
+.fld{display:flex;flex-direction:column;gap:3px}
+.fld.full{margin-bottom:8px}
+.fld label{font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:.4px}
+.fld input,.fld select{padding:6px 9px;border:1px solid var(--border2);border-radius:6px;font-size:12px;background:var(--surface2);color:var(--text);outline:none;width:100%}
+.fld input:focus,.fld select:focus{border-color:var(--accent)}
+.ea{display:flex;justify-content:space-between;align-items:center;margin-top:12px}
+.bdel{padding:5px 11px;background:#FEE;color:#C00;border:1px solid #FCC;border-radius:6px;cursor:pointer;font-size:11px}
+.bcancel{padding:5px 11px;border:1px solid var(--border2);border-radius:6px;cursor:pointer;font-size:11px;background:transparent;color:var(--text2)}
+.bsave{padding:5px 14px;background:var(--accent);color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:11px;font-weight:600}
+/* Main layout */
+.main{padding:14px 20px}
+.yr-lbl{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:2px;margin:4px 0 6px}
+.sem-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
+.sem-row.full{grid-template-columns:1fr}
+@media(max-width:600px){.sem-row{grid-template-columns:1fr}}
+/* Semester card */
+.sc{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;transition:border .12s,background .12s}
+.sc.dov{border:2px dashed var(--accent)!important;background:var(--surface2)}
+.sh{padding:7px 11px;background:var(--surface2);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:8px}
+.sh-l{display:flex;align-items:baseline;gap:6px;min-width:0;flex:1}
+.sh-title{font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sh-meta{font-size:10px;color:var(--text3);white-space:nowrap;flex-shrink:0}
+.sh-r{display:flex;gap:3px;flex-shrink:0}
+.sbtn{width:22px;height:22px;border-radius:5px;border:1px solid var(--border2);background:transparent;cursor:pointer;color:var(--text2);display:flex;align-items:center;justify-content:center;font-size:13px;line-height:1;transition:all .1s}
+.sbtn:hover{background:var(--border)}
+.sbtn.add{background:var(--accent);border-color:var(--accent);color:#fff;font-size:16px}
+.sbtn.add:hover{background:var(--accent-d)}
+.sprg{height:2px;background:var(--border)}
+.sprgf{height:100%;background:var(--green);transition:width .4s}
+.cl{padding:7px;display:flex;flex-direction:column;gap:4px;min-height:36px}
+.empty{text-align:center;padding:12px;color:var(--text3);font-size:11px;font-style:italic}
+/* Course card */
+.cc{display:flex;align-items:flex-start;gap:6px;padding:5px 8px;border-radius:6px;cursor:grab;border:1px solid transparent;transition:transform .1s,box-shadow .1s;user-select:none}
+.cc:active{cursor:grabbing}
+.cc:hover{transform:translateX(2px);box-shadow:0 2px 6px rgba(0,0,0,.1)}
+.cc.done{opacity:.5}
+.chk{width:15px;height:15px;border-radius:3px;border:1.5px solid;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;transition:all .15s;margin-top:1px}
+.dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-top:3px}
+.ci{flex:1;min-width:0}
+.ccode{font-size:11px;font-weight:700}
+.cname{font-size:10px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;margin-top:1px}
+.cnote{font-size:9px;color:var(--text3);font-style:italic;display:block;margin-top:1px}
+.cc.done .ccode,.cc.done .cname{text-decoration:line-through}
+.crdt{font-size:9px;color:var(--text3);flex-shrink:0;margin-top:2px}
+.ebtn{display:none;width:18px;height:18px;border-radius:3px;border:1px solid var(--border2);background:var(--surface2);cursor:pointer;font-size:11px;color:var(--text2);align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.cc:hover .ebtn{display:flex}
+/* Compare semester card */
+.csc{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:12px}
+.csc-hdr{padding:8px 12px;background:var(--surface2);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.csc-title{font-size:12px;font-weight:600}
+.csc-cr{font-size:10px;color:var(--text3)}
+.csc-pills{display:flex;gap:5px;margin-left:auto;flex-wrap:wrap}
+.dpill{font-size:10px;padding:1px 7px;border-radius:8px;font-weight:500;white-space:nowrap}
+.dpill.sh{background:#EAF3DE;color:#3B6D11}
+.dpill.oa{background:#FEF3DC;color:#7A4A00}
+.dpill.ob{background:#E6F1FB;color:#185FA5}
+@media(prefers-color-scheme:dark){
+  .dpill.sh{background:#173404;color:#97C459}
+  .dpill.oa{background:#3A2200;color:#F0C060}
+  .dpill.ob{background:#042C53;color:#85B7EB}
+}
+.csc-cols{display:grid;grid-template-columns:1fr 1fr}
+.csc-col{padding:6px;min-height:36px}
+.csc-col-hdr{font-size:10px;font-weight:600;padding:3px 7px;margin-bottom:4px;display:flex;align-items:center;gap:5px;border-radius:4px}
+.ccc{display:flex;align-items:flex-start;gap:5px;padding:4px 7px;border-radius:5px;border:1px solid transparent;margin-bottom:3px}
+.ccc.oa{background:#FFFBE8;border-color:#F0D080}
+.ccc.ob{background:#EEF6FF;border-color:#B0D0F0}
+@media(prefers-color-scheme:dark){.ccc.oa{background:#2A1E00;border-color:#6A4800}.ccc.ob{background:#001830;border-color:#184870}}
+.ccc-lbl{font-size:8px;padding:1px 5px;border-radius:3px;font-weight:700;flex-shrink:0;margin-top:2px}
+.ccc-lbl.a{background:#F0D080;color:#5A3800}
+.ccc-lbl.b{background:#B0D0F0;color:#083070}
+@media(prefers-color-scheme:dark){.ccc-lbl.a{background:#6A4800;color:#F0D080}.ccc-lbl.b{background:#184870;color:#B0D0F0}}
+.ccc-info{flex:1;min-width:0}
+.ccc-code{font-size:10px;font-weight:700}
+.ccc-name{font-size:9px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
+.ccc-cr{font-size:9px;color:var(--text3);flex-shrink:0;margin-top:2px}
+.csc-div{width:1px;background:var(--border)}
+.csc-mt{padding:10px;color:var(--text3);font-size:10px;font-style:italic;text-align:center}
+/* Add sem form */
+.asf{border:1px dashed var(--border2);border-radius:10px;padding:9px 12px;background:var(--surface2);display:flex;gap:7px;align-items:center;margin-bottom:14px}
+.asf input{flex:1;padding:5px 9px;border:1px solid var(--border2);border-radius:6px;font-size:12px;background:var(--surface);color:var(--text);outline:none}
+.asf button{padding:5px 11px;font-size:11px;border-radius:6px;cursor:pointer}
+/* Modal */
+.mbk{position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;z-index:100;padding:20px}
+.modal{background:var(--surface);border-radius:14px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.3);max-height:90vh;display:flex;flex-direction:column}
+.mhdr{padding:16px 20px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.mhdr h3{font-size:15px;font-weight:600}
+.mclose{width:26px;height:26px;border-radius:6px;border:1px solid var(--border2);background:transparent;cursor:pointer;color:var(--text2);font-size:16px;display:flex;align-items:center;justify-content:center}
+.mbody{padding:16px 20px;overflow-y:auto;flex:1}
+.mfooter{padding:12px 20px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end;align-items:center;flex-shrink:0}
+/* Schedule list */
+.slist{display:flex;flex-direction:column;gap:8px}
+.si{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--border);border-radius:8px;background:var(--surface2)}
+.si.act{border-color:var(--accent);background:var(--surface)}
+.si-dot{width:11px;height:11px;border-radius:50%;flex-shrink:0}
+.si-info{flex:1;min-width:0}
+.si-name{font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.si-name input{width:100%;font-size:13px;font-weight:600;border:none;background:transparent;color:var(--text);outline:none;border-bottom:1px solid var(--accent)}
+.si-meta{font-size:10px;color:var(--text3);margin-top:2px}
+.si-acts{display:flex;gap:4px;flex-shrink:0;flex-wrap:wrap}
+.sa{padding:3px 8px;border-radius:5px;font-size:10px;cursor:pointer;border:1px solid var(--border2);background:transparent;color:var(--text2)}
+.sa:hover{background:var(--border)}
+.sa.act-badge{background:var(--accent);color:#fff;border-color:var(--accent);cursor:default}
+.sa.d{color:#C00;border-color:#FCC}
+.sa.d:hover{background:#FEE}
+/* Compare pick */
+.cpg{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.cpi{padding:12px;border:2px solid var(--border);border-radius:8px;cursor:pointer;transition:border-color .1s;text-align:center}
+.cpi:hover{border-color:var(--border2)}
+.cpi.sel{border-color:var(--accent)}
+.cpi-dot{width:12px;height:12px;border-radius:50%;margin:0 auto 6px}
+.cpi-name{font-size:12px;font-weight:600}
+.cpi-meta{font-size:10px;color:var(--text3);margin-top:3px}
+/* Share */
+.sta{width:100%;height:90px;padding:9px;border:1px solid var(--border2);border-radius:7px;font-family:monospace;font-size:10px;background:var(--surface2);color:var(--text);resize:vertical;outline:none;margin-bottom:10px}
+.copied{font-size:11px;color:var(--green);display:none}
+.copied.show{display:block}
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script>
+const CATS={
+  ECE:     {name:'ECE',     bg:'var(--ece-bg)',brd:'var(--ece-brd)',txt:'var(--ece-txt)'},
+  MATH:    {name:'Math',    bg:'var(--math-bg)',brd:'var(--math-brd)',txt:'var(--math-txt)'},
+  BUSINESS:{name:'Business',bg:'var(--biz-bg)',brd:'var(--biz-brd)',txt:'var(--biz-txt)'},
+  CORE:    {name:'Core',    bg:'var(--core-bg)',brd:'var(--core-brd)',txt:'var(--core-txt)'},
+  ADVANCED:{name:'Adv. Tech',bg:'var(--adv-bg)',brd:'var(--adv-brd)',txt:'var(--adv-txt)'},
+  PHY:     {name:'Physics', bg:'var(--phy-bg)',brd:'var(--phy-brd)',txt:'var(--phy-txt)'},
+  OTHER:   {name:'Other',   bg:'var(--oth-bg)',brd:'var(--oth-brd)',txt:'var(--oth-txt)'},
+};
+const COLORS=['#BF3A1F','#185FA5','#3B6D11','#7B3FA0','#8A5A00','#0F6E6E','#C04870','#4A6A20'];
+const LAYOUT=[
+  {type:'full',ids:['ap']},
+  {type:'full',ids:['phy']},
+  {type:'pair',label:'Year 1',ids:['y1f','y1s']},
+  {type:'pair',label:'Year 2',ids:['y2f','y2s']},
+  {type:'pair',label:'Year 3',ids:['y3f','y3s']},
+  {type:'pair',label:'Year 4',ids:['y4f','y4s']},
+];
+const KNOWN=new Set(LAYOUT.flatMap(l=>l.ids));
+
+const DS=[
+  {id:'ap',label:'AP / Pre-College Credits',courses:[
+    {id:'c1',code:'M 408C',name:'Differential & Integral Calculus',cat:'MATH',credits:4,done:false,note:'AP Credit'},
+    {id:'c2',code:'RHE 306',name:'Rhetoric & Writing',cat:'CORE',credits:3,done:false,note:'AP Credit'},
+    {id:'c3',code:'HIS',name:'US History',cat:'CORE',credits:3,done:false,note:'AP Credit'},
+    {id:'c4',code:'GOV 310L',name:'American Government',cat:'CORE',credits:3,done:false,note:'AP Credit'},
+    {id:'c5',code:'ECO 304K',name:'Intro to Microeconomics (SES)',cat:'BUSINESS',credits:3,done:false,note:'AP Credit'},
+    {id:'c6',code:'E 316',name:'Humanities Credit (L, M, N or P)',cat:'CORE',credits:3,done:false,note:'AP Credit'},
+  ]},
+  {id:'phy',label:'Physics — Summer (between Y1 & Y2)',courses:[
+    {id:'c7',code:'PHY 303K',name:'Engineering Physics 1',cat:'PHY',credits:3,done:false,note:''},
+    {id:'c8',code:'PHY 105M',name:'Lab for PHY 303K',cat:'PHY',credits:1,done:false,note:''},
+    {id:'c9',code:'PHY 303L',name:'Engineering Physics 2',cat:'PHY',credits:3,done:false,note:''},
+    {id:'c10',code:'PHY 105N',name:'Lab for PHY 303L',cat:'PHY',credits:1,done:false,note:''},
+  ]},
+  {id:'y1f',label:'Year 1 — Fall',courses:[
+    {id:'c11',code:'ECE 302H',name:'Intro to Electrical Engineering Honors',cat:'ECE',credits:3,done:false,note:'Pre-req: M 408D'},
+    {id:'c12',code:'ECE 306H',name:'Introduction to Computing',cat:'ECE',credits:3,done:false,note:'Pre-req: M 408C'},
+    {id:'c13',code:'M 408D',name:'Seq. Series & Multivariable Calculus',cat:'MATH',credits:4,done:false,note:'Pre-req: M 408C'},
+    {id:'c14',code:'BA 101H',name:'Professional Dev & Career Planning Honors',cat:'BUSINESS',credits:1,done:false,note:''},
+    {id:'c15',code:'MAN 101H',name:'Leadership & Innovation Honors',cat:'BUSINESS',credits:3,done:false,note:''},
+    {id:'c16',code:'BA 324H',name:'Business Communication',cat:'BUSINESS',credits:3,done:false,note:'Pre-req: RHE 306, BA 101H'},
+  ]},
+  {id:'y1s',label:'Year 1 — Spring',courses:[
+    {id:'c17',code:'ECE 319H',name:'Intro to Embedded Systems',cat:'ECE',credits:3,done:false,note:'Pre-req: ECE 302H, ECE 306H'},
+    {id:'c18',code:'ECE 312H',name:'Software Design & Implementation',cat:'ECE',credits:3,done:false,note:'Pre-req: ECE 306H, M 408C'},
+    {id:'c19',code:'M 427J',name:'Differential Equations',cat:'MATH',credits:4,done:false,note:'Pre-req: M 408D'},
+    {id:'c20',code:'MIS 301H',name:'Intro to Info Tech Mgmt Honors',cat:'BUSINESS',credits:3,done:false,note:''},
+    {id:'c21',code:'STA 301H',name:'Intro to Data Science Honors',cat:'BUSINESS',credits:3,done:false,note:''},
+    {id:'c22',code:'ECO 304L',name:'Intro to Macroeconomics',cat:'BUSINESS',credits:3,done:false,note:''},
+  ]},
+  {id:'y2f',label:'Year 2 — Fall',courses:[
+    {id:'c23',code:'ECE 411H',name:'Circuit Theory',cat:'ECE',credits:3,done:false,note:'Pre-req: ECE 302H, PHY 303L, M 427J'},
+    {id:'c24',code:'ECE 313H',name:'Linear Systems & Signals',cat:'ECE',credits:3,done:false,note:'Pre-req: ECE 302H, M 427J, M 340L'},
+    {id:'c25',code:'M 340L',name:'Matrices & Matrix Calculations',cat:'MATH',credits:3,done:false,note:'Pre-req: M 408D'},
+    {id:'c26',code:'BAH 151H',name:'Honors Lyceum',cat:'BUSINESS',credits:1,done:false,note:''},
+    {id:'c27',code:'ACC 311H',name:'Financial Accounting Honors',cat:'BUSINESS',credits:3,done:false,note:'Pre-req: BA 101H'},
+    {id:'c28',code:'STA 235H',name:'Data Science for Bus Applications Honors',cat:'BUSINESS',credits:3,done:false,note:'Pre-req: STA 301H'},
+  ]},
+  {id:'y2s',label:'Year 2 — Spring',courses:[
+    {id:'c29',code:'ECE 351H',name:'Probability / Random Processes',cat:'ECE',credits:3,done:false,note:''},
+    {id:'c30',code:'O M 235H',name:'Operations Management Honors',cat:'BUSINESS',credits:3,done:false,note:''},
+    {id:'c31',code:'ACC 312H',name:'Managerial Accounting Honors',cat:'BUSINESS',credits:3,done:false,note:'Pre-req: ACC 311H'},
+    {id:'c32',code:'DS 235H',name:'Intro to Decision Science Honors',cat:'BUSINESS',credits:3,done:false,note:''},
+    {id:'c33',code:'UGS 302/3',name:'First Year Signature Course',cat:'CORE',credits:3,done:false,note:''},
+    {id:'c34',code:'VAPA',name:'Visual & Performing Arts',cat:'CORE',credits:3,done:false,note:'AP Credit accepted'},
+  ]},
+  {id:'y3f',label:'Year 3 — Fall',courses:[
+    {id:'c35',code:'ATC-1',name:'Advanced Tech Component',cat:'ADVANCED',credits:3,done:false,note:'ECB students only'},
+    {id:'c36',code:'ATC-M',name:'Advanced Tech Component (Math)',cat:'ADVANCED',credits:3,done:false,note:'ECB students only'},
+    {id:'c37',code:'ATC-2',name:'Advanced Tech Component',cat:'ADVANCED',credits:3,done:false,note:'ECB students only'},
+    {id:'c38',code:'FIN 357H',name:'Business Finance Honors',cat:'BUSINESS',credits:3,done:false,note:'Pre-req: ECO 304K, ACC 311H, STA 235H'},
+    {id:'c39',code:'MAN 327H',name:'Entrepreneurship & Innovation Honors',cat:'BUSINESS',credits:3,done:false,note:''},
+  ]},
+  {id:'y3s',label:'Year 3 — Spring',courses:[
+    {id:'c40',code:'ATC-Lab',name:'Advanced Tech Component Lab',cat:'ADVANCED',credits:1,done:false,note:'ECB students only'},
+    {id:'c41',code:'ATC-3',name:'Advanced Tech Component',cat:'ADVANCED',credits:3,done:false,note:'ECB students only'},
+    {id:'c42',code:'MAN 336H',name:'Organizational Behavior Honors',cat:'BUSINESS',credits:3,done:false,note:''},
+    {id:'c43',code:'P/S/A',name:'Psychology/Sociology/Anthropology Elective',cat:'CORE',credits:3,done:false,note:''},
+    {id:'c44',code:'MKT 337H',name:'Principles of Marketing Honors',cat:'BUSINESS',credits:3,done:false,note:''},
+  ]},
+  {id:'y4f',label:'Year 4 — Fall',courses:[
+    {id:'c45',code:'ECE 364D',name:'Intro to Engineering Design',cat:'ECE',credits:3,done:false,note:'Writing flag (Wr)'},
+    {id:'c46',code:'ATC-4',name:'Advanced Tech Component',cat:'ADVANCED',credits:3,done:false,note:'ECB students only'},
+    {id:'c47',code:'LEB 323H',name:'Business Law & Ethics Honors',cat:'BUSINESS',credits:3,done:false,note:'4th year; Pre-req: ACC 312H'},
+    {id:'c48',code:'GOV 312L/P',name:'American Government',cat:'CORE',credits:3,done:false,note:''},
+    {id:'c49',code:'BA 353',name:'Internship Credit',cat:'BUSINESS',credits:3,done:false,note:'Pre-req: BA 32H'},
+  ]},
+  {id:'y4s',label:'Year 4 — Spring',courses:[
+    {id:'c50',code:'ECE 464H',name:'Senior Design Project',cat:'ECE',credits:3,done:false,note:'Pre-req: ECE 364D'},
+    {id:'c51',code:'ATE',name:'Advanced Technical Elective',cat:'ADVANCED',credits:3,done:false,note:'Varies'},
+    {id:'c52',code:'ATC-5',name:'Advanced Tech Component',cat:'ADVANCED',credits:3,done:false,note:'ECB students only'},
+    {id:'c53',code:'MAN 374H',name:'Gen Mgmt & Strategy Honors',cat:'BUSINESS',credits:3,done:false,note:'4th year'},
+    {id:'c54',code:'HIS',name:'US History',cat:'CORE',credits:3,done:false,note:''},
+  ]},
+];
+
+// ─── State ────────────────────────────────────────────────────────────────────
+let _c=300;
+const uid=()=>'c'+(++_c);
+const sid=()=>'s'+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
+const esc=s=>String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const dc=x=>JSON.parse(JSON.stringify(x));
+
+const S={
+  schedules:[],activeId:null,
+  compareMode:false,compareId:null,cmpPickId:null,
+  edit:null,form:{},filter:null,
+  dragSrc:null,dragOver:null,
+  showAddSem:false,
+  modal:null,
+  renamingId:null,
+};
+
+const getAct=()=>S.schedules.find(s=>s.id===S.activeId);
+const getAS=()=>getAct()?.sems??[];
+const getCS=()=>S.schedules.find(s=>s.id===S.compareId)?.sems??[];
+function setAS(sems){S.schedules=S.schedules.map(s=>s.id!==S.activeId?s:{...s,sems,updatedAt:Date.now()});}
+function nextColor(){return COLORS[S.schedules.length%COLORS.length];}
+function nextName(){
+  const used=new Set(S.schedules.map(s=>s.name));
+  for(const l of'ABCDEFGHIJ'){const n=`Plan ${l}`;if(!used.has(n))return n;}
+  return'Plan '+Date.now();
+}
+
+// ─── Storage ──────────────────────────────────────────────────────────────────
+const SK='cp-v3';
+async function save(){
+  const d=JSON.stringify({schedules:S.schedules,activeId:S.activeId});
+  try{if(window.storage)await window.storage.set(SK,d);else localStorage.setItem(SK,d);}catch(e){}
+}
+async function load(){
+  try{
+    let d=null;
+    if(window.storage){const r=await window.storage.get(SK);d=r?.value;}else d=localStorage.getItem(SK);
+    if(d){const p=JSON.parse(d);if(p.schedules?.length){S.schedules=p.schedules;S.activeId=p.activeId||p.schedules[0].id;return true;}}
+  }catch(e){}
+  return false;
+}
+function initDefault(){
+  const id=sid();
+  S.schedules=[{id,name:'Main Plan',color:COLORS[0],sems:dc(DS),createdAt:Date.now(),updatedAt:Date.now()}];
+  S.activeId=id;
+}
+function encodeShare(){return btoa(encodeURIComponent(JSON.stringify({schedules:S.schedules,activeId:S.activeId})));}
+function decodeShare(code){
+  const p=JSON.parse(decodeURIComponent(atob(code.trim())));
+  if(p.schedules?.length)return p;
+  if(Array.isArray(p)&&p.length){const id=sid();return{schedules:[{id,name:'Imported',color:COLORS[0],sems:p,createdAt:Date.now(),updatedAt:Date.now()}],activeId:id};}
+  throw new Error('bad');
+}
+
+// ─── Render: course card ──────────────────────────────────────────────────────
+function rCourse(semId,c){
+  const cat=CATS[c.cat]||CATS.OTHER;
+  const chkBg=c.done?'#2A7A47':'transparent',chkBrd=c.done?'#2A7A47':cat.txt;
+  return `<div class="cc${c.done?' done':''}" style="background:${cat.bg};border-color:${cat.brd}"
+      draggable="true" ondragstart="wDS('${semId}','${c.id}')" ondragend="wDE()">
+    <div class="chk" style="border-color:${chkBrd};background:${chkBg}" data-a="toggle" data-sem="${semId}" data-cid="${c.id}">
+      ${c.done?`<svg width="9" height="9" viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2.5" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/></svg>`:''}
+    </div>
+    <div class="dot" style="background:${cat.txt}"></div>
+    <div class="ci">
+      <span class="ccode" style="color:${cat.txt}">${esc(c.code)}</span>
+      <span class="cname">${esc(c.name)}</span>
+      ${c.note?`<span class="cnote">${esc(c.note)}</span>`:''}
+    </div>
+    <span class="crdt">${c.credits}cr</span>
+    <button class="ebtn" data-a="edit" data-sem="${semId}" data-cid="${c.id}">✎</button>
+  </div>`;
+}
+
+// ─── Render: normal semester card ─────────────────────────────────────────────
+function rSem(sem){
+  const courses=S.filter?sem.courses.filter(c=>c.cat===S.filter):sem.courses;
+  const totalCr=sem.courses.reduce((t,c)=>t+c.credits,0);
+  const done=sem.courses.filter(c=>c.done).length;
+  const pct=sem.courses.length?done/sem.courses.length*100:0;
+  const dov=S.dragOver===sem.id;
+  return `<div class="sc${dov?' dov':''}" id="sc-${sem.id}"
+      ondragover="event.preventDefault();wDO('${sem.id}')"
+      ondrop="wDrop('${sem.id}')" ondragleave="wDL('${sem.id}')">
+    <div class="sh">
+      <div class="sh-l">
+        <span class="sh-title">${esc(sem.label)}</span>
+        <span class="sh-meta">${totalCr}cr · ${done}/${sem.courses.length}</span>
+      </div>
+      <div class="sh-r">
+        <button class="sbtn add" data-a="add" data-sem="${sem.id}">+</button>
+        <button class="sbtn" data-a="dsem" data-sem="${sem.id}" style="font-size:15px">×</button>
+      </div>
+    </div>
+    <div class="sprg"><div class="sprgf" style="width:${pct}%"></div></div>
+    <div class="cl">
+      ${courses.length?courses.map(c=>rCourse(sem.id,c)).join(''):'<div class="empty">Drop here · + to add</div>'}
+    </div>
+  </div>`;
+}
+
+// ─── Render: compare semester card ───────────────────────────────────────────
+function rCmpSem(semId,sA,sB,schA,schB){
+  const codesA=new Set((sA?.courses||[]).map(c=>c.code.trim().toUpperCase()));
+  const codesB=new Set((sB?.courses||[]).map(c=>c.code.trim().toUpperCase()));
+  const shared=[...codesA].filter(c=>codesB.has(c)).length;
+  const onlyA=codesA.size-shared,onlyB=codesB.size-shared;
+  const label=sA?.label||sB?.label||semId;
+  const crA=(sA?.courses||[]).reduce((t,c)=>t+c.credits,0);
+  const crB=(sB?.courses||[]).reduce((t,c)=>t+c.credits,0);
+
+  const rCC=(c,side)=>{
+    const cat=CATS[c.cat]||CATS.OTHER;
+    const isShared=(side==='a'?codesB:codesA).has(c.code.trim().toUpperCase());
+    return `<div class="ccc${isShared?'':' o'+side}">
+      ${!isShared?`<span class="ccc-lbl ${side}">${side.toUpperCase()}</span>`:''}
+      <div style="width:6px;height:6px;border-radius:50%;background:${cat.txt};flex-shrink:0;margin-top:3px"></div>
+      <div class="ccc-info">
+        <span class="ccc-code" style="color:${cat.txt}">${esc(c.code)}</span>
+        <span class="ccc-name">${esc(c.name)}</span>
+      </div>
+      <span class="ccc-cr">${c.credits}cr</span>
+    </div>`;
+  };
+
+  return `<div class="csc">
+    <div class="csc-hdr">
+      <span class="csc-title">${esc(label)}</span>
+      <span class="csc-cr">${crA}cr vs ${crB}cr</span>
+      <div class="csc-pills">
+        ${shared?`<span class="dpill sh">${shared} shared</span>`:''}
+        ${onlyA?`<span class="dpill oa">${onlyA} only in A</span>`:''}
+        ${onlyB?`<span class="dpill ob">${onlyB} only in B</span>`:''}
+        ${!shared&&!onlyA&&!onlyB?'<span class="csc-cr">both empty</span>':''}
+      </div>
+    </div>
+    <div class="csc-cols">
+      <div class="csc-col">
+        <div class="csc-col-hdr" style="background:${schA.color}20;color:${schA.color}">
+          <span style="width:7px;height:7px;border-radius:50%;background:${schA.color};display:inline-block;flex-shrink:0"></span>
+          ${esc(schA.name)} · ${crA}cr
+        </div>
+        ${sA?.courses.length?sA.courses.map(c=>rCC(c,'a')).join(''):'<div class="csc-mt">No courses</div>'}
+      </div>
+      <div class="csc-div"></div>
+      <div class="csc-col">
+        <div class="csc-col-hdr" style="background:${schB.color}20;color:${schB.color}">
+          <span style="width:7px;height:7px;border-radius:50%;background:${schB.color};display:inline-block;flex-shrink:0"></span>
+          ${esc(schB.name)} · ${crB}cr
+        </div>
+        ${sB?.courses.length?sB.courses.map(c=>rCC(c,'b')).join(''):'<div class="csc-mt">No courses</div>'}
+      </div>
+    </div>
+  </div>`;
+}
+
+// ─── Render: compare view ─────────────────────────────────────────────────────
+function rCompareView(){
+  const schA=getAct(),schB=S.schedules.find(s=>s.id===S.compareId);
+  if(!schA||!schB)return'';
+  const semsA=schA.sems,semsB=schB.sems;
+  const allIds=[...new Set([...semsA.map(s=>s.id),...semsB.map(s=>s.id)])];
+  const allA=semsA.flatMap(s=>s.courses),allB=semsB.flatMap(s=>s.courses);
+  const cA=new Set(allA.map(c=>c.code.trim().toUpperCase()));
+  const cB=new Set(allB.map(c=>c.code.trim().toUpperCase()));
+  const shAll=[...cA].filter(c=>cB.has(c)).length;
+  const crA=allA.reduce((t,c)=>t+c.credits,0),crB=allB.reduce((t,c)=>t+c.credits,0);
+
+  let body='';
+  for(const row of LAYOUT){
+    const relevant=row.ids.filter(id=>allIds.includes(id));
+    if(!relevant.length)continue;
+    if(row.label)body+=`<div class="yr-lbl">${row.label}</div>`;
+    for(const id of relevant){
+      body+=rCmpSem(id,semsA.find(s=>s.id===id),semsB.find(s=>s.id===id),schA,schB);
+    }
+  }
+  const customIds=allIds.filter(id=>!KNOWN.has(id));
+  if(customIds.length){
+    body+=`<div class="yr-lbl">Custom Semesters</div>`;
+    for(const id of customIds)body+=rCmpSem(id,semsA.find(s=>s.id===id),semsB.find(s=>s.id===id),schA,schB);
+  }
+
+  return `<div class="cmp-bar">
+    <div class="cmp-tag" style="background:${schA.color}30;color:${schA.color}">
+      <span style="width:8px;height:8px;border-radius:50%;background:${schA.color};display:inline-block;margin-right:5px;vertical-align:middle"></span>
+      A: ${esc(schA.name)} — ${allA.length} courses, ${crA}cr
+    </div>
+    <span style="font-size:10px;opacity:.5">vs</span>
+    <div class="cmp-tag" style="background:${schB.color}30;color:${schB.color}">
+      <span style="width:8px;height:8px;border-radius:50%;background:${schB.color};display:inline-block;margin-right:5px;vertical-align:middle"></span>
+      B: ${esc(schB.name)} — ${allB.length} courses, ${crB}cr
+    </div>
+    <span class="cmp-sum">${shAll} shared · ${cA.size-shAll} unique to A · ${cB.size-shAll} unique to B</span>
+    <button class="cmp-exit" onclick="S.compareMode=false;S.compareId=null;render()">✕ Exit Compare</button>
+  </div>
+  <div class="main">${body}</div>`;
+}
+
+// ─── Render: normal main ──────────────────────────────────────────────────────
+function rMain(){
+  const sems=getAS();
+  let html='';
+  if(S.showAddSem)html+=`<div class="asf">
+    <input id="nsn" placeholder="Semester name, e.g. Summer Research 2025" autofocus>
+    <button data-a="addsem" style="background:var(--accent);color:#fff;border:none">Add</button>
+    <button data-a="cancelsem" style="background:transparent;border:1px solid var(--border2);color:var(--text2)">Cancel</button>
+  </div>`;
+  for(const row of LAYOUT){
+    const rs=row.ids.map(id=>sems.find(s=>s.id===id)).filter(Boolean);
+    if(!rs.length)continue;
+    if(row.label)html+=`<div class="yr-lbl">${row.label}</div>`;
+    html+=`<div class="sem-row${row.type==='full'?' full':''}">${rs.map(rSem).join('')}</div>`;
+  }
+  const custom=sems.filter(s=>!KNOWN.has(s.id));
+  if(custom.length)html+=`<div class="yr-lbl">Custom Semesters</div><div class="sem-row full">${custom.map(rSem).join('')}</div>`;
+  return `<div class="main">${html}</div>`;
+}
+
+// ─── Render: edit panel ───────────────────────────────────────────────────────
+function rEP(){
+  if(!S.edit)return'';
+  const f=S.form,sems=getAS();
+  const semOpts=sems.map(s=>`<option value="${s.id}"${f.semId===s.id?' selected':''}>${esc(s.label)}</option>`).join('');
+  const catOpts=Object.entries(CATS).map(([k,v])=>`<option value="${k}"${f.cat===k?' selected':''}>${v.name}</option>`).join('');
+  return `<div class="ep">
+    <h3>${S.edit.isNew?'Add Course':'Edit Course'}</h3>
+    <div class="fg">
+      <div class="fld"><label>Code</label><input id="f-code" value="${esc(f.code||'')}" placeholder="ECE 302H"></div>
+      <div class="fld"><label>Credits</label><input id="f-credits" type="number" value="${f.credits||3}" min="0" max="20"></div>
+    </div>
+    <div class="fld full"><label>Course Name</label><input id="f-name" value="${esc(f.name||'')}" placeholder="Full course name"></div>
+    <div class="fg">
+      <div class="fld"><label>Category</label><select id="f-cat">${catOpts}</select></div>
+      <div class="fld"><label>Semester</label><select id="f-sem">${semOpts}</select></div>
+    </div>
+    <div class="fld full"><label>Notes / Pre-reqs</label><input id="f-note" value="${esc(f.note||'')}" placeholder="Optional"></div>
+    <div class="ea">
+      <div>${!S.edit.isNew?'<button class="bdel" data-a="del">Delete course</button>':''}</div>
+      <div style="display:flex;gap:7px">
+        <button class="bcancel" data-a="cancel">Cancel</button>
+        <button class="bsave" data-a="save">Save</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ─── Render: modals ───────────────────────────────────────────────────────────
+function rModal(){
+  if(!S.modal)return'';
+
+  if(S.modal==='export')return`<div class="mbk" id="mbk">
+    <div class="modal" style="max-width:480px">
+      <div class="mhdr"><h3>📤 Share all schedules</h3><button class="mclose" data-a="close-modal">×</button></div>
+      <div class="mbody">
+        <p style="font-size:12px;color:var(--text2);margin-bottom:10px">Includes all ${S.schedules.length} schedule(s). Share this code with anyone — they can import it to get your exact plans.</p>
+        <textarea class="sta" id="share-code" readonly onclick="this.select()">${esc(encodeShare())}</textarea>
+        <span class="copied" id="copy-badge">✓ Copied!</span>
+      </div>
+      <div class="mfooter">
+        <button onclick="copyCode()" style="padding:6px 14px;background:var(--accent);color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px">Copy Code</button>
+        <button data-a="close-modal" style="padding:6px 14px;border:1px solid var(--border2);border-radius:6px;cursor:pointer;font-size:12px;background:var(--surface2);color:var(--text)">Close</button>
+      </div>
+    </div>
+  </div>`;
+
+  if(S.modal==='import')return`<div class="mbk" id="mbk">
+    <div class="modal" style="max-width:480px">
+      <div class="mhdr"><h3>📥 Import schedules</h3><button class="mclose" data-a="close-modal">×</button></div>
+      <div class="mbody">
+        <p style="font-size:12px;color:var(--text2);margin-bottom:10px">Paste a share code to load schedules. <strong>Replaces all current data.</strong></p>
+        <textarea class="sta" id="import-code" placeholder="Paste share code here…"></textarea>
+        <span id="import-err" style="font-size:11px;color:#C00;display:none">Invalid code.</span>
+      </div>
+      <div class="mfooter">
+        <button data-a="close-modal" style="padding:6px 14px;border:1px solid var(--border2);border-radius:6px;cursor:pointer;font-size:12px;background:var(--surface2);color:var(--text)">Cancel</button>
+        <button onclick="doImport()" style="padding:6px 14px;background:var(--accent);color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px">Import</button>
+      </div>
+    </div>
+  </div>`;
+
+  if(S.modal==='reset')return`<div class="mbk" id="mbk">
+    <div class="modal" style="max-width:400px">
+      <div class="mhdr"><h3>⚠️ Reset everything?</h3><button class="mclose" data-a="close-modal">×</button></div>
+      <div class="mbody"><p style="font-size:13px;color:var(--text2)">Deletes all schedules and restores the default ECE + Business Honors plan. Cannot be undone.</p></div>
+      <div class="mfooter">
+        <button data-a="close-modal" style="padding:6px 14px;border:1px solid var(--border2);border-radius:6px;cursor:pointer;font-size:12px;background:var(--surface2);color:var(--text)">Cancel</button>
+        <button onclick="doReset()" style="padding:6px 14px;background:#C00;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px">Reset Everything</button>
+      </div>
+    </div>
+  </div>`;
+
+  if(S.modal==='schedules'){
+    const items=S.schedules.map(sch=>{
+      const all=sch.sems.flatMap(s=>s.courses);
+      const cr=all.reduce((t,c)=>t+c.credits,0),done=all.filter(c=>c.done).length;
+      const isAct=sch.id===S.activeId,isRen=S.renamingId===sch.id;
+      return `<div class="si${isAct?' act':''}">
+        <div class="si-dot" style="background:${sch.color}"></div>
+        <div class="si-info">
+          ${isRen
+            ?`<div class="si-name"><input id="ren-inp" value="${esc(sch.name)}" onkeydown="if(event.key==='Enter')commitRename('${sch.id}');if(event.key==='Escape'){S.renamingId=null;render();}"></div>`
+            :`<div class="si-name">${esc(sch.name)}</div>`}
+          <div class="si-meta">${all.length} courses · ${cr}cr · ${done} done</div>
+        </div>
+        <div class="si-acts">
+          ${isRen
+            ?`<button class="sa" onclick="commitRename('${sch.id}')">Save</button>`
+            :`<button class="sa" onclick="startRename('${sch.id}')">Rename</button>`}
+          <button class="sa" onclick="dupSched('${sch.id}')">Duplicate</button>
+          ${isAct?`<span class="sa act-badge">✓ Active</span>`:`<button class="sa" onclick="switchSched('${sch.id}')">Switch</button>`}
+          ${S.schedules.length>1?`<button class="sa d" onclick="delSched('${sch.id}')">Delete</button>`:''}
+        </div>
+      </div>`;
+    }).join('');
+    return `<div class="mbk" id="mbk">
+      <div class="modal" style="max-width:640px">
+        <div class="mhdr">
+          <h3>Saved Schedules</h3>
+          <div style="display:flex;gap:8px;align-items:center">
+            <button onclick="newSched()" style="padding:4px 11px;background:var(--accent);color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:11px">+ New Schedule</button>
+            <button class="mclose" data-a="close-modal">×</button>
+          </div>
+        </div>
+        <div class="mbody"><div class="slist">${items}</div></div>
+        <div class="mfooter">
+          <span style="font-size:11px;color:var(--text3);margin-right:auto">${S.schedules.length} schedule(s) · click a name to rename</span>
+          <button data-a="close-modal" style="padding:6px 14px;border:1px solid var(--border2);border-radius:6px;cursor:pointer;font-size:12px;background:var(--surface2);color:var(--text)">Done</button>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  if(S.modal==='compare-pick'){
+    const others=S.schedules.filter(s=>s.id!==S.activeId);
+    if(!others.length)return`<div class="mbk" id="mbk">
+      <div class="modal" style="max-width:380px">
+        <div class="mhdr"><h3>Compare Schedules</h3><button class="mclose" data-a="close-modal">×</button></div>
+        <div class="mbody">
+          <p style="color:var(--text2);font-size:13px">You need at least two schedules to compare.</p>
+          <button onclick="newSched()" style="margin-top:12px;padding:7px 14px;background:var(--accent);color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px">+ New Schedule</button>
+        </div>
+        <div class="mfooter"><button data-a="close-modal" style="padding:6px 14px;border:1px solid var(--border2);border-radius:6px;cursor:pointer;font-size:12px;background:var(--surface2);color:var(--text)">Cancel</button></div>
+      </div>
+    </div>`;
+
+    const active=getAct();
+    const items=others.map(s=>{
+      const all=s.sems.flatMap(x=>x.courses);
+      const cr=all.reduce((t,c)=>t+c.credits,0);
+      const sel=S.cmpPickId===s.id;
+      return `<div class="cpi${sel?' sel':''}" onclick="S.cmpPickId='${s.id}';render()">
+        <div class="cpi-dot" style="background:${s.color}"></div>
+        <div class="cpi-name">${esc(s.name)}</div>
+        <div class="cpi-meta">${all.length} courses · ${cr}cr</div>
+        ${sel?'<div style="font-size:16px;margin-top:5px;color:var(--accent)">✓</div>':''}
+      </div>`;
+    }).join('');
+
+    return `<div class="mbk" id="mbk">
+      <div class="modal" style="max-width:520px">
+        <div class="mhdr"><h3>⇄ Compare with…</h3><button class="mclose" data-a="close-modal">×</button></div>
+        <div class="mbody">
+          <p style="font-size:12px;color:var(--text2);margin-bottom:12px">
+            <strong>${esc(active?.name)}</strong> is schedule <span style="color:var(--accent);font-weight:600">A</span>. Pick one to compare against:
+          </p>
+          <div class="cpg">${items}</div>
+        </div>
+        <div class="mfooter">
+          <button data-a="close-modal" style="padding:6px 14px;border:1px solid var(--border2);border-radius:6px;cursor:pointer;font-size:12px;background:var(--surface2);color:var(--text)">Cancel</button>
+          <button onclick="startCmp()" style="padding:6px 16px;background:${S.cmpPickId?'var(--accent)':'var(--border2)'};color:${S.cmpPickId?'#fff':'var(--text3)'};border:none;border-radius:6px;cursor:pointer;font-size:12px">Compare →</button>
+        </div>
+      </div>
+    </div>`;
+  }
+  return'';
+}
+
+// ─── Main render ──────────────────────────────────────────────────────────────
+function render(){
+  const act=getAct();
+  const sems=getAS();
+  const all=sems.flatMap(s=>s.courses);
+  const total=all.length,done=all.filter(c=>c.done).length;
+  const totalCr=all.reduce((t,c)=>t+c.credits,0),doneCr=all.filter(c=>c.done).reduce((t,c)=>t+c.credits,0);
+  const pct=total?Math.round(done/total*100):0;
+
+  const fbtns=`<button class="fbtn${!S.filter?' on':''}" data-a="filter" data-cat="">All</button>`+
+    Object.entries(CATS).map(([k,v])=>{
+      const on=S.filter===k;
+      return `<button class="fbtn${on?' on':''}" data-a="filter" data-cat="${k}" style="${on?`background:${v.txt};color:${v.bg};border-color:${v.txt}`:`border-color:${v.txt};color:${v.txt}`}">${v.name}</button>`;
+    }).join('');
+
+  document.getElementById('root').innerHTML=`
+    ${rModal()}
+    <div class="hdr">
+      <div class="hdr-top">
+        <div>
+          <div class="hdr-sub">UT Austin · ECE + Business Honors</div>
+          <h1>Course Planner <span style="font-size:11px;opacity:.5;font-weight:400">2024–2026</span></h1>
+          <div style="margin-top:4px;display:flex;align-items:center;gap:7px">
+            <div class="sched-pill" onclick="S.modal='schedules';render()">
+              <div class="sched-dot" style="background:${act?.color||'#FFF'}"></div>
+              <span style="font-weight:600;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(act?.name||'')}</span>
+              <span style="opacity:.7;font-size:10px">▾</span>
+            </div>
+            ${S.schedules.length>1?`<span style="font-size:10px;opacity:.6">${S.schedules.length} schedules</span>`:''}
+          </div>
+        </div>
+        <div class="hdr-right">
+          <div class="stats">
+            <div class="stat"><div class="v">${done}/${total}</div><div class="l">Done</div></div>
+            <div class="stat"><div class="v">${doneCr}/${totalCr}</div><div class="l">Credits</div></div>
+            <div class="stat"><div class="v">${pct}%</div><div class="l">Progress</div></div>
+          </div>
+          <div class="hdr-btns">
+            <button class="hbtn" onclick="S.modal='schedules';render()">📋 Schedules</button>
+            <button class="hbtn" onclick="S.cmpPickId=null;S.modal='compare-pick';render()">⇄ Compare</button>
+            <button class="hbtn" onclick="S.modal='export';render()">📤 Share</button>
+            <button class="hbtn" onclick="S.modal='import';render()">📥 Import</button>
+            <button class="hbtn ghost" onclick="S.modal='reset';render()">↺</button>
+          </div>
+        </div>
+      </div>
+      <div class="pbar"><div class="pfill" style="width:${pct}%"></div></div>
+    </div>
+    <nav class="nav">
+      <span class="nav-lbl">Filter:</span>${fbtns}
+      <div class="nav-right">${S.compareMode?'':`<button class="nsm p" data-a="show-add-sem">+ Add Semester</button>`}</div>
+    </nav>
+    ${S.compareMode?rCompareView():`${rEP()}${rMain()}`}`;
+
+  if(S.renamingId&&S.modal==='schedules')setTimeout(()=>{const el=document.getElementById('ren-inp');if(el){el.focus();el.select();}},50);
+}
+
+// ─── Event delegation ─────────────────────────────────────────────────────────
+function mutate(fn){fn();save();render();}
+
+document.addEventListener('click',e=>{
+  if(e.target.id==='mbk'){S.modal=null;S.renamingId=null;render();return;}
+  const el=e.target.closest('[data-a]');if(!el)return;
+  const a=el.dataset.a,sem=el.dataset.sem,cid=el.dataset.cid;
+  if(a==='filter')mutate(()=>S.filter=el.dataset.cat||null);
+  else if(a==='toggle'){e.stopPropagation();mutate(()=>setAS(getAS().map(s=>s.id!==sem?s:{...s,courses:s.courses.map(c=>c.id!==cid?c:{...c,done:!c.done})})));}
+  else if(a==='edit'){
+    e.stopPropagation();
+    const sems=getAS();const s=sems.find(x=>x.id===sem);const c=s?.courses.find(x=>x.id===cid);
+    if(c){S.edit={semId:sem,courseId:cid,isNew:false};S.form={...c,semId:sem};render();window.scrollTo(0,0);}
+  }
+  else if(a==='add'){S.edit={semId:sem,isNew:true};S.form={id:uid(),code:'',name:'',cat:'ECE',credits:3,done:false,note:'',semId:sem};render();window.scrollTo(0,0);}
+  else if(a==='cancel'){S.edit=null;S.form={};render();}
+  else if(a==='save'){
+    const code=document.getElementById('f-code').value.trim();
+    const name=document.getElementById('f-name').value.trim();
+    if(!code||!name)return;
+    const credits=Math.max(0,parseInt(document.getElementById('f-credits').value)||0);
+    const cat=document.getElementById('f-cat').value;
+    const toSem=document.getElementById('f-sem').value;
+    const note=document.getElementById('f-note').value.trim();
+    const updated={id:S.form.id,code,name,credits,cat,done:S.form.done||false,note};
+    mutate(()=>{
+      let sems=getAS();const from=S.edit.semId;
+      if(S.edit.isNew){sems=sems.map(s=>s.id!==toSem?s:{...s,courses:[...s.courses,updated]});}
+      else if(from===toSem){sems=sems.map(s=>s.id!==from?s:{...s,courses:s.courses.map(c=>c.id!==updated.id?c:updated)});}
+      else{sems=sems.map(s=>{if(s.id===from)return{...s,courses:s.courses.filter(c=>c.id!==updated.id)};if(s.id===toSem)return{...s,courses:[...s.courses,updated]};return s;});}
+      setAS(sems);S.edit=null;S.form={};
+    });
+  }
+  else if(a==='del'){const{semId,courseId}=S.edit;mutate(()=>{setAS(getAS().map(s=>s.id!==semId?s:{...s,courses:s.courses.filter(c=>c.id!==courseId)}));S.edit=null;S.form={};});}
+  else if(a==='dsem'){mutate(()=>{setAS(getAS().filter(s=>s.id!==sem));if(S.edit?.semId===sem){S.edit=null;S.form={};}});}
+  else if(a==='show-add-sem'){S.showAddSem=true;render();}
+  else if(a==='addsem'){const n=document.getElementById('nsn')?.value.trim();if(n)mutate(()=>{setAS([...getAS(),{id:'sem_'+Date.now(),label:n,courses:[]}]);S.showAddSem=false;});else{S.showAddSem=false;render();}}
+  else if(a==='cancelsem'){S.showAddSem=false;render();}
+  else if(a==='close-modal'){S.modal=null;S.renamingId=null;render();}
+});
+
+// ─── Schedule actions ─────────────────────────────────────────────────────────
+window.switchSched=id=>mutate(()=>{S.activeId=id;S.compareMode=false;S.edit=null;S.form={};S.modal=null;});
+window.newSched=()=>mutate(()=>{
+  const id=sid();
+  S.schedules.push({id,name:nextName(),color:nextColor(),sems:dc(DS),createdAt:Date.now(),updatedAt:Date.now()});
+  S.activeId=id;S.modal=null;S.edit=null;S.form={};
+});
+window.dupSched=srcId=>mutate(()=>{
+  const src=S.schedules.find(s=>s.id===srcId);if(!src)return;
+  const id=sid();
+  S.schedules.push({id,name:src.name+' (copy)',color:nextColor(),sems:dc(src.sems),createdAt:Date.now(),updatedAt:Date.now()});
+  S.activeId=id;S.modal=null;
+});
+window.delSched=id=>{if(S.schedules.length<=1)return;mutate(()=>{S.schedules=S.schedules.filter(s=>s.id!==id);if(S.activeId===id)S.activeId=S.schedules[0].id;if(S.compareId===id){S.compareId=null;S.compareMode=false;}});};
+window.startRename=id=>{S.renamingId=id;render();};
+window.commitRename=id=>{const val=document.getElementById('ren-inp')?.value.trim();if(val)mutate(()=>{S.schedules=S.schedules.map(s=>s.id!==id?s:{...s,name:val});S.renamingId=null;});else{S.renamingId=null;render();}};
+window.startCmp=()=>{if(!S.cmpPickId)return;S.compareId=S.cmpPickId;S.compareMode=true;S.modal=null;S.edit=null;render();};
+
+// ─── Share ────────────────────────────────────────────────────────────────────
+window.copyCode=()=>{
+  const ta=document.getElementById('share-code');if(!ta)return;ta.select();
+  try{navigator.clipboard.writeText(ta.value).then(()=>{const b=document.getElementById('copy-badge');if(b){b.classList.add('show');setTimeout(()=>b.classList.remove('show'),2500);}});}catch(e){try{document.execCommand('copy');}catch(e2){}}
+};
+window.doImport=()=>{
+  const raw=document.getElementById('import-code')?.value;if(!raw)return;
+  try{const p=decodeShare(raw);mutate(()=>{S.schedules=p.schedules;S.activeId=p.activeId||p.schedules[0].id;S.compareMode=false;S.compareId=null;S.modal=null;S.edit=null;S.form={};});}
+  catch(ex){const err=document.getElementById('import-err');if(err)err.style.display='block';}
+};
+window.doReset=()=>mutate(()=>{initDefault();S.compareMode=false;S.compareId=null;S.modal=null;S.edit=null;S.form={};});
+
+// ─── Drag & Drop ──────────────────────────────────────────────────────────────
+window.wDS=(semId,courseId)=>{S.dragSrc={semId,courseId};};
+window.wDE=()=>{S.dragOver=null;document.querySelectorAll('.sc.dov').forEach(e=>e.classList.remove('dov'));};
+window.wDO=semId=>{if(S.dragOver!==semId){S.dragOver=semId;document.querySelectorAll('.sc.dov').forEach(e=>e.classList.remove('dov'));document.getElementById('sc-'+semId)?.classList.add('dov');}};
+window.wDL=semId=>{document.getElementById('sc-'+semId)?.classList.remove('dov');if(S.dragOver===semId)S.dragOver=null;};
+window.wDrop=targetSemId=>{
+  document.querySelectorAll('.sc.dov').forEach(e=>e.classList.remove('dov'));S.dragOver=null;
+  if(!S.dragSrc||S.dragSrc.semId===targetSemId){S.dragSrc=null;return;}
+  const{semId:from,courseId}=S.dragSrc;let moved;
+  mutate(()=>{
+    let sems=getAS();
+    sems=sems.map(s=>{if(s.id===from){moved=s.courses.find(c=>c.id===courseId);return{...s,courses:s.courses.filter(c=>c.id!==courseId)};}return s;});
+    if(moved)sems=sems.map(s=>s.id!==targetSemId?s:{...s,courses:[...s.courses,moved]});
+    setAS(sems);S.dragSrc=null;
+  });
+};
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
+(async()=>{const ok=await load();if(!ok)initDefault();render();})();
+</script>
+</body>
+</html>
