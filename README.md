@@ -17,7 +17,7 @@ If you have ever wished UT IDA could let you build and compare what-if schedules
 
 ## How to use it
 
-Open `college course planner.html` in any modern browser. That is the whole install.
+Open `college-course-planner.html` in any modern browser. That is the whole install.
 
 Releases on this repo always ship the latest planner as a downloadable asset, so you can grab a known version without cloning.
 
