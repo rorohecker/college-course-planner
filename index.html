@@ -242,6 +242,31 @@ body{font-family:-apple-system,'Segoe UI',system-ui,sans-serif;background:var(--
 .kb-row:last-child{border-bottom:none}
 .kb-key{font-family:monospace;font-size:11px;background:var(--surface2);padding:2px 7px;border-radius:4px;border:1px solid var(--border2)}
 #confetti{position:fixed;inset:0;pointer-events:none;z-index:200}
+/* Saved pulse */
+.saved-pulse{position:fixed;right:14px;bottom:14px;background:var(--green);color:#fff;font-size:11px;padding:5px 11px;border-radius:7px;opacity:0;pointer-events:none;z-index:90;transition:opacity .25s;box-shadow:0 4px 14px rgba(0,0,0,.25)}
+.saved-pulse.on{opacity:.95;animation:savedBob .9s ease-out}
+@keyframes savedBob{0%{transform:translateY(8px);opacity:0}25%{transform:translateY(0);opacity:.95}80%{opacity:.95}100%{opacity:0}}
+/* Inline grade pill — clickable on done courses */
+.cgrade.editable{cursor:pointer;border:1px dashed var(--border2)}
+.cgrade.editable:hover{background:var(--accent);color:#fff;border-color:var(--accent)}
+.cgrade-pop{position:absolute;background:var(--surface);border:1px solid var(--border2);border-radius:6px;box-shadow:0 6px 18px rgba(0,0,0,.18);padding:4px;z-index:60;display:grid;grid-template-columns:repeat(4,1fr);gap:2px}
+.cgrade-pop button{padding:4px 8px;font-size:10px;border:1px solid transparent;background:transparent;color:var(--text);border-radius:4px;cursor:pointer}
+.cgrade-pop button:hover{background:var(--accent);color:#fff}
+.cgrade-pop button.clr{color:var(--text3);grid-column:span 4;border-top:1px solid var(--border);margin-top:2px;padding-top:5px}
+/* Touch drag */
+.cc.touching{opacity:.4}
+.touch-ghost{position:fixed;pointer-events:none;z-index:300;background:var(--surface);border:2px solid var(--accent);border-radius:7px;padding:5px 9px;font-size:11px;font-weight:600;box-shadow:0 8px 22px rgba(0,0,0,.25);transform:translate(-50%,-50%)}
+/* Lazy-render compare cards. Browsers skip layout for offscreen .csc cards. */
+.csc{content-visibility:auto;contain-intrinsic-size:auto 200px}
+/* Catalog autocomplete results */
+.ac-pop{position:absolute;background:var(--surface);border:1px solid var(--border2);border-radius:6px;box-shadow:0 6px 18px rgba(0,0,0,.18);max-height:220px;overflow-y:auto;z-index:50;font-size:12px;min-width:260px}
+.ac-row{padding:6px 10px;cursor:pointer;display:flex;gap:8px;align-items:center;border-bottom:1px solid var(--border)}
+.ac-row:last-child{border-bottom:none}
+.ac-row:hover,.ac-row.on{background:var(--accent);color:#fff}
+.ac-row .ac-code{font-weight:700;flex:0 0 80px}
+.ac-row .ac-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ac-row .ac-cr{font-size:10px;opacity:.7;flex-shrink:0}
+.ac-empty{padding:8px 10px;font-size:11px;color:var(--text3)}
 ::-webkit-scrollbar{width:6px;height:6px}
 ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
@@ -264,6 +289,148 @@ body{font-family:-apple-system,'Segoe UI',system-ui,sans-serif;background:var(--
 <body>
 <div id="root"></div>
 <canvas id="confetti"></canvas>
+<div id="saved-pulse" class="saved-pulse">Saved ✓</div>
+<input id="restore-file-input" type="file" accept=".json,application/json" style="display:none">
+<div id="prewarm" style="position:absolute;visibility:hidden;pointer-events:none;left:-9999px"></div>
+<script id="catalog-data" type="application/json">
+[
+  {"code":"ECE 302","name":"Intro to Electrical Engineering","credits":3,"cat":"ECE"},
+  {"code":"ECE 302H","name":"Intro to Electrical Engineering Honors","credits":3,"cat":"ECE"},
+  {"code":"ECE 306","name":"Introduction to Computing","credits":3,"cat":"ECE"},
+  {"code":"ECE 306H","name":"Introduction to Computing Honors","credits":3,"cat":"ECE"},
+  {"code":"ECE 312","name":"Software Design & Implementation","credits":3,"cat":"ECE"},
+  {"code":"ECE 312H","name":"Software Design & Implementation Honors","credits":3,"cat":"ECE"},
+  {"code":"ECE 313","name":"Linear Systems & Signals","credits":3,"cat":"ECE"},
+  {"code":"ECE 313H","name":"Linear Systems & Signals Honors","credits":3,"cat":"ECE"},
+  {"code":"ECE 316","name":"Digital Logic Design","credits":3,"cat":"ECE"},
+  {"code":"ECE 319K","name":"Intro to Embedded Systems","credits":3,"cat":"ECE"},
+  {"code":"ECE 319H","name":"Intro to Embedded Systems Honors","credits":3,"cat":"ECE"},
+  {"code":"ECE 325","name":"Electromagnetic Engineering","credits":3,"cat":"ECE"},
+  {"code":"ECE 325K","name":"Antennas & Wireless Propagation","credits":3,"cat":"ECE"},
+  {"code":"ECE 333T","name":"Engineering Communication","credits":3,"cat":"ECE"},
+  {"code":"ECE 334K","name":"Quantum Theory of Engineering Materials","credits":3,"cat":"ECE"},
+  {"code":"ECE 338L","name":"Analog Integrated Circuit Design","credits":3,"cat":"ECE"},
+  {"code":"ECE 339","name":"Solid-State Electronic Devices","credits":3,"cat":"ECE"},
+  {"code":"ECE 339S","name":"Solar Energy Conversion Devices","credits":3,"cat":"ECE"},
+  {"code":"ECE 340P","name":"High-Throughput Nanopatterning","credits":3,"cat":"ECE"},
+  {"code":"ECE 341","name":"Electric Drives and Machines","credits":3,"cat":"ECE"},
+  {"code":"ECE 347","name":"Modern Optics","credits":3,"cat":"ECE"},
+  {"code":"ECE 348","name":"Laser and Optical Engineering","credits":3,"cat":"ECE"},
+  {"code":"ECE 351H","name":"Probability / Random Processes Honors","credits":3,"cat":"ECE"},
+  {"code":"ECE 351K","name":"Probability & Random Processes","credits":3,"cat":"ECE"},
+  {"code":"ECE 351M","name":"Digital Signal Processing","credits":3,"cat":"ECE"},
+  {"code":"ECE 360C","name":"Algorithms","credits":3,"cat":"ECE"},
+  {"code":"ECE 360G","name":"Programming Paradigms","credits":3,"cat":"ECE"},
+  {"code":"ECE 360K","name":"Intro to Digital Communications","credits":3,"cat":"ECE"},
+  {"code":"ECE 360P","name":"Concurrent and Distributed Systems","credits":3,"cat":"ECE"},
+  {"code":"ECE 360T","name":"Software Testing","credits":3,"cat":"ECE"},
+  {"code":"ECE 361C","name":"Multicore Computing","credits":3,"cat":"ECE"},
+  {"code":"ECE 361E","name":"Machine Learning for Edge AI","credits":3,"cat":"ECE"},
+  {"code":"ECE 361G","name":"Engineering Program Analysis","credits":3,"cat":"ECE"},
+  {"code":"ECE 361M","name":"Software Architectures","credits":3,"cat":"ECE"},
+  {"code":"ECE 361N","name":"Information Security & Privacy","credits":3,"cat":"ECE"},
+  {"code":"ECE 361Q","name":"Requirements Engineering","credits":3,"cat":"ECE"},
+  {"code":"ECE 361R","name":"Radio Frequency Circuit Design","credits":3,"cat":"ECE"},
+  {"code":"ECE 362K","name":"Intro to Automatic Control","credits":3,"cat":"ECE"},
+  {"code":"ECE 362M","name":"Power Electronics II","credits":3,"cat":"ECE"},
+  {"code":"ECE 362Q","name":"Power Quality and Harmonics","credits":3,"cat":"ECE"},
+  {"code":"ECE 363M","name":"Microwave and Radio Frequency Engineering","credits":3,"cat":"ECE"},
+  {"code":"ECE 363N","name":"Engineering Acoustics","credits":3,"cat":"ECE"},
+  {"code":"ECE 364D","name":"Intro to Engineering Design","credits":3,"cat":"ECE"},
+  {"code":"ECE 368L","name":"Power Systems Apparatus & Lab","credits":3,"cat":"ECE"},
+  {"code":"ECE 369","name":"Power Systems Engineering","credits":3,"cat":"ECE"},
+  {"code":"ECE 371P","name":"Intro to Computer Vision","credits":3,"cat":"ECE"},
+  {"code":"ECE 371R","name":"Digital Image Processing","credits":3,"cat":"ECE"},
+  {"code":"ECE 372N","name":"Telecommunication Networks","credits":3,"cat":"ECE"},
+  {"code":"ECE 374K","name":"Biomedical Electronic Instrument Design","credits":3,"cat":"ECE"},
+  {"code":"ECE 374N","name":"Neural Engineering","credits":3,"cat":"ECE"},
+  {"code":"ECE 379K","name":"Special Topics","credits":3,"cat":"ECE"},
+  {"code":"ECE 411","name":"Circuit Theory","credits":4,"cat":"ECE"},
+  {"code":"ECE 411H","name":"Circuit Theory Honors","credits":4,"cat":"ECE"},
+  {"code":"ECE 422C","name":"Software Design & Implementation II","credits":4,"cat":"ECE"},
+  {"code":"ECE 438","name":"Fundamentals of Electronic Circuits I Lab","credits":4,"cat":"ECE"},
+  {"code":"ECE 438K","name":"Analog Electronics","credits":4,"cat":"ECE"},
+  {"code":"ECE 440","name":"Integrated Circuits Nanomanufacturing","credits":4,"cat":"ECE"},
+  {"code":"ECE 445L","name":"Embedded Systems Design Laboratory","credits":4,"cat":"ECE"},
+  {"code":"ECE 445M","name":"Embedded and Real-Time Systems Laboratory","credits":4,"cat":"ECE"},
+  {"code":"ECE 445S","name":"Real-Time DSP Laboratory","credits":4,"cat":"ECE"},
+  {"code":"ECE 460J","name":"Data Science Laboratory","credits":4,"cat":"ECE"},
+  {"code":"ECE 460M","name":"Digital Systems Design Using HDL","credits":4,"cat":"ECE"},
+  {"code":"ECE 460N","name":"Computer Architecture","credits":4,"cat":"ECE"},
+  {"code":"ECE 460R","name":"Intro to VLSI Design","credits":4,"cat":"ECE"},
+  {"code":"ECE 461L","name":"Software Engineering & Design Laboratory","credits":4,"cat":"ECE"},
+  {"code":"ECE 461P","name":"Data Science Principles","credits":4,"cat":"ECE"},
+  {"code":"ECE 461S","name":"Operating Systems","credits":4,"cat":"ECE"},
+  {"code":"ECE 461T","name":"Compilers","credits":4,"cat":"ECE"},
+  {"code":"ECE 462L","name":"Power Electronics Laboratory","credits":4,"cat":"ECE"},
+  {"code":"ECE 464H","name":"Senior Design Project","credits":4,"cat":"ECE"},
+  {"code":"ECE 468L","name":"Power Systems Apparatus and Laboratory","credits":4,"cat":"ECE"},
+  {"code":"ECE 471C","name":"Wireless Communications Laboratory","credits":4,"cat":"ECE"},
+  {"code":"M 408C","name":"Differential & Integral Calculus","credits":4,"cat":"MATH"},
+  {"code":"M 408D","name":"Seq, Series & Multivariable Calculus","credits":4,"cat":"MATH"},
+  {"code":"M 408L","name":"Integral Calculus","credits":4,"cat":"MATH"},
+  {"code":"M 408S","name":"Integral Calculus for Science","credits":4,"cat":"MATH"},
+  {"code":"M 325K","name":"Discrete Mathematics","credits":3,"cat":"MATH"},
+  {"code":"M 340L","name":"Matrices & Matrix Calculations","credits":3,"cat":"MATH"},
+  {"code":"M 362K","name":"Probability","credits":3,"cat":"MATH"},
+  {"code":"M 427J","name":"Differential Equations","credits":4,"cat":"MATH"},
+  {"code":"M 427K","name":"Adv Calculus for Applications I","credits":4,"cat":"MATH"},
+  {"code":"M 427L","name":"Adv Calculus for Applications II","credits":4,"cat":"MATH"},
+  {"code":"PHY 303K","name":"Engineering Physics 1","credits":3,"cat":"PHY"},
+  {"code":"PHY 303L","name":"Engineering Physics 2","credits":3,"cat":"PHY"},
+  {"code":"PHY 105M","name":"Lab for PHY 303K","credits":1,"cat":"PHY"},
+  {"code":"PHY 105N","name":"Lab for PHY 303L","credits":1,"cat":"PHY"},
+  {"code":"PHY 317K","name":"General Physics I","credits":3,"cat":"PHY"},
+  {"code":"PHY 317L","name":"General Physics II","credits":3,"cat":"PHY"},
+  {"code":"BA 101H","name":"Professional Dev & Career Planning Honors","credits":1,"cat":"BUSINESS"},
+  {"code":"BA 324H","name":"Business Communication","credits":3,"cat":"BUSINESS"},
+  {"code":"BA 353","name":"Internship Credit","credits":3,"cat":"BUSINESS"},
+  {"code":"BAH 151H","name":"Honors Lyceum","credits":1,"cat":"BUSINESS"},
+  {"code":"MAN 101H","name":"Leadership & Innovation Honors","credits":1,"cat":"BUSINESS"},
+  {"code":"MAN 327H","name":"Entrepreneurship & Innovation Honors","credits":3,"cat":"BUSINESS"},
+  {"code":"MAN 336H","name":"Organizational Behavior Honors","credits":3,"cat":"BUSINESS"},
+  {"code":"MAN 374H","name":"Gen Mgmt & Strategy Honors","credits":3,"cat":"BUSINESS"},
+  {"code":"ACC 311H","name":"Financial Accounting Honors","credits":3,"cat":"BUSINESS"},
+  {"code":"ACC 312H","name":"Managerial Accounting Honors","credits":3,"cat":"BUSINESS"},
+  {"code":"FIN 357H","name":"Business Finance Honors","credits":3,"cat":"BUSINESS"},
+  {"code":"MIS 301H","name":"Intro to Info Tech Mgmt Honors","credits":3,"cat":"BUSINESS"},
+  {"code":"MKT 337H","name":"Principles of Marketing Honors","credits":3,"cat":"BUSINESS"},
+  {"code":"LEB 323H","name":"Business Law & Ethics Honors","credits":3,"cat":"BUSINESS"},
+  {"code":"STA 235H","name":"Data Science for Bus Applications Honors","credits":2,"cat":"BUSINESS"},
+  {"code":"STA 301H","name":"Intro to Data Science Honors","credits":3,"cat":"BUSINESS"},
+  {"code":"ECO 304K","name":"Intro to Microeconomics","credits":3,"cat":"BUSINESS"},
+  {"code":"ECO 304L","name":"Intro to Macroeconomics","credits":3,"cat":"BUSINESS"},
+  {"code":"O M 235H","name":"Operations Management Honors","credits":2,"cat":"BUSINESS"},
+  {"code":"DS 235H","name":"Intro to Decision Science Honors","credits":2,"cat":"BUSINESS"},
+  {"code":"RHE 306","name":"Rhetoric & Writing","credits":3,"cat":"CORE"},
+  {"code":"RHE 309K","name":"Critical Reading & Persuasive Writing","credits":3,"cat":"CORE"},
+  {"code":"UGS 302","name":"First Year Signature Course","credits":3,"cat":"CORE"},
+  {"code":"UGS 303","name":"First Year Signature Course","credits":3,"cat":"CORE"},
+  {"code":"E 316L","name":"British Literature","credits":3,"cat":"CORE"},
+  {"code":"E 316M","name":"American Literature","credits":3,"cat":"CORE"},
+  {"code":"E 316N","name":"World Literature","credits":3,"cat":"CORE"},
+  {"code":"E 316P","name":"Masterworks of Literature","credits":3,"cat":"CORE"},
+  {"code":"HIS 315K","name":"US History 1492-1865","credits":3,"cat":"CORE"},
+  {"code":"HIS 315L","name":"US History 1865-Present","credits":3,"cat":"CORE"},
+  {"code":"GOV 310L","name":"American Government","credits":3,"cat":"CORE"},
+  {"code":"GOV 312L","name":"Issues & Policies in American Government","credits":3,"cat":"CORE"},
+  {"code":"GOV 312P","name":"Constitutional Principles","credits":3,"cat":"CORE"},
+  {"code":"CH 301","name":"Principles of Chemistry I","credits":3,"cat":"OTHER"},
+  {"code":"CH 302","name":"Principles of Chemistry II","credits":3,"cat":"OTHER"},
+  {"code":"BIO 311C","name":"Introductory Biology I","credits":3,"cat":"OTHER"},
+  {"code":"BIO 311D","name":"Introductory Biology II","credits":3,"cat":"OTHER"},
+  {"code":"CS 311","name":"Discrete Math for Computer Science","credits":3,"cat":"OTHER"},
+  {"code":"CS 312","name":"Intro to Programming","credits":3,"cat":"OTHER"},
+  {"code":"CS 314","name":"Data Structures","credits":3,"cat":"OTHER"},
+  {"code":"CS 314H","name":"Data Structures Honors","credits":3,"cat":"OTHER"},
+  {"code":"CS 331","name":"Algorithms & Complexity","credits":3,"cat":"OTHER"},
+  {"code":"CS 439","name":"Operating Systems","credits":3,"cat":"OTHER"},
+  {"code":"ME 337C","name":"Intro to Nuclear Power Systems","credits":3,"cat":"OTHER"},
+  {"code":"ANT 302","name":"Intro to Anthropology","credits":3,"cat":"CORE"},
+  {"code":"PSY 301","name":"Intro to Psychology","credits":3,"cat":"CORE"},
+  {"code":"SOC 302","name":"Intro to Sociology","credits":3,"cat":"CORE"}
+]
+</script>
 <script>
 // ─── Static data ──────────────────────────────────────────────────────────────
 const CATS={
@@ -422,6 +589,27 @@ const SEM_TEMPLATES={
   ]},
 };
 
+// Static UT course catalog snapshot for autocomplete. Credits follow the
+// first-digit-of-course-number rule. Cat is best-effort. Expand as needed
+// each semester. Loaded from a JSON script tag to keep this script smaller.
+const CATALOG=JSON.parse(document.getElementById('catalog-data').textContent);
+
+// Curriculum templates. Active schedule can be reset to any of these.
+// "ecb" is the existing default (DS). Others wipe BHP-specific courses.
+const CURRICULUM_TEMPLATES={
+  ecb:{label:'ECE + Business Honors (ECB Dual Degree)',short:'ECB',build:()=>dc(DS)},
+  eceHonors:{label:'ECE Honors only (no BHP)',short:'ECE Honors',build:()=>{
+    const s=dc(DS);
+    // Drop pure-BHP courses but keep economics (also required for ECE general core).
+    const keep=c=>c.cat!=='BUSINESS'||c.code.startsWith('ECO ');
+    return s.map(sem=>({...sem,courses:sem.courses.filter(keep)}));
+  }},
+  blank:{label:'Blank slate (only AP credits + physics)',short:'Blank',build:()=>{
+    const s=dc(DS);
+    return s.map(sem=>['ap','phy'].includes(sem.id)?sem:{...sem,courses:[]});
+  }},
+};
+
 // ─── State ────────────────────────────────────────────────────────────────────
 let _c=300;
 const uid=()=>'c'+(++_c);
@@ -457,10 +645,27 @@ function nextName(){
 
 // ─── Storage ──────────────────────────────────────────────────────────────────
 const SK='cp-v3',SNAPK='cp-snap-v1';
-async function save(){
+let _saveTimer=null;
+let _saveRev=0;            // bumps every mutation; used to invalidate memo caches.
+function bumpRev(){_saveRev++;}
+// Debounced write. Rapid edits (typing in a target field, dragging quickly)
+// only commit to disk after 250ms of quiet. beforeunload also flushes.
+function save(){
+  bumpRev();
+  if(_saveTimer)clearTimeout(_saveTimer);
+  _saveTimer=setTimeout(_saveNow,250);
+}
+async function _saveNow(){
+  _saveTimer=null;
   const d=JSON.stringify({schedules:S.schedules,activeId:S.activeId});
   try{if(window.storage)await window.storage.set(SK,d);else localStorage.setItem(SK,d);}catch(e){}
   try{tabCh?.postMessage({t:'save',ts:Date.now(),id:tabId});}catch(e){}
+  showSavedPulse();
+}
+window.addEventListener('beforeunload',()=>{if(_saveTimer){clearTimeout(_saveTimer);_saveNow();}});
+function showSavedPulse(){
+  const el=document.getElementById('saved-pulse');if(!el)return;
+  el.classList.remove('on');void el.offsetWidth;el.classList.add('on');
 }
 async function load(){
   try{
@@ -580,18 +785,28 @@ function gpaFor(courses){
 }
 // Major GPA is strict: ECE = only ECE-prefix courses; Business = only Business.
 // Math/Physics/AdvancedTech roll up into Overall but not into either major GPA.
+// Memoized by mutation revision so keystrokes that don't touch the plan
+// (search, target-GPA input, etc) don't recompute the GPA panel each render.
+let _gpaCache={rev:-1,val:null,actId:null};
 function gpaPanel(){
+  if(_gpaCache.rev===_saveRev&&_gpaCache.actId===S.activeId)return _gpaCache.val;
   const all=getAS().flatMap(s=>s.courses);
-  return{
+  const val={
     overall:gpaFor(all),
     eceMajor:gpaFor(all.filter(c=>c.cat==='ECE')),
     biz:gpaFor(all.filter(c=>c.cat==='BUSINESS')),
     all,
   };
+  _gpaCache={rev:_saveRev,actId:S.activeId,val};
+  return val;
 }
 // Per-semester GPA, computed over each semester's done+graded courses.
+let _gpaSemCache={rev:-1,val:null,actId:null};
 function gpaPerSem(){
-  return getAS().filter(s=>!s.isOff).map(s=>({sem:s,g:gpaFor(s.courses)}));
+  if(_gpaSemCache.rev===_saveRev&&_gpaSemCache.actId===S.activeId)return _gpaSemCache.val;
+  const val=getAS().filter(s=>!s.isOff).map(s=>({sem:s,g:gpaFor(s.courses)}));
+  _gpaSemCache={rev:_saveRev,actId:S.activeId,val};
+  return val;
 }
 function gradedRows(){
   const out=[];
@@ -604,15 +819,23 @@ function gradedRows(){
 }
 
 // ─── Track progress ──────────────────────────────────────────────────────────
+// Memoized — only recomputes when the schedules change or active id flips.
+let _trackCache={rev:-1,val:null,actId:null};
 function trackProgress(){
-  const tk=getAct()?.track;if(!tk||!TRACKS[tk])return null;
-  const t=TRACKS[tk];
-  const codes=new Set(getAS().flatMap(s=>s.courses).map(c=>c.code.trim().toUpperCase().replace(/H$/,'')));
-  const isECB=(getAct()?.kind||'ecb')!=='general';
-  const need=isECB?t.pickECB:t.pickAll;
-  const coreHit=t.cores.filter(c=>codes.has(c.code.toUpperCase().replace(/H$/,''))).length;
-  const electHit=t.electives.filter(e=>codes.has(e.toUpperCase().replace(/H$/,''))).length;
-  return{track:t,key:tk,need,coreHit,coreTotal:t.cores.length,electHit};
+  if(_trackCache.rev===_saveRev&&_trackCache.actId===S.activeId)return _trackCache.val;
+  const tk=getAct()?.track;
+  let val=null;
+  if(tk&&TRACKS[tk]){
+    const t=TRACKS[tk];
+    const codes=new Set(getAS().flatMap(s=>s.courses).map(c=>c.code.trim().toUpperCase().replace(/H$/,'')));
+    const isECB=(getAct()?.kind||'ecb')!=='general';
+    const need=isECB?t.pickECB:t.pickAll;
+    const coreHit=t.cores.filter(c=>codes.has(c.code.toUpperCase().replace(/H$/,''))).length;
+    const electHit=t.electives.filter(e=>codes.has(e.toUpperCase().replace(/H$/,''))).length;
+    val={track:t,key:tk,need,coreHit,coreTotal:t.cores.length,electHit};
+  }
+  _trackCache={rev:_saveRev,actId:S.activeId,val};
+  return val;
 }
 
 // ─── Confetti ─────────────────────────────────────────────────────────────────
@@ -641,8 +864,13 @@ function rCourse(semId,c){
   const cat=CATS[c.cat]||CATS.OTHER;
   const chkBg=c.done?'#2A7A47':'transparent',chkBrd=c.done?'#2A7A47':cat.txt;
   const isSel=S.selection.has(c.id)&&S.selectionSem===semId;
+  // Inline grade pill: clickable when the course is done. Click opens a small
+  // grade picker without going through the GPA modal.
+  const gradePill=c.done
+    ?`<span class="cgrade editable" title="Click to set grade" onclick="cgClick('${semId}','${c.id}',event)">${esc(c.grade||'+ grade')}</span>`
+    :(c.grade?`<span class="cgrade">${esc(c.grade)}</span>`:'');
   return `<div class="cc${c.done?' done':''}${isSel?' sel':''}" style="background:${cat.bg};border-color:${cat.brd}"
-      draggable="true" ondragstart="wDS('${semId}','${c.id}')" ondragend="wDE()"
+      draggable="true" ondragstart="wDSCustom('${semId}','${c.id}',event)" ondragend="wDE()"
       onclick="cClick('${semId}','${c.id}',event)">
     <div class="chk" style="border-color:${chkBrd};background:${chkBg}" data-a="toggle" data-sem="${semId}" data-cid="${c.id}">
       ${c.done?`<svg width="9" height="9" viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2.5" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/></svg>`:''}
@@ -653,7 +881,7 @@ function rCourse(semId,c){
       <span class="cname">${esc(c.name)}</span>
       ${c.note?`<span class="cnote">${esc(c.note)}</span>`:''}
     </div>
-    ${c.grade?`<span class="cgrade">${esc(c.grade)}</span>`:''}
+    ${gradePill}
     <span class="crdt">${c.credits}cr</span>
     <button class="ebtn" data-a="edit" data-sem="${semId}" data-cid="${c.id}">✎</button>
   </div>`;
@@ -1025,21 +1253,65 @@ function rModal(){
   }
 
   if(S.modal==='search'){
-    const q=(S.searchQ||'').trim().toLowerCase();
-    let results=[];
-    if(q)for(const sch of S.schedules)for(const sem of sch.sems)for(const c of sem.courses)if(c.code.toLowerCase().includes(q)||c.name.toLowerCase().includes(q))results.push({sch,sem,c});
-    const body=q?(results.length?`<div class="sres">${results.slice(0,80).map(r=>`
-      <div class="sres-row" onclick="jumpTo('${r.sch.id}','${r.sem.id}','${r.c.id}')">
-        <span class="sr-code" style="color:${(CATS[r.c.cat]||CATS.OTHER).txt}">${esc(r.c.code)}</span>
-        <span class="sr-name">${esc(r.c.name)}</span>
-        <span class="sr-loc">${esc(r.sch.name)} · ${esc(r.sem.label)}</span>
-      </div>`).join('')}</div>`:'<div class="sres-empty">No matches.</div>'):'<div class="sres-empty">Type a course code or name above.</div>';
     return`<div class="mbk" id="mbk">
       <div class="modal" style="max-width:600px">
         <div class="mhdr"><h3>🔎 Search across all schedules</h3><button class="mclose" data-a="close-modal">×</button></div>
         <div class="mbody">
           <input id="search-inp" autofocus placeholder="ECE 411, Operations Management…" value="${esc(S.searchQ)}" oninput="onSearchInput(this.value)" style="width:100%;padding:9px 12px;font-size:13px;border:1px solid var(--border2);border-radius:7px;background:var(--surface2);color:var(--text);outline:none">
-          ${body}
+          <div id="search-results">${computeSearchResultsHtml()}</div>
+        </div>
+        <div class="mfooter"><button data-a="close-modal" style="padding:6px 14px;border:1px solid var(--border2);border-radius:6px;cursor:pointer;font-size:12px;background:var(--surface2);color:var(--text)">Close</button></div>
+      </div>
+    </div>`;
+  }
+
+  if(S.modal==='transcript'){
+    return`<div class="mbk" id="mbk">
+      <div class="modal" style="max-width:600px">
+        <div class="mhdr"><h3>📝 Import from UT Direct transcript</h3><button class="mclose" data-a="close-modal">×</button></div>
+        <div class="mbody">
+          <p style="font-size:12px;color:var(--text2);margin-bottom:8px">Paste the completed-courses section of your UT Direct transcript (or any text with course codes and grades, one per line). Courses already in your plan are marked done with their grade.</p>
+          <textarea id="transcript-in" placeholder="ECE 302H   3.0   A&#10;M 408D     4.0   B+&#10;..." style="width:100%;min-height:180px;padding:9px;border:1px solid var(--border2);border-radius:7px;background:var(--surface2);color:var(--text);font-family:monospace;font-size:11px;outline:none;margin-bottom:8px"></textarea>
+          <div id="transcript-result" style="font-size:12px;color:var(--text)"></div>
+        </div>
+        <div class="mfooter">
+          <span class="left">A snapshot is taken before any changes apply.</span>
+          <button data-a="close-modal" style="padding:6px 14px;border:1px solid var(--border2);border-radius:6px;cursor:pointer;font-size:12px;background:var(--surface2);color:var(--text)">Close</button>
+          <button onclick="runTranscriptImport()" style="padding:6px 14px;background:var(--accent);color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px">Apply</button>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  if(S.modal==='backup'){
+    return`<div class="mbk" id="mbk">
+      <div class="modal" style="max-width:480px">
+        <div class="mhdr"><h3>💾 Backup &amp; restore</h3><button class="mclose" data-a="close-modal">×</button></div>
+        <div class="mbody">
+          <p style="font-size:12px;color:var(--text2);margin-bottom:10px">Download all schedules as a JSON file you can save anywhere, or restore from a previously downloaded file. Restore replaces all current data; a snapshot is taken first.</p>
+          <div style="display:flex;gap:10px;flex-direction:column">
+            <button onclick="downloadBackup()" style="padding:10px 14px;background:var(--accent);color:#fff;border:none;border-radius:7px;cursor:pointer;font-size:13px;font-weight:600">⬇ Download backup.json</button>
+            <button onclick="pickRestoreFile()" style="padding:10px 14px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:7px;cursor:pointer;font-size:13px">⬆ Restore from file…</button>
+          </div>
+        </div>
+        <div class="mfooter"><button data-a="close-modal" style="padding:6px 14px;border:1px solid var(--border2);border-radius:6px;cursor:pointer;font-size:12px;background:var(--surface2);color:var(--text)">Close</button></div>
+      </div>
+    </div>`;
+  }
+
+  if(S.modal==='curriculum'){
+    const cur=getAct();
+    const cards=Object.entries(CURRICULUM_TEMPLATES).map(([k,t])=>`
+      <div class="tk-card" onclick="applyCurriculum('${k}')">
+        <div class="tk-name">${esc(t.label)}</div>
+        <div class="tk-grad">Click to replace the active plan with this template.</div>
+      </div>`).join('');
+    return`<div class="mbk" id="mbk">
+      <div class="modal" style="max-width:560px">
+        <div class="mhdr"><h3>📚 Curriculum templates</h3><button class="mclose" data-a="close-modal">×</button></div>
+        <div class="mbody">
+          <p style="font-size:12px;color:var(--text2);margin-bottom:10px">Swap the active plan for a different starting curriculum. Useful when you're switching majors or want to plan as a non-ECB student. A snapshot is saved first so you can recover.</p>
+          <div class="tk-grid">${cards}</div>
         </div>
         <div class="mfooter"><button data-a="close-modal" style="padding:6px 14px;border:1px solid var(--border2);border-radius:6px;cursor:pointer;font-size:12px;background:var(--surface2);color:var(--text)">Close</button></div>
       </div>
@@ -1215,6 +1487,9 @@ function render(){
             <button class="hbtn" onclick="S.modal='search';render()" title="Search (S)">🔎 Search</button>
             <button class="hbtn" onclick="S.modal='history';render()" title="Version history (H)">🕒 History</button>
             <button class="hbtn" onclick="window.print()" title="Print or save as PDF (P)">🖨️ Print</button>
+            <button class="hbtn" onclick="S.modal='transcript';render()" title="Paste UT Direct transcript to auto-fill grades">📝 Transcript</button>
+            <button class="hbtn" onclick="S.modal='curriculum';render()" title="Swap curriculum template">📚 Curriculum</button>
+            <button class="hbtn" onclick="S.modal='backup';render()" title="Download or restore backup file">💾 Backup</button>
             <button class="hbtn" onclick="S.modalTab='code';S.modal='export';render()" title="Share">📤 Share</button>
             <button class="hbtn" onclick="S.modal='import';render()" title="Import">📥 Import</button>
             <button class="hbtn ghost" onclick="undo()" title="Undo (Ctrl+Z)" ${HISTORY.past.length?'':'disabled'}>↶</button>
@@ -1507,12 +1782,312 @@ document.addEventListener('keydown',e=>{
   }
 });
 
+// ─── Catalog autocomplete ────────────────────────────────────────────────────
+// Lightweight popup wired to the edit panel "Code" input. Ranked match:
+// exact code > code prefix > word prefix in name > substring.
+function rankCatalog(q){
+  q=q.trim().toUpperCase();if(!q)return[];
+  const out=[];
+  for(const e of CATALOG){
+    const code=e.code.toUpperCase(),name=e.name.toUpperCase();
+    let score=0;
+    if(code===q)score=10;
+    else if(code.startsWith(q))score=7;
+    else if(code.replace(/\s+/g,'').startsWith(q.replace(/\s+/g,'')))score=6;
+    else if(name.startsWith(q))score=4;
+    else if(code.includes(q))score=3;
+    else if(name.includes(q))score=2;
+    if(score)out.push({e,score});
+  }
+  out.sort((a,b)=>b.score-a.score||a.e.code.localeCompare(b.e.code));
+  return out.slice(0,8).map(x=>x.e);
+}
+let _acOpen=false,_acIdx=0;
+function showAutocomplete(){
+  const input=document.getElementById('f-code');if(!input)return;
+  const q=input.value;
+  const results=rankCatalog(q);
+  let pop=document.getElementById('ac-pop');
+  if(!q){if(pop)pop.remove();_acOpen=false;return;}
+  if(!pop){pop=document.createElement('div');pop.id='ac-pop';pop.className='ac-pop';document.body.appendChild(pop);}
+  const r=input.getBoundingClientRect();
+  pop.style.left=(r.left+window.scrollX)+'px';
+  pop.style.top=(r.bottom+window.scrollY+2)+'px';
+  pop.style.width=Math.max(r.width,260)+'px';
+  if(!results.length){pop.innerHTML='<div class="ac-empty">No catalog match. Type and save to add as a new course.</div>';_acOpen=true;return;}
+  pop.innerHTML=results.map((e,i)=>`<div class="ac-row${i===_acIdx?' on':''}" data-i="${i}"><span class="ac-code">${esc(e.code)}</span><span class="ac-name">${esc(e.name)}</span><span class="ac-cr">${e.credits}cr</span></div>`).join('');
+  pop.querySelectorAll('.ac-row').forEach(row=>{
+    row.onclick=()=>pickAutocomplete(parseInt(row.dataset.i));
+  });
+  _acOpen=true;_acIdx=Math.min(_acIdx,results.length-1);
+}
+function pickAutocomplete(i){
+  const input=document.getElementById('f-code');if(!input)return;
+  const results=rankCatalog(input.value);
+  const e=results[i];if(!e)return;
+  input.value=e.code;
+  const n=document.getElementById('f-name');if(n&&!n.value.trim())n.value=e.name;
+  const cr=document.getElementById('f-credits');if(cr)cr.value=e.credits;
+  const cat=document.getElementById('f-cat');if(cat&&e.cat)cat.value=e.cat;
+  closeAutocomplete();
+}
+function closeAutocomplete(){const p=document.getElementById('ac-pop');if(p)p.remove();_acOpen=false;_acIdx=0;}
+document.addEventListener('input',e=>{if(e.target.id==='f-code')showAutocomplete();});
+document.addEventListener('keydown',e=>{
+  if(!_acOpen||e.target?.id!=='f-code')return;
+  const results=rankCatalog(document.getElementById('f-code').value);
+  if(e.key==='ArrowDown'){e.preventDefault();_acIdx=Math.min(_acIdx+1,results.length-1);showAutocomplete();}
+  else if(e.key==='ArrowUp'){e.preventDefault();_acIdx=Math.max(_acIdx-1,0);showAutocomplete();}
+  else if(e.key==='Enter'&&results.length){e.preventDefault();pickAutocomplete(_acIdx);}
+  else if(e.key==='Escape'){closeAutocomplete();}
+});
+document.addEventListener('click',e=>{if(_acOpen&&!e.target.closest('#ac-pop')&&e.target.id!=='f-code')closeAutocomplete();});
+
+// ─── Inline grade pill ───────────────────────────────────────────────────────
+window.cgClick=(semId,cid,e)=>{
+  e.stopPropagation();
+  closeGradePop();
+  const sems=getAS();const c=sems.find(s=>s.id===semId)?.courses.find(x=>x.id===cid);
+  if(!c||!c.done)return;
+  const pop=document.createElement('div');pop.id='cg-pop';pop.className='cgrade-pop';
+  pop.innerHTML=GRADE_OPTS.filter(g=>g).map(g=>`<button data-g="${g}">${g}</button>`).join('')+`<button class="clr" data-g="">Clear grade</button>`;
+  pop.querySelectorAll('button').forEach(b=>{b.onclick=ev=>{ev.stopPropagation();setGrade(semId,cid,b.dataset.g);closeGradePop();};});
+  document.body.appendChild(pop);
+  const r=e.target.getBoundingClientRect();
+  pop.style.left=Math.min(window.innerWidth-pop.offsetWidth-8,r.left+window.scrollX)+'px';
+  pop.style.top=(r.bottom+window.scrollY+3)+'px';
+};
+function closeGradePop(){const p=document.getElementById('cg-pop');if(p)p.remove();}
+document.addEventListener('click',e=>{if(!e.target.closest('#cg-pop'))closeGradePop();});
+
+// ─── File backup / restore ───────────────────────────────────────────────────
+window.downloadBackup=()=>{
+  const data=JSON.stringify({schedules:S.schedules,activeId:S.activeId,exportedAt:new Date().toISOString(),version:'cp-v3'},null,2);
+  const blob=new Blob([data],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.download=`course-plan-${new Date().toISOString().slice(0,10)}.json`;
+  document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+};
+window.pickRestoreFile=()=>document.getElementById('restore-file-input').click();
+document.getElementById('restore-file-input').addEventListener('change',async e=>{
+  const file=e.target.files[0];if(!file)return;
+  try{
+    const txt=await file.text();
+    const p=JSON.parse(txt);
+    if(!p.schedules||!Array.isArray(p.schedules))throw new Error('No schedules array in file');
+    saveSnapshotNow('pre-restore');
+    mutate(()=>{S.schedules=p.schedules;S.activeId=p.activeId||p.schedules[0].id;S.compareMode=false;S.compareId=null;S.modal=null;S.edit=null;S.form={};},{reason:'file-restore'});
+  }catch(err){alert('Could not read backup file: '+err.message);}
+  e.target.value='';
+});
+
+// ─── UT Direct transcript import ─────────────────────────────────────────────
+// Permissive parser: scan lines for a course code + a grade. Updates matching
+// courses in the active plan (sets done=true and grade). Lines that look like
+// real courses but don't match anything in the plan get reported back so the
+// user can add them.
+function parseTranscript(text){
+  const lines=text.split(/[\r\n]+/);
+  const codeRe=/\b([A-Z][A-Z\s]{0,4})\s+(\d{3})([A-Z]?)\b/;
+  const gradeRe=/\b(A\+|A-|B\+|B-|C\+|C-|D\+|D-|A|B|C|D|F|CR|NC|W|Q|IP)(?:\W|$)/;
+  const out=[];
+  for(const raw of lines){
+    const line=raw.replace(/\s+/g,' ').trim();
+    if(!line)continue;
+    const mc=line.match(codeRe);
+    if(!mc)continue;
+    const mg=line.match(gradeRe);
+    if(!mg)continue;
+    const code=`${mc[1].trim()} ${mc[2]}${mc[3]||''}`;
+    out.push({code,grade:mg[1],raw:line});
+  }
+  return out;
+}
+function applyTranscript(parsed){
+  // Normalize codes for matching (strip H/Honors suffix to be tolerant).
+  const norm=s=>String(s||'').trim().toUpperCase().replace(/\s+/g,' ').replace(/H$/,'');
+  const updates=new Map();
+  for(const p of parsed)updates.set(norm(p.code),p.grade);
+  let matched=0,unmatched=[];
+  mutate(()=>{
+    setAS(getAS().map(sem=>{
+      if(sem.isOff)return sem;
+      return{...sem,courses:sem.courses.map(c=>{
+        const g=updates.get(norm(c.code));
+        if(g!=null){matched++;return{...c,done:true,grade:g};}
+        return c;
+      })};
+    }));
+  },{reason:'transcript-import'});
+  // Find parsed courses that weren't in any semester.
+  const allCodes=new Set(getAS().flatMap(s=>s.courses).map(c=>norm(c.code)));
+  for(const[code,grade]of updates){if(!allCodes.has(code))unmatched.push({code,grade});}
+  return{matched,unmatched,total:parsed.length};
+}
+window.runTranscriptImport=()=>{
+  const ta=document.getElementById('transcript-in');if(!ta)return;
+  const parsed=parseTranscript(ta.value);
+  if(!parsed.length){document.getElementById('transcript-result').innerHTML='<span style="color:#C00">No courses found. Paste the table of completed courses from UT Direct.</span>';return;}
+  const r=applyTranscript(parsed);
+  let html=`<b>${r.matched}</b> of ${r.total} parsed lines updated.`;
+  if(r.unmatched.length)html+=`<br><span style="color:var(--text3)">Not in any semester: ${r.unmatched.slice(0,8).map(u=>`${esc(u.code)} (${u.grade})`).join(', ')}${r.unmatched.length>8?'…':''}. Add them manually or via the catalog autocomplete.</span>`;
+  document.getElementById('transcript-result').innerHTML=html;
+};
+
+// ─── Curriculum templates ────────────────────────────────────────────────────
+window.applyCurriculum=key=>{
+  const t=CURRICULUM_TEMPLATES[key];if(!t)return;
+  if(!confirm(`Replace the active plan with the "${t.short}" template? A snapshot is saved first so you can recover.`))return;
+  saveSnapshotNow('pre-curriculum-swap');
+  mutate(()=>{
+    const id=S.activeId;
+    S.schedules=S.schedules.map(s=>s.id!==id?s:{...s,sems:t.build(),updatedAt:Date.now()});
+    S.modal=null;S.edit=null;S.form={};
+  },{reason:'curriculum-swap'});
+};
+
+// ─── Touch drag (mobile) ─────────────────────────────────────────────────────
+// HTML5 drag-and-drop does not fire on touchscreens. Long-press a card to
+// start, drag a ghost element, drop on the target semester card.
+let touchDrag=null;
+document.addEventListener('touchstart',e=>{
+  const card=e.target.closest('.cc');if(!card)return;
+  const semCard=card.closest('.sc');if(!semCard)return;
+  const semId=semCard.id.replace(/^sc-/,'');
+  // data-cid is on the chk element. Pull from there.
+  const cidEl=card.querySelector('[data-cid]');if(!cidEl)return;
+  const cid=cidEl.dataset.cid;
+  touchDrag={semId,cid,el:card,started:false,timer:setTimeout(()=>{
+    if(!touchDrag)return;
+    touchDrag.started=true;
+    card.classList.add('touching');
+    if(navigator.vibrate)try{navigator.vibrate(15);}catch(_){}
+    const sems=getAS();const c=sems.find(s=>s.id===semId)?.courses.find(x=>x.id===cid);
+    if(c){
+      S.dragSrc={semId,courseId:cid,bulk:false};
+      const g=document.createElement('div');g.id='touch-ghost';g.className='touch-ghost';g.textContent=c.code;
+      document.body.appendChild(g);
+      const t=e.touches[0];g.style.left=t.clientX+'px';g.style.top=t.clientY+'px';
+    }
+  },380)};
+},{passive:true});
+document.addEventListener('touchmove',e=>{
+  if(!touchDrag)return;
+  const t=e.touches[0];
+  // Cancel long-press if user starts scrolling before timer fires.
+  if(!touchDrag.started){const dx=t.clientX-(touchDrag.x0||t.clientX),dy=t.clientY-(touchDrag.y0||t.clientY);if(!touchDrag.x0){touchDrag.x0=t.clientX;touchDrag.y0=t.clientY;}else if(Math.abs(dx)>10||Math.abs(dy)>10){clearTimeout(touchDrag.timer);touchDrag=null;}return;}
+  e.preventDefault();
+  const g=document.getElementById('touch-ghost');if(g){g.style.left=t.clientX+'px';g.style.top=t.clientY+'px';}
+  // Highlight the semester under the touch.
+  const under=document.elementFromPoint(t.clientX,t.clientY)?.closest('.sc');
+  document.querySelectorAll('.sc.dov').forEach(el=>el.classList.remove('dov'));
+  if(under&&under.id&&under.id!=='sc-'+touchDrag.semId)under.classList.add('dov');
+  // Page edge auto-scroll.
+  const vh=window.innerHeight,Z=80;
+  if(t.clientY<Z)window.scrollBy(0,-10);
+  else if(t.clientY>vh-Z)window.scrollBy(0,10);
+},{passive:false});
+document.addEventListener('touchend',e=>{
+  if(!touchDrag){return;}
+  clearTimeout(touchDrag.timer);
+  const g=document.getElementById('touch-ghost');if(g)g.remove();
+  touchDrag.el.classList.remove('touching');
+  if(touchDrag.started){
+    const t=e.changedTouches[0];
+    const under=document.elementFromPoint(t.clientX,t.clientY)?.closest('.sc');
+    document.querySelectorAll('.sc.dov').forEach(el=>el.classList.remove('dov'));
+    if(under&&under.id&&under.id!=='sc-'+touchDrag.semId){
+      const target=under.id.replace(/^sc-/,'');
+      window.wDrop(target);
+    }else{S.dragSrc=null;}
+  }
+  touchDrag=null;
+},{passive:true});
+
+// ─── Custom drag preview ─────────────────────────────────────────────────────
+// Replaces the browser's default drag ghost with a small canvas-rendered chip.
+window.wDSCustom=(semId,courseId,e)=>{
+  // Build preview if dataTransfer is available.
+  try{
+    if(e&&e.dataTransfer&&e.dataTransfer.setDragImage){
+      const sems=getAS();const c=sems.find(s=>s.id===semId)?.courses.find(x=>x.id===courseId);
+      const label=c?`${c.code}`:'';
+      const N=S.selection.has(courseId)&&S.selectionSem===semId?S.selection.size:1;
+      const text=N>1?`${label} +${N-1}`:label;
+      const cv=document.createElement('canvas');
+      const W=200,H=36;cv.width=W*2;cv.height=H*2;cv.style.width=W+'px';cv.style.height=H+'px';
+      const ctx=cv.getContext('2d');ctx.scale(2,2);
+      ctx.fillStyle='#BF3A1F';ctx.strokeStyle='#8A2010';
+      ctx.beginPath();ctx.roundRect?ctx.roundRect(1,1,W-2,H-2,7):ctx.rect(1,1,W-2,H-2);ctx.fill();ctx.stroke();
+      ctx.fillStyle='#fff';ctx.font='600 13px -apple-system,Segoe UI,sans-serif';
+      ctx.textBaseline='middle';ctx.fillText(text,12,H/2);
+      // Off-screen attach is required for Safari/Chrome to honor the bitmap.
+      cv.style.position='absolute';cv.style.left='-9999px';document.body.appendChild(cv);
+      e.dataTransfer.setDragImage(cv,20,18);
+      setTimeout(()=>cv.remove(),0);
+    }
+  }catch(_){}
+  return window.wDS(semId,courseId);
+};
+
+// ─── Targeted search update (no full re-render on keystrokes) ────────────────
+function computeSearchResultsHtml(){
+  const q=(S.searchQ||'').trim().toLowerCase();
+  if(!q)return'<div class="sres-empty">Type a course code or name above.</div>';
+  // Ranked: exact code > prefix > code substring > name match.
+  const out=[];
+  for(const sch of S.schedules)for(const sem of sch.sems)for(const c of sem.courses){
+    const code=c.code.toLowerCase(),name=c.name.toLowerCase();
+    let score=0;
+    if(code===q)score=10;
+    else if(code.startsWith(q))score=6;
+    else if(code.includes(q))score=4;
+    else if(name.startsWith(q))score=3;
+    else if(name.includes(q))score=1;
+    if(score)out.push({sch,sem,c,score});
+  }
+  if(!out.length)return'<div class="sres-empty">No matches.</div>';
+  out.sort((a,b)=>b.score-a.score);
+  return `<div class="sres">${out.slice(0,80).map(r=>`
+    <div class="sres-row" onclick="jumpTo('${r.sch.id}','${r.sem.id}','${r.c.id}')">
+      <span class="sr-code" style="color:${(CATS[r.c.cat]||CATS.OTHER).txt}">${esc(r.c.code)}</span>
+      <span class="sr-name">${esc(r.c.name)}</span>
+      <span class="sr-loc">${esc(r.sch.name)} · ${esc(r.sem.label)}</span>
+    </div>`).join('')}</div>`;
+}
+window.onSearchInput=v=>{
+  S.searchQ=v;
+  // Replace just the results container instead of re-rendering the whole modal.
+  const host=document.getElementById('search-results');
+  if(host){host.innerHTML=computeSearchResultsHtml();return;}
+  render();
+};
+
+// ─── Pre-warm common modals at idle ──────────────────────────────────────────
+// Forces the browser to parse modal CSS/HTML once during idle so the first
+// open feels instant.
+function prewarmModals(){
+  const host=document.getElementById('prewarm');if(!host)return;
+  try{
+    const prev=S.modal;
+    for(const m of['gpa','search','history','track']){S.modal=m;host.innerHTML=rModal();}
+    S.modal=prev;host.innerHTML='';
+  }catch(_){}
+}
+
+// ─── Undo/redo, snapshots exposed (extras) ───────────────────────────────────
+// (existing exposures kept above)
+
 // ─── Init ─────────────────────────────────────────────────────────────────────
 (async()=>{
   const ok=await load();
   if(!ok)initDefault();
   S.schedules=S.schedules.map(s=>({kind:'ecb',...s}));
   render();
+  if('requestIdleCallback'in window)requestIdleCallback(prewarmModals,{timeout:2000});
+  else setTimeout(prewarmModals,500);
 })();
 </script>
 </body>
