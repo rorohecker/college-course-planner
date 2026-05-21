@@ -1,6 +1,6 @@
-# ECB Course Planner
+# College Course Planner
 
-A course planner for UT Austin students. Built originally for the Engineering and Business Honors (ECB) program, but it works just as well for any major. It runs entirely in your browser as a single HTML file, with no backend, no signup, and no install.
+A college course planner for UT Austin students. Built originally for the Engineering and Business Honors (ECB) program, but it works just as well for any major and at any school once you swap in the curriculum. It runs entirely in your browser as a single HTML file, with no backend, no signup, and no install.
 
 If you have ever wished UT IDA could let you build and compare what-if schedules without clicking through a dozen menus, this is meant to be that tool.
 
