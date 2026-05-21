@@ -306,7 +306,7 @@ const DS=[
     {id:'c12',code:'ECE 306H',name:'Introduction to Computing',cat:'ECE',credits:3,done:false,note:'Pre-req: M 408C'},
     {id:'c13',code:'M 408D',name:'Seq. Series & Multivariable Calculus',cat:'MATH',credits:4,done:false,note:'Pre-req: M 408C'},
     {id:'c14',code:'BA 101H',name:'Professional Dev & Career Planning Honors',cat:'BUSINESS',credits:1,done:false,note:''},
-    {id:'c15',code:'MAN 101H',name:'Leadership & Innovation Honors',cat:'BUSINESS',credits:3,done:false,note:''},
+    {id:'c15',code:'MAN 101H',name:'Leadership & Innovation Honors',cat:'BUSINESS',credits:1,done:false,note:''},
     {id:'c16',code:'BA 324H',name:'Business Communication',cat:'BUSINESS',credits:3,done:false,note:'Pre-req: RHE 306, BA 101H'},
   ]},
   {id:'y1s',label:'Year 1 — Spring',courses:[
@@ -318,18 +318,18 @@ const DS=[
     {id:'c22',code:'ECO 304L',name:'Intro to Macroeconomics',cat:'BUSINESS',credits:3,done:false,note:''},
   ]},
   {id:'y2f',label:'Year 2 — Fall',courses:[
-    {id:'c23',code:'ECE 411H',name:'Circuit Theory',cat:'ECE',credits:3,done:false,note:'Pre-req: ECE 302H, PHY 303L, M 427J'},
+    {id:'c23',code:'ECE 411H',name:'Circuit Theory',cat:'ECE',credits:4,done:false,note:'Pre-req: ECE 302H, PHY 303L, M 427J'},
     {id:'c24',code:'ECE 313H',name:'Linear Systems & Signals',cat:'ECE',credits:3,done:false,note:'Pre-req: ECE 302H, M 427J, M 340L'},
     {id:'c25',code:'M 340L',name:'Matrices & Matrix Calculations',cat:'MATH',credits:3,done:false,note:'Pre-req: M 408D'},
     {id:'c26',code:'BAH 151H',name:'Honors Lyceum',cat:'BUSINESS',credits:1,done:false,note:''},
     {id:'c27',code:'ACC 311H',name:'Financial Accounting Honors',cat:'BUSINESS',credits:3,done:false,note:'Pre-req: BA 101H'},
-    {id:'c28',code:'STA 235H',name:'Data Science for Bus Applications Honors',cat:'BUSINESS',credits:3,done:false,note:'Pre-req: STA 301H'},
+    {id:'c28',code:'STA 235H',name:'Data Science for Bus Applications Honors',cat:'BUSINESS',credits:2,done:false,note:'Pre-req: STA 301H'},
   ]},
   {id:'y2s',label:'Year 2 — Spring',courses:[
     {id:'c29',code:'ECE 351H',name:'Probability / Random Processes',cat:'ECE',credits:3,done:false,note:''},
-    {id:'c30',code:'O M 235H',name:'Operations Management Honors',cat:'BUSINESS',credits:3,done:false,note:''},
+    {id:'c30',code:'O M 235H',name:'Operations Management Honors',cat:'BUSINESS',credits:2,done:false,note:''},
     {id:'c31',code:'ACC 312H',name:'Managerial Accounting Honors',cat:'BUSINESS',credits:3,done:false,note:'Pre-req: ACC 311H'},
-    {id:'c32',code:'DS 235H',name:'Intro to Decision Science Honors',cat:'BUSINESS',credits:3,done:false,note:''},
+    {id:'c32',code:'DS 235H',name:'Intro to Decision Science Honors',cat:'BUSINESS',credits:2,done:false,note:''},
     {id:'c33',code:'UGS 302/3',name:'First Year Signature Course',cat:'CORE',credits:3,done:false,note:''},
     {id:'c34',code:'VAPA',name:'Visual & Performing Arts',cat:'CORE',credits:3,done:false,note:'AP Credit accepted'},
   ]},
@@ -355,7 +355,7 @@ const DS=[
     {id:'c49',code:'BA 353',name:'Internship Credit',cat:'BUSINESS',credits:3,done:false,note:'Pre-req: BA 32H'},
   ]},
   {id:'y4s',label:'Year 4 — Spring',courses:[
-    {id:'c50',code:'ECE 464H',name:'Senior Design Project',cat:'ECE',credits:3,done:false,note:'Pre-req: ECE 364D'},
+    {id:'c50',code:'ECE 464H',name:'Senior Design Project',cat:'ECE',credits:4,done:false,note:'Pre-req: ECE 364D'},
     {id:'c51',code:'ATE',name:'Advanced Technical Elective',cat:'ADVANCED',credits:3,done:false,note:'Varies'},
     {id:'c52',code:'ATC-5',name:'Advanced Tech Component',cat:'ADVANCED',credits:3,done:false,note:'ECB students only'},
     {id:'c53',code:'MAN 374H',name:'Gen Mgmt & Strategy Honors',cat:'BUSINESS',credits:3,done:false,note:'4th year'},
@@ -562,24 +562,36 @@ function redo(){
 }
 
 // ─── GPA ──────────────────────────────────────────────────────────────────────
+// Defensive: trim/uppercase grade, coerce credits to a number so string credits
+// from legacy data or imports don't double up via string multiplication.
 function gpaFor(courses){
   let pts=0,hrs=0;
   for(const c of courses){
     if(!c.done)continue;
-    const p=GRADE_PTS[c.grade];
-    if(c.grade==null||c.grade===''||p==null)continue;
-    pts+=p*c.credits;hrs+=c.credits;
+    const g=String(c.grade??'').trim().toUpperCase();
+    if(!g||!(g in GRADE_PTS))continue;
+    const p=GRADE_PTS[g];
+    if(p==null)continue;
+    const cr=Number(c.credits)||0;
+    if(!cr)continue;
+    pts+=p*cr;hrs+=cr;
   }
   return{pts,hrs,gpa:hrs?pts/hrs:null};
 }
+// Major GPA is strict: ECE = only ECE-prefix courses; Business = only Business.
+// Math/Physics/AdvancedTech roll up into Overall but not into either major GPA.
 function gpaPanel(){
   const all=getAS().flatMap(s=>s.courses);
   return{
     overall:gpaFor(all),
-    eceMajor:gpaFor(all.filter(c=>c.cat==='ECE'||c.cat==='MATH'||c.cat==='PHY'||c.cat==='ADVANCED')),
+    eceMajor:gpaFor(all.filter(c=>c.cat==='ECE')),
     biz:gpaFor(all.filter(c=>c.cat==='BUSINESS')),
     all,
   };
+}
+// Per-semester GPA, computed over each semester's done+graded courses.
+function gpaPerSem(){
+  return getAS().filter(s=>!s.isOff).map(s=>({sem:s,g:gpaFor(s.courses)}));
 }
 function gradedRows(){
   const out=[];
@@ -994,9 +1006,10 @@ function rModal(){
         <div class="mbody">
           <div class="gpa-stats">
             <div class="gpa-stat"><div class="v">${fmt(p.overall)}</div><div class="l">Overall GPA</div><div style="font-size:9px;color:var(--text3);margin-top:2px">${p.overall.hrs} credits graded</div></div>
-            <div class="gpa-stat"><div class="v">${fmt(p.eceMajor)}</div><div class="l">ECE / Tech GPA</div><div style="font-size:9px;color:var(--text3);margin-top:2px">${p.eceMajor.hrs} credits</div></div>
-            <div class="gpa-stat"><div class="v">${fmt(p.biz)}</div><div class="l">Business GPA</div><div style="font-size:9px;color:var(--text3);margin-top:2px">${p.biz.hrs} credits</div></div>
+            <div class="gpa-stat"><div class="v">${fmt(p.eceMajor)}</div><div class="l">ECE Major GPA</div><div style="font-size:9px;color:var(--text3);margin-top:2px">${p.eceMajor.hrs} cr · ECE courses only</div></div>
+            <div class="gpa-stat"><div class="v">${fmt(p.biz)}</div><div class="l">Business GPA</div><div style="font-size:9px;color:var(--text3);margin-top:2px">${p.biz.hrs} cr · BHP courses only</div></div>
           </div>
+          ${(()=>{const sg=gpaPerSem().filter(x=>x.g.hrs>0);return sg.length?`<div class="gpa-target" style="margin-bottom:14px"><div style="font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px">Per-semester GPA</div>${sg.map(x=>`<div style="display:flex;justify-content:space-between;font-size:11px;padding:3px 0;border-bottom:1px dashed var(--border)"><span>${esc(x.sem.label)}</span><span><b>${fmt(x.g)}</b> <span style="color:var(--text3)">${x.g.hrs}cr</span></span></div>`).join('')}</div>`:'';})()}
           <div class="gpa-target">
             <label>Target overall GPA: <input type="number" min="0" max="4" step="0.01" value="${esc(S.gpaTarget)}" oninput="S.gpaTarget=this.value;updateTarget()"> <span style="font-size:10px;color:var(--text3)">UT scale: A=4.0, A-=3.67, B+=3.33…</span></label>
             <div class="res" id="gpa-target-res">${targetRes||'<span style=\"color:var(--text3)\">Enter a target to see what GPA your remaining courses need.</span>'}</div>
@@ -1081,15 +1094,17 @@ function rModal(){
       <div class="tk-prog">
         <div style="display:flex;justify-content:space-between;align-items:center"><b style="font-size:12px">${esc(prog.track.short)}</b><span style="font-size:11px;color:var(--text2)">${prog.coreHit}/${prog.coreTotal} cores · ${prog.electHit}/${prog.need} electives</span></div>
         <div class="tp-bar"><div class="tp-fill" style="width:${Math.min(100,(prog.coreHit+Math.min(prog.electHit,prog.need))/(prog.coreTotal+prog.need)*100)}%"></div></div>
-        <div class="tk-h">Required cores</div>
+        <div class="tk-h">Required cores <span style="font-weight:400;color:var(--text3);text-transform:none;letter-spacing:0">— click to add to your plan</span></div>
         <div class="tk-list">${prog.track.cores.map(c=>{
           const hit=codes.has(c.code.toUpperCase().replace(/H$/,''));
-          return`<div class="${hit?'ok':'miss'}">${hit?'✓':'○'} ${esc(c.code)} — ${esc(c.name)}${c.alt?` <span style=\"color:var(--text3)\">(${esc(c.alt)})</span>`:''}</div>`;
+          const click=hit?'':`style="cursor:pointer" title="Click to add to your plan" onclick="addTrackCourse('${esc(c.code)}','${esc(c.name)}')"`;
+          return`<div class="${hit?'ok':'miss'}" ${click}>${hit?'✓':'＋'} ${esc(c.code)} — ${esc(c.name)}${c.alt?` <span style=\"color:var(--text3)\">(${esc(c.alt)})</span>`:''}</div>`;
         }).join('')}</div>
-        <div class="tk-h">Approved electives (pick ${prog.need})</div>
+        <div class="tk-h">Approved electives (pick ${prog.need}) <span style="font-weight:400;color:var(--text3);text-transform:none;letter-spacing:0">— click to add</span></div>
         <div class="tk-list" style="columns:2;column-gap:18px">${prog.track.electives.map(e=>{
           const hit=codes.has(e.toUpperCase().replace(/H$/,''));
-          return`<div class="${hit?'ok':'miss'}">${hit?'✓':'○'} ${esc(e)}</div>`;
+          const click=hit?'':`style="cursor:pointer" title="Click to add" onclick="addTrackCourse('${esc(e)}','${esc(e)} (track elective)')"`;
+          return`<div class="${hit?'ok':'miss'}" ${click}>${hit?'✓':'＋'} ${esc(e)}</div>`;
         }).join('')}</div>
       </div>`:'';
     return`<div class="mbk" id="mbk">
@@ -1144,11 +1159,14 @@ function rModal(){
 
 // ─── Main render ──────────────────────────────────────────────────────────────
 function render(){
+  // Capture modal scroll position so things like the GPA grade picker don't
+  // jump the user back to the top every time they pick a grade.
+  const prevModalScroll=document.querySelector('.mbody')?.scrollTop||0;
   const act=getAct();
   const sems=getAS();
   const all=sems.flatMap(s=>s.courses);
   const total=all.length,done=all.filter(c=>c.done).length;
-  const totalCr=all.reduce((t,c)=>t+c.credits,0),doneCr=all.filter(c=>c.done).reduce((t,c)=>t+c.credits,0);
+  const totalCr=all.reduce((t,c)=>t+Number(c.credits||0),0),doneCr=all.filter(c=>c.done).reduce((t,c)=>t+Number(c.credits||0),0);
   const pct=total?Math.round(done/total*100):0;
 
   if(pct===100&&S.lastPct<100)setTimeout(fireConfetti,50);
@@ -1217,6 +1235,9 @@ function render(){
 
   if(S.renamingId&&S.modal==='schedules')setTimeout(()=>{const el=document.getElementById('ren-inp');if(el){el.focus();el.select();}},50);
   if(S.modal==='search')setTimeout(()=>{const i=document.getElementById('search-inp');if(i&&document.activeElement!==i)i.focus();},0);
+  // Restore modal scroll so picking a grade in a long GPA list doesn't jump
+  // the user back to the top of the modal.
+  if(S.modal&&prevModalScroll){const mb=document.querySelector('.mbody');if(mb)mb.scrollTop=prevModalScroll;}
 }
 
 // ─── Event delegation ─────────────────────────────────────────────────────────
@@ -1390,6 +1411,64 @@ window.wDrop=targetSemId=>{
       setAS(sems);
     }
     S.dragSrc=null;
+  });
+};
+
+// ─── Auto-scroll while dragging ───────────────────────────────────────────────
+// When a drag gets close to the top or bottom of the viewport, scroll the page
+// so the user can drag courses across long plans without releasing the mouse.
+let dragScrollDir=0,dragScrollRAF=null;
+function dragScrollTick(){
+  if(!dragScrollDir){dragScrollRAF=null;return;}
+  window.scrollBy(0,dragScrollDir*14);
+  dragScrollRAF=requestAnimationFrame(dragScrollTick);
+}
+document.addEventListener('dragover',e=>{
+  if(!S.dragSrc)return;
+  const y=e.clientY,vh=window.innerHeight,ZONE=90;
+  if(y<ZONE)dragScrollDir=-1;
+  else if(y>vh-ZONE)dragScrollDir=1;
+  else dragScrollDir=0;
+  if(dragScrollDir&&!dragScrollRAF)dragScrollRAF=requestAnimationFrame(dragScrollTick);
+});
+['dragend','drop','mouseup'].forEach(ev=>document.addEventListener(ev,()=>{dragScrollDir=0;}));
+
+// ─── Add a course from the track picker into the schedule ────────────────────
+// Parse credits from the course code first digit per UT convention.
+function parseCreditsFromCode(code){
+  const m=String(code||'').match(/[^\d]*(\d)/);
+  return m?parseInt(m[1],10):3;
+}
+function categoryForCode(code){
+  const c=String(code||'').trim().toUpperCase();
+  if(c.startsWith('M '))return'MATH';
+  if(c.startsWith('PHY'))return'PHY';
+  if(c.startsWith('ECE'))return'ECE';
+  return'ADVANCED';
+}
+window.addTrackCourse=(code,name)=>{
+  const sems=getAS();
+  // First try to replace an unfilled ATC-* or ATE placeholder so the slot
+  // counters in the default ECB plan stay accurate.
+  let targetSemId=null,replaceCid=null;
+  outer:for(const s of sems){
+    if(s.isOff)continue;
+    for(const c of s.courses){
+      const cd=String(c.code).trim().toUpperCase();
+      if(cd.startsWith('ATC-')||cd==='ATE'){targetSemId=s.id;replaceCid=c.id;break outer;}
+    }
+  }
+  const cat=categoryForCode(code);
+  const credits=parseCreditsFromCode(code);
+  mutate(()=>{
+    if(targetSemId&&replaceCid){
+      setAS(getAS().map(s=>s.id!==targetSemId?s:{...s,courses:s.courses.map(c=>c.id!==replaceCid?c:{...c,code,name,cat,credits,note:'Added from track picker'})}));
+    }else{
+      // No placeholder left, just append to Year 3 Fall (or the first non-off semester).
+      const sem=getAS().find(s=>s.id==='y3f'&&!s.isOff)||getAS().find(s=>!s.isOff);
+      if(!sem)return;
+      setAS(getAS().map(s=>s.id!==sem.id?s:{...s,courses:[...s.courses,{id:uid(),code,name,cat,credits,done:false,note:'Added from track picker',grade:''}]}));
+    }
   });
 };
 
