@@ -449,9 +449,14 @@ body{font-family:-apple-system,'Segoe UI',system-ui,sans-serif;background:var(--
 </script>
 <script>
 // ─── Static data ──────────────────────────────────────────────────────────────
-const APP_VERSION='2026.05.24.4';
+const APP_VERSION='2026.05.24.5';
+// Raw URL is used only for parsing APP_VERSION on the live copy — never as a user link
+// (raw.githubusercontent.com serves text/plain, so the browser shows source instead of rendering).
 const UPDATE_URL='https://raw.githubusercontent.com/rorohecker/college-course-planner/main/college-course-planner.html';
 const REPO_URL='https://github.com/rorohecker/college-course-planner';
+// Releases asset URL — GitHub sends Content-Disposition: attachment, so this downloads the file.
+const DOWNLOAD_URL='https://github.com/rorohecker/college-course-planner/releases/latest/download/college-course-planner.html';
+const RELEASES_URL='https://github.com/rorohecker/college-course-planner/releases/latest';
 const START_SEEN_KEY='cp-start-seen';
 const LAST_EXPORT_KEY='cp-last-export';
 const EXPORT_SNOOZE_KEY='cp-export-snooze';
@@ -1437,8 +1442,8 @@ function rBanners(){
   if(S.update?.state==='available'&&!S.updateDismissed){
     html+=`<div class="top-banner update">
       <span class="grow">⬆ Update available — v${esc(S.update.latest||'?')} is out (you're on v${esc(APP_VERSION)}).</span>
-      <a href="${esc(UPDATE_URL)}" target="_blank" rel="noopener">Open latest</a>
-      <a href="${esc(REPO_URL+'/commits/main')}" target="_blank" rel="noopener" class="ghost">What's new</a>
+      <a href="${esc(DOWNLOAD_URL)}" rel="noopener">Download latest</a>
+      <a href="${esc(RELEASES_URL)}" target="_blank" rel="noopener" class="ghost">What's new</a>
       <button data-a="dismiss-update" class="ghost" title="Dismiss until next version">×</button>
     </div>`;
   }
@@ -1454,7 +1459,7 @@ function rBanners(){
 
 function rStartNote(){
   const updateAction=S.update?.state==='available'
-    ?`<a class="linkbtn p" href="${esc(UPDATE_URL)}" target="_blank" rel="noopener">Open latest copy</a>`
+    ?`<a class="linkbtn p" href="${esc(DOWNLOAD_URL)}" rel="noopener">Download latest</a>`
     :`<button class="linkbtn" data-a="manual-update">Check updates</button>`;
   return `<div class="mbk">
     <div class="modal" style="max-width:470px">
@@ -1481,11 +1486,11 @@ function rModal(){
       <div class="mhdr"><h3>Planner Updates</h3><button class="mclose" data-a="close-modal">×</button></div>
       <div class="mbody">
         <p style="font-size:13px;color:var(--text2);line-height:1.45;margin-bottom:10px">${updateLine()}</p>
-        <p style="font-size:11px;color:var(--text3);line-height:1.45">This file checks the GitHub copy automatically on startup. A browser cannot overwrite a local HTML file by itself, so use the latest-copy link when an update is available.</p>
+        <p style="font-size:11px;color:var(--text3);line-height:1.45">This file checks GitHub on startup. <b>Download latest</b> grabs the newest <code>college-course-planner.html</code> from the latest release — save it over your existing copy in the same folder so your autosaved plan stays linked.</p>
       </div>
       <div class="mfooter">
         <button class="linkbtn" data-a="manual-update">Check Again</button>
-        ${S.update?.state==='available'?`<a class="linkbtn p" href="${esc(UPDATE_URL)}" target="_blank" rel="noopener">Open latest copy</a>`:''}
+        ${S.update?.state==='available'?`<a class="linkbtn p" href="${esc(DOWNLOAD_URL)}" rel="noopener">Download latest</a>`:''}
         <button data-a="close-modal" style="padding:6px 14px;border:1px solid var(--border2);border-radius:6px;cursor:pointer;font-size:12px;background:var(--surface2);color:var(--text)">Close</button>
       </div>
     </div>
