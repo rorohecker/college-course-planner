@@ -50,6 +50,7 @@ body{font-family:-apple-system,'Segoe UI',system-ui,sans-serif;background:var(--
 .hbtn.ghost{background:transparent;border-color:rgba(255,255,255,.25);color:rgba(255,255,255,.65)}
 .hbtn:disabled{opacity:.4;cursor:not-allowed}
 .pbar{height:3px;background:rgba(255,255,255,.25);border-radius:2px;margin-top:10px}
+.pbar-extra{margin-top:3px;opacity:.85}
 .pfill{height:100%;background:var(--gold);border-radius:2px;transition:width .5s}
 .nav{background:var(--surface);border-bottom:1px solid var(--border);padding:8px 20px;display:flex;gap:5px;align-items:center;flex-wrap:wrap;position:sticky;top:0;z-index:10}
 .nav-lbl{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-right:2px}
@@ -449,7 +450,7 @@ body{font-family:-apple-system,'Segoe UI',system-ui,sans-serif;background:var(--
 </script>
 <script>
 // ─── Static data ──────────────────────────────────────────────────────────────
-const APP_VERSION='2026.05.24.5';
+const APP_VERSION='2026.05.25.1';
 // Raw URL is used only for parsing APP_VERSION on the live copy — never as a user link
 // (raw.githubusercontent.com serves text/plain, so the browser shows source instead of rendering).
 const UPDATE_URL='https://raw.githubusercontent.com/rorohecker/college-course-planner/main/college-course-planner.html';
@@ -484,6 +485,10 @@ const LAYOUT=[
 ];
 const KNOWN=new Set(LAYOUT.flatMap(l=>l.ids));
 const BUSINESS_LAYOUT=[
+  {type:'pair',label:'Year 1',ids:['y1f','y1s']},
+  {type:'pair',label:'Year 2',ids:['y2f','y2s']},
+  {type:'pair',label:'Year 3',ids:['y3f','y3s']},
+  {type:'pair',label:'Year 4',ids:['y4f','y4s']},
   {type:'pair',label:'BBA Foundations',ids:['lower','core']},
   {type:'pair',label:'Shared Business Requirements',ids:['upper','human']},
   {type:'pair',label:'Business Tracks',ids:['major','canfield']},
@@ -571,6 +576,14 @@ const DS=[
 ];
 
 const BUSINESS_DS=[
+  {id:'y1f',label:'Year 1 — Fall',courses:[]},
+  {id:'y1s',label:'Year 1 — Spring',courses:[]},
+  {id:'y2f',label:'Year 2 — Fall',courses:[]},
+  {id:'y2s',label:'Year 2 — Spring',courses:[]},
+  {id:'y3f',label:'Year 3 — Fall',courses:[]},
+  {id:'y3s',label:'Year 3 — Spring',courses:[]},
+  {id:'y4f',label:'Year 4 — Fall',courses:[]},
+  {id:'y4s',label:'Year 4 — Spring',courses:[]},
   {id:'lower',label:'Lower-Division Business Core',courses:[
     {id:'b1',code:'MAN 101',name:'Introduction to Management',cat:'BUSINESS',credits:1,done:false,note:'Freshmen: MAN 101S; transfer: MAN 101T',grade:''},
     {id:'b2',code:'B A 101',name:'Professional Development and Career Planning',cat:'BUSINESS',credits:1,done:false,note:'Freshmen: B A 101S; transfer: B A 101T',grade:''},
@@ -785,7 +798,23 @@ const CURRICULUM_TEMPLATES={
 
 // ─── State ────────────────────────────────────────────────────────────────────
 let _c=300;
-const uid=()=>'c'+(++_c);
+const uid=()=>'u'+(++_c);
+// A course counts toward the degree if it came from a curriculum template
+// (DS / BUSINESS_DS / BUSINESS_TRACKS). Template IDs use these prefixes:
+//   ECE base: c1-c61          BBA base: b1-b37          Track-added: biz_<key>_<i>
+// User-added courses use 'u' prefix (uid()) so they can be excluded as 'extra'.
+// Courses with `req:false` explicitly set are also treated as extras (manual override).
+function isRequired(c){
+  if(c?.req===false)return false;
+  if(c?.req===true)return true;
+  const id=String(c?.id||'');
+  if(id.startsWith('biz_'))return true;
+  if(/^b\d+$/.test(id))return true;
+  // Template ECE courses are c1-c61; anything higher (or u-prefix) was user-added.
+  const m=/^c(\d+)$/.exec(id);
+  if(m)return parseInt(m[1],10)<=100;
+  return false;
+}
 const sid=()=>'s'+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 const esc=s=>String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 const dc=x=>JSON.parse(JSON.stringify(x));
@@ -838,6 +867,54 @@ function updateLine(){
   if(u.state==='offline')return'Could not check GitHub right now. Try again when you are online.';
   return`Current version: ${esc(APP_VERSION)}.`;
 }
+// In-place update flow:
+//   1. fetch the new HTML from raw GitHub
+//   2. on supported browsers (Chrome/Edge/Opera) use showSaveFilePicker so the
+//      user can write the new content directly over their existing file in one step
+//   3. fall back to a regular download otherwise
+//   4. after saving, prompt the user to reload — same path = same localStorage origin,
+//      so their plan stays intact
+async function applyUpdate(){
+  if(typeof fetch!=='function'){alert('Your browser cannot fetch updates here.');return;}
+  S.update={...S.update,state:'applying',error:null};render();
+  try{
+    const res=await fetch(UPDATE_URL+'?v='+Date.now(),{cache:'no-store'});
+    if(!res.ok)throw new Error('HTTP '+res.status);
+    const html=await res.text();
+    const latestMatch=html.match(/const APP_VERSION=['"]([^'"]+)['"]/);
+    const latest=latestMatch?latestMatch[1]:S.update.latest;
+    // Try the File System Access API first.
+    if('showSaveFilePicker' in window){
+      try{
+        const handle=await window.showSaveFilePicker({
+          suggestedName:'college-course-planner.html',
+          types:[{description:'College Course Planner',accept:{'text/html':['.html']}}],
+        });
+        const writable=await handle.createWritable();
+        await writable.write(new Blob([html],{type:'text/html'}));
+        await writable.close();
+        S.update={...S.update,state:'applied',latest};render();
+        return;
+      }catch(err){
+        if(err&&err.name==='AbortError'){S.update={...S.update,state:'available'};render();return;}
+        // any other FSA error → fall through to download
+      }
+    }
+    // Fallback: trigger a regular browser download.
+    const blob=new Blob([html],{type:'text/html'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url;a.download='college-course-planner.html';
+    document.body.appendChild(a);a.click();a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),1000);
+    S.update={...S.update,state:'downloaded',latest};render();
+  }catch(err){
+    S.update={...S.update,state:'available',error:err?.message||String(err)};
+    alert('Could not download the update: '+(err?.message||err));
+    render();
+  }
+}
+
 async function checkForUpdates(showModal=false){
   if(showModal){S.modal='update';S.update={state:'checking',latest:null,checkedAt:null,error:null};render();}
   if(typeof fetch!=='function'){
@@ -948,7 +1025,15 @@ function syncBusinessTracks(sch,nextTracks=businessTrackKeys(sch)){
   const canfieldKey=clean.includes('canfield')?'canfield':null;
   const prev=new Map((sch.sems||[]).map(s=>[s.id,s]));
   const baseIds=new Set(BUSINESS_DS.map(s=>s.id));
-  const baseRaw=(sch.sems?.length?sch.sems:dc(BUSINESS_DS)).filter(s=>baseIds.has(s.id)&&s.id!=='major'&&s.id!=='canfield');
+  let baseRaw=(sch.sems?.length?sch.sems:dc(BUSINESS_DS)).filter(s=>baseIds.has(s.id)&&s.id!=='major'&&s.id!=='canfield');
+  // Migration: add any missing base sems (e.g. y1f-y4s for older biz schedules) as empty.
+  const have=new Set(baseRaw.map(s=>s.id));
+  for(const ds of BUSINESS_DS){
+    if(ds.id==='major'||ds.id==='canfield'||have.has(ds.id))continue;
+    baseRaw.push({id:ds.id,label:ds.label,courses:[]});
+  }
+  const ord=new Map(BUSINESS_DS.map((ds,i)=>[ds.id,i]));
+  baseRaw.sort((a,b)=>(ord.get(a.id)??99)-(ord.get(b.id)??99));
   const base=applyHonorsSwap(baseRaw,!!canfieldKey);
   const major=majorKey
     ?{id:'major',label:'Major Track - '+BUSINESS_TRACKS[majorKey].name,courses:pruneTrackDupes(base,businessTrackCourses(majorKey,prev.get('major')))}
@@ -1442,7 +1527,7 @@ function rBanners(){
   if(S.update?.state==='available'&&!S.updateDismissed){
     html+=`<div class="top-banner update">
       <span class="grow">⬆ Update available — v${esc(S.update.latest||'?')} is out (you're on v${esc(APP_VERSION)}).</span>
-      <a href="${esc(DOWNLOAD_URL)}" rel="noopener">Download latest</a>
+      <button data-a="open-update-modal">${'showSaveFilePicker' in window?'Apply update':'Download update'}</button>
       <a href="${esc(RELEASES_URL)}" target="_blank" rel="noopener" class="ghost">What's new</a>
       <button data-a="dismiss-update" class="ghost" title="Dismiss until next version">×</button>
     </div>`;
@@ -1459,7 +1544,7 @@ function rBanners(){
 
 function rStartNote(){
   const updateAction=S.update?.state==='available'
-    ?`<a class="linkbtn p" href="${esc(DOWNLOAD_URL)}" rel="noopener">Download latest</a>`
+    ?`<button class="linkbtn p" data-a="open-update-modal">${'showSaveFilePicker' in window?'Apply update':'Download update'}</button>`
     :`<button class="linkbtn" data-a="manual-update">Check updates</button>`;
   return `<div class="mbk">
     <div class="modal" style="max-width:470px">
@@ -1481,20 +1566,40 @@ function rStartNote(){
 function rModal(){
   if(!S.modal)return'';
 
-  if(S.modal==='update')return`<div class="mbk" id="mbk">
-    <div class="modal" style="max-width:470px">
-      <div class="mhdr"><h3>Planner Updates</h3><button class="mclose" data-a="close-modal">×</button></div>
-      <div class="mbody">
-        <p style="font-size:13px;color:var(--text2);line-height:1.45;margin-bottom:10px">${updateLine()}</p>
-        <p style="font-size:11px;color:var(--text3);line-height:1.45">This file checks GitHub on startup. <b>Download latest</b> grabs the newest <code>college-course-planner.html</code> from the latest release — save it over your existing copy in the same folder so your autosaved plan stays linked.</p>
+  if(S.modal==='update'){
+    const st=S.update?.state;
+    const fsaSupported='showSaveFilePicker' in window;
+    let body='';
+    if(st==='applied'){
+      body=`<p style="font-size:13px;color:var(--green);line-height:1.45;margin-bottom:10px">✓ Update saved to disk. Reload this tab to run the new version — your saved plan stays put.</p>
+        <p style="font-size:11px;color:var(--text3);line-height:1.45">If you saved to a <b>different file path</b> than where this tab is currently running, open that new file directly instead of reloading.</p>`;
+    }else if(st==='downloaded'){
+      body=`<p style="font-size:13px;color:var(--text2);line-height:1.45;margin-bottom:10px">📥 Latest copy downloaded. Replace your existing <code>college-course-planner.html</code> with the new one (keep the same folder), then reload this tab.</p>
+        <p style="font-size:11px;color:var(--text3);line-height:1.45">Your plan is autosaved in this browser and stays linked to the file path — keep the new file in the same place.</p>`;
+    }else if(st==='applying'){
+      body=`<p style="font-size:13px;color:var(--text2);line-height:1.45">⏳ Fetching the latest version…</p>`;
+    }else{
+      body=`<p style="font-size:13px;color:var(--text2);line-height:1.45;margin-bottom:10px">${updateLine()}</p>
+        <p style="font-size:11px;color:var(--text3);line-height:1.45">${fsaSupported
+          ?'Click <b>Apply update</b> to fetch the new version and write it directly over your current file (the browser will ask where to save).'
+          :'Click <b>Download update</b> to grab the new file. Replace your existing copy in the same folder, then reload.'} Your saved plan stays in this browser as long as the file path is the same.</p>`;
+    }
+    const applyBtn=(st==='available'||st==='current')
+      ?`<button class="linkbtn p" data-a="apply-update">${fsaSupported?'Apply update':'Download update'}</button>`:'';
+    const reloadBtn=(st==='applied'||st==='downloaded')
+      ?`<button class="linkbtn p" onclick="location.reload()">Reload now</button>`:'';
+    return`<div class="mbk" id="mbk">
+      <div class="modal" style="max-width:500px">
+        <div class="mhdr"><h3>Planner Updates</h3><button class="mclose" data-a="close-modal">×</button></div>
+        <div class="mbody">${body}</div>
+        <div class="mfooter">
+          <button class="linkbtn" data-a="manual-update" ${st==='applying'?'disabled':''}>Check again</button>
+          ${applyBtn}${reloadBtn}
+          <button data-a="close-modal" style="padding:6px 14px;border:1px solid var(--border2);border-radius:6px;cursor:pointer;font-size:12px;background:var(--surface2);color:var(--text)">Close</button>
+        </div>
       </div>
-      <div class="mfooter">
-        <button class="linkbtn" data-a="manual-update">Check Again</button>
-        ${S.update?.state==='available'?`<a class="linkbtn p" href="${esc(DOWNLOAD_URL)}" rel="noopener">Download latest</a>`:''}
-        <button data-a="close-modal" style="padding:6px 14px;border:1px solid var(--border2);border-radius:6px;cursor:pointer;font-size:12px;background:var(--surface2);color:var(--text)">Close</button>
-      </div>
-    </div>
-  </div>`;
+    </div>`;
+  }
 
   if(S.modal==='export'){
     const tab=S.modalTab||'code';
@@ -1691,11 +1796,22 @@ function rModal(){
 
   if(S.modal==='transcript'){
     return`<div class="mbk" id="mbk">
-      <div class="modal" style="max-width:600px">
-        <div class="mhdr"><h3>📝 Import from UT Direct transcript</h3><button class="mclose" data-a="close-modal">×</button></div>
+      <div class="modal" style="max-width:620px">
+        <div class="mhdr"><h3>📝 Import from UT transcript</h3><button class="mclose" data-a="close-modal">×</button></div>
         <div class="mbody">
-          <p style="font-size:12px;color:var(--text2);margin-bottom:8px">Paste the completed-courses section of your UT Direct transcript (or any text with course codes and grades, one per line). Courses already in your plan are marked done with their grade.</p>
-          <textarea id="transcript-in" placeholder="ECE 302H   3.0   A&#10;M 408D     4.0   B+&#10;..." style="width:100%;min-height:180px;padding:9px;border:1px solid var(--border2);border-radius:7px;background:var(--surface2);color:var(--text);font-family:monospace;font-size:11px;outline:none;margin-bottom:8px"></textarea>
+          <p style="font-size:12px;color:var(--text2);margin-bottom:6px">Paste your Academic Summary text (the whole table from the PDF works) or any line that contains a course code + grade. Matching courses in your plan are marked done with their grade.</p>
+          <details style="margin-bottom:8px"><summary style="font-size:11px;color:var(--text3);cursor:pointer">Accepted formats</summary>
+            <pre style="font-size:10px;color:var(--text3);background:var(--surface2);padding:7px 9px;border-radius:5px;margin-top:5px;line-height:1.4;white-space:pre-wrap">ECE 302H   3.0   A
+B A 324H   BUSN COMM: ORAL/WRIT: HON   A-   2250   In residence   3.0   11.01
+B A S353   INTERNSHIP IN BUSINESS ADMIN   Z   69138   Extension   3.0   0.00
+GOV 310L   AMERICAN GOVERNMENT   CR   16210   Credit by exam   3.0   0.00</pre>
+            <p style="font-size:10px;color:var(--text3);margin-top:4px">Multi-word departments (B A, A S), special prefixes (S353), and grades A+ through F, CR, NC, W, Q, IP, and Z are recognized.</p>
+          </details>
+          <div style="display:flex;gap:6px;margin-bottom:6px">
+            <button onclick="pasteTranscriptFromClipboard()" style="padding:4px 10px;font-size:11px;background:var(--surface2);border:1px solid var(--border2);border-radius:5px;cursor:pointer;color:var(--text)">📋 Paste from clipboard</button>
+            <button onclick="document.getElementById('transcript-in').value='';document.getElementById('transcript-result').innerHTML='';" style="padding:4px 10px;font-size:11px;background:transparent;border:1px solid var(--border2);border-radius:5px;cursor:pointer;color:var(--text3)">Clear</button>
+          </div>
+          <textarea id="transcript-in" placeholder="Paste your transcript here…" style="width:100%;min-height:180px;padding:9px;border:1px solid var(--border2);border-radius:7px;background:var(--surface2);color:var(--text);font-family:monospace;font-size:11px;outline:none;margin-bottom:8px"></textarea>
           <div id="transcript-result" style="font-size:12px;color:var(--text)"></div>
         </div>
         <div class="mfooter">
@@ -1899,9 +2015,14 @@ function render(){
   const act=getAct();
   const sems=getAS();
   const all=sems.flatMap(s=>s.courses);
+  const reqAll=all.filter(isRequired);
+  const addAll=all.filter(c=>!isRequired(c));
+  const sumCr=arr=>arr.reduce((t,c)=>t+Number(c.credits||0),0);
+  const reqTotalCr=sumCr(reqAll),reqDoneCr=sumCr(reqAll.filter(c=>c.done));
+  const addTotalCr=sumCr(addAll),addDoneCr=sumCr(addAll.filter(c=>c.done));
   const total=all.length,done=all.filter(c=>c.done).length;
-  const totalCr=all.reduce((t,c)=>t+Number(c.credits||0),0),doneCr=all.filter(c=>c.done).reduce((t,c)=>t+Number(c.credits||0),0);
-  const pct=total?Math.round(done/total*100):0;
+  const pct=reqTotalCr?Math.round(reqDoneCr/reqTotalCr*100):(total?Math.round(done/total*100):0);
+  const addPct=addTotalCr?Math.round(addDoneCr/addTotalCr*100):0;
 
   if(pct===100&&S.lastPct<100)setTimeout(fireConfetti,50);
   S.lastPct=pct;
@@ -1943,8 +2064,8 @@ function render(){
         </div>
         <div class="hdr-right">
           <div class="stats">
-            <div class="stat"><div class="v">${done}/${total}</div><div class="l">Done</div></div>
-            <div class="stat"><div class="v">${doneCr}/${totalCr}</div><div class="l">Credits</div></div>
+            <div class="stat" title="Credits earned out of credits required for the degree"><div class="v">${reqDoneCr}/${reqTotalCr}</div><div class="l">Degree cr</div></div>
+            ${addAll.length?`<div class="stat" title="Additional courses you've added beyond the degree requirements"><div class="v">${addDoneCr}/${addTotalCr}</div><div class="l">Extra cr</div></div>`:''}
             <div class="stat"><div class="v">${pct}%</div><div class="l">Progress</div></div>
           </div>
           <div class="hdr-btns">
@@ -1968,7 +2089,8 @@ function render(){
           </div>
         </div>
       </div>
-      <div class="pbar"><div class="pfill" style="width:${pct}%"></div></div>
+      <div class="pbar" title="Degree completion: ${reqDoneCr} of ${reqTotalCr} required credits"><div class="pfill" style="width:${pct}%"></div></div>
+      ${addAll.length?`<div class="pbar pbar-extra" title="Additional courses: ${addDoneCr} of ${addTotalCr} extra credits"><div class="pfill" style="width:${addPct}%;background:var(--gold);opacity:.6"></div></div>`:''}
     </div>
     ${rSelToolbar()}
     <nav class="nav">
@@ -2004,6 +2126,8 @@ document.addEventListener('click',e=>{
     S.startNote=false;render();
   }
   else if(a==='manual-update'){checkForUpdates(!S.startNote);}
+  else if(a==='open-update-modal'){S.modal='update';render();}
+  else if(a==='apply-update'){applyUpdate();}
   else if(a==='dismiss-update'){
     if(S.update?.latest){try{localStorage.setItem(UPDATE_DISMISS_KEY,S.update.latest);}catch(e){}}
     S.updateDismissed=true;render();
@@ -2385,19 +2509,33 @@ document.getElementById('restore-file-input').addEventListener('change',async e=
 // real courses but don't match anything in the plan get reported back so the
 // user can add them.
 function parseTranscript(text){
+  // Handles both casual paste ("ECE 302H A") and the UT Academic Summary PDF format:
+  //   "ECE 302H    INTRO ELECTRICAL ENGR: HONORS    C+    18215    In residence    3.0    6.99"
+  //   "B A 324H   BUSN COMM: ORAL/WRIT: HON         A-    2250     In residence    3.0    11.01"
+  //   "B A S353   INTERNSHIP IN BUSINESS ADMIN      Z     69138    Extension       3.0    0.00"
+  // Course code = dept (1-4 letters, optional second word of 1-3 letters)
+  //               + optional 1-letter prefix + 3 digits + optional 1-letter suffix.
   const lines=text.split(/[\r\n]+/);
-  const codeRe=/\b([A-Z][A-Z\s]{0,4})\s+(\d{3})([A-Z]?)\b/;
-  const gradeRe=/\b(A\+|A-|B\+|B-|C\+|C-|D\+|D-|A|B|C|D|F|CR|NC|W|Q|IP)(?:\W|$)/;
+  const codeRe=/\b([A-Z]{1,4}(?:\s+[A-Z]{1,3})?)\s+([A-Z]?)(\d{3})([A-Z]?)\b/;
+  // Grades: standard letters, CR/NC, W/Q/IP, plus Z (in-progress for internships, etc).
+  const gradeRe=/\b(A\+|A-|B\+|B-|C\+|C-|D\+|D-|A|B|C|D|F|CR|NC|W|Q|IP|Z)\b/;
   const out=[];
   for(const raw of lines){
     const line=raw.replace(/\s+/g,' ').trim();
     if(!line)continue;
     const mc=line.match(codeRe);
     if(!mc)continue;
-    const mg=line.match(gradeRe);
+    const dept=mc[1].replace(/\s+/g,' ').trim();
+    const num=(mc[2]||'')+mc[3]+(mc[4]||'');
+    const code=`${dept} ${num}`;
+    // Search for grade only AFTER the course code to avoid catching letters
+    // inside the code itself (e.g. the 'A' in 'B A 324H').
+    const after=line.slice((mc.index||0)+mc[0].length);
+    const mg=after.match(gradeRe);
     if(!mg)continue;
-    const code=`${mc[1].trim()} ${mc[2]}${mc[3]||''}`;
-    out.push({code,grade:mg[1],raw:line});
+    let grade=mg[1];
+    if(grade==='Z')grade='IP'; // in-progress courses get IP per UT GPA rules
+    out.push({code,grade,raw:line});
   }
   return out;
 }
@@ -2422,6 +2560,16 @@ function applyTranscript(parsed){
   for(const[code,grade]of updates){if(!allCodes.has(code))unmatched.push({code,grade});}
   return{matched,unmatched,total:parsed.length};
 }
+window.pasteTranscriptFromClipboard=async()=>{
+  const ta=document.getElementById('transcript-in');if(!ta)return;
+  try{
+    const text=await navigator.clipboard.readText();
+    if(!text){alert('Clipboard is empty.');return;}
+    ta.value=text;ta.focus();
+  }catch(err){
+    alert('Could not read clipboard. Paste manually with Ctrl+V (Cmd+V on Mac).');
+  }
+};
 window.runTranscriptImport=()=>{
   const ta=document.getElementById('transcript-in');if(!ta)return;
   const parsed=parseTranscript(ta.value);
