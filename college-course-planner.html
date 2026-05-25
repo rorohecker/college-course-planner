@@ -449,7 +449,7 @@ body{font-family:-apple-system,'Segoe UI',system-ui,sans-serif;background:var(--
 </script>
 <script>
 // ─── Static data ──────────────────────────────────────────────────────────────
-const APP_VERSION='2026.05.24.2';
+const APP_VERSION='2026.05.24.3';
 const UPDATE_URL='https://raw.githubusercontent.com/rorohecker/college-course-planner/main/college-course-planner.html';
 const REPO_URL='https://github.com/rorohecker/college-course-planner';
 const START_SEEN_KEY='cp-start-seen';
@@ -943,10 +943,14 @@ const SK='cp-v3',SNAPK='cp-snap-v1';
 let _saveTimer=null;
 let _saveRev=0;            // bumps every mutation; used to invalidate memo caches.
 function bumpRev(){_saveRev++;}
+let _dirtySinceBackup=false;
+const UNLOAD_WARN_KEY='cp-unload-warn';
+function unloadWarnEnabled(){try{return localStorage.getItem(UNLOAD_WARN_KEY)!=='off';}catch(e){return true;}}
 // Debounced write. Rapid edits (typing in a target field, dragging quickly)
 // only commit to disk after 250ms of quiet. beforeunload also flushes.
 function save(){
   bumpRev();
+  _dirtySinceBackup=true;
   if(_saveTimer)clearTimeout(_saveTimer);
   _saveTimer=setTimeout(_saveNow,250);
 }
@@ -959,7 +963,13 @@ async function _saveNow(){
   showSavedPulse();
   const stamp=document.getElementById('saved-stamp');if(stamp)stamp.textContent='saved '+relTime(S.lastSaved);
 }
-window.addEventListener('beforeunload',()=>{if(_saveTimer){clearTimeout(_saveTimer);_saveNow();}});
+window.addEventListener('beforeunload',e=>{
+  if(_saveTimer){clearTimeout(_saveTimer);_saveNow();}
+  if(_dirtySinceBackup&&unloadWarnEnabled()){
+    // Browsers ignore custom text and show their generic prompt; reminder shows up either way.
+    e.preventDefault();e.returnValue='Save a backup of your plan before closing?';return e.returnValue;
+  }
+});
 function showSavedPulse(){
   const el=document.getElementById('saved-pulse');if(!el)return;
   el.classList.remove('on');void el.offsetWidth;el.classList.add('on');
@@ -1665,6 +1675,10 @@ function rModal(){
             <button onclick="downloadBackup()" style="padding:10px 14px;background:var(--accent);color:#fff;border:none;border-radius:7px;cursor:pointer;font-size:13px;font-weight:600">⬇ Download backup.json</button>
             <button onclick="pickRestoreFile()" style="padding:10px 14px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:7px;cursor:pointer;font-size:13px">⬆ Restore from file…</button>
           </div>
+          <label style="display:flex;align-items:center;gap:8px;margin-top:14px;font-size:12px;color:var(--text2);cursor:pointer">
+            <input type="checkbox" ${unloadWarnEnabled()?'checked':''} onchange="setUnloadWarn(this.checked)">
+            Warn me before closing if I've edited the plan since my last backup
+          </label>
         </div>
         <div class="mfooter"><button data-a="close-modal" style="padding:6px 14px;border:1px solid var(--border2);border-radius:6px;cursor:pointer;font-size:12px;background:var(--surface2);color:var(--text)">Close</button></div>
       </div>
@@ -2306,8 +2320,10 @@ window.downloadBackup=()=>{
   writeLastExport(Date.now());
   writeExportSnooze(0);
   recomputeExportReminder();
+  _dirtySinceBackup=false;
   render();
 };
+window.setUnloadWarn=on=>{try{localStorage.setItem(UNLOAD_WARN_KEY,on?'on':'off');}catch(e){}render();};
 window.pickRestoreFile=()=>document.getElementById('restore-file-input').click();
 document.getElementById('restore-file-input').addEventListener('change',async e=>{
   const file=e.target.files[0];if(!file)return;
