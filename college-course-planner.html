@@ -449,7 +449,7 @@ body{font-family:-apple-system,'Segoe UI',system-ui,sans-serif;background:var(--
 </script>
 <script>
 // ─── Static data ──────────────────────────────────────────────────────────────
-const APP_VERSION='2026.05.24.3';
+const APP_VERSION='2026.05.24.4';
 const UPDATE_URL='https://raw.githubusercontent.com/rorohecker/college-course-planner/main/college-course-planner.html';
 const REPO_URL='https://github.com/rorohecker/college-course-planner';
 const START_SEEN_KEY='cp-start-seen';
@@ -550,7 +550,7 @@ const DS=[
     {id:'c44',code:'MKT 337H',name:'Principles of Marketing Honors',cat:'BUSINESS',credits:3,done:false,note:''},
   ]},
   {id:'y4f',label:'Year 4 — Fall',courses:[
-    {id:'c45',code:'ECE 364D',name:'Intro to Engineering Design',cat:'ECE',credits:3,done:false,note:'Writing flag (Wr)'},
+    {id:'c45',code:'ECE 364D',name:'Intro to Engineering Design',cat:'ECE',credits:3,done:false,note:''},
     {id:'c46',code:'ATC-4',name:'Advanced Tech Component',cat:'ADVANCED',credits:3,done:false,note:'ECB students only'},
     {id:'c47',code:'LEB 323H',name:'Business Law & Ethics Honors',cat:'BUSINESS',credits:3,done:false,note:'4th year; Pre-req: ACC 312H'},
     {id:'c48',code:'GOV 312L/P',name:'American Government',cat:'CORE',credits:3,done:false,note:''},
@@ -587,7 +587,6 @@ const BUSINESS_DS=[
     {id:'b16',code:'SCI/TECH I',name:'Science and Technology Part I',cat:'CORE',credits:3,done:false,note:'',grade:''},
     {id:'b17',code:'SCI/TECH I/II',name:'Science and Technology Part I or II',cat:'CORE',credits:3,done:false,note:'',grade:''},
     {id:'b18',code:'VAPA',name:'Visual and Performing Arts',cat:'CORE',credits:3,done:false,note:'',grade:''},
-    {id:'b19',code:'WR FLAG',name:'Intensive Writing course not used elsewhere in core',cat:'CORE',credits:3,done:false,note:'Use a course that carries the writing flag',grade:''},
   ]},
   {id:'upper',label:'Upper-Division Business Core',courses:[
     {id:'b20',code:'STA 301',name:'Introduction to Data Science',cat:'BUSINESS',credits:3,done:false,note:'',grade:''},
@@ -655,14 +654,13 @@ const TRACKS={
 };
 
 const BUSINESS_TRACKS={
-  canfield:{name:'Canfield Business Honors',kind:'honors',short:'Canfield',note:'Honors add-on. Canfield can stay selected alongside one BBA major track.',courses:[
+  canfield:{name:'Canfield Business Honors',kind:'honors',short:'Canfield',note:'Honors add-on. Selecting Canfield auto-swaps shared BBA core courses to their Honors (H) versions. Canfield can stay selected alongside one BBA major track.',courses:[
     {code:'B A 151H',name:'Honors Lyceum',credits:1},
     {code:'MAN 327H',name:'Entrepreneurship and Innovation Honors',credits:3},
     {code:'LEB 323H',name:'Business Law and Ethics Honors',credits:3},
     {code:'MAN 374H',name:'General Management and Strategy Honors',credits:3},
     {code:'UD BUS ELEC 1',name:'Upper-Division Business Elective',credits:3},
     {code:'UD BUS ELEC 2',name:'Upper-Division Business Elective',credits:3},
-    {code:'HONORS CORE',name:'Use honors versions of shared BBA core where available',credits:0,note:'MAN 101H, B A 101H, B A 324H, STA 235H, STA 301H, MIS 301H, ACC 311H, ACC 312H, D S 235H, O M 235H, MKT 337H, MAN 336H, FIN 357H'},
   ]},
   accounting:{name:'Accounting',kind:'major',short:'Accounting',courses:[
     {code:'ACC 326',name:'Financial Accounting - Intermediate',credits:3},
@@ -901,18 +899,57 @@ function businessTrackCourses(key,prev){
     };
   });
 }
+// Shared BBA core courses → Canfield honors equivalents. Course names get
+// " Honors" suffixed; codes get the H suffix per UT McCombs conventions.
+const HONORS_MAP={
+  'MAN 101':'MAN 101H','B A 101':'B A 101H','B A 324':'B A 324H','STA 235':'STA 235H',
+  'STA 301':'STA 301H','MIS 301':'MIS 301H','ACC 311':'ACC 311H','ACC 312':'ACC 312H',
+  'D S 235':'D S 235H','O M 235':'O M 235H','MAN 336':'MAN 336H','MKT 337':'MKT 337H',
+  'FIN 357':'FIN 357H','LEB 323/BGS 337':'LEB 323H',
+};
+const HONORS_REVERSE=Object.fromEntries(Object.entries(HONORS_MAP).map(([k,v])=>[v,k]));
+function applyHonorsSwap(sems,honorsOn){
+  return sems.map(sem=>({...sem,courses:sem.courses.map(c=>{
+    const code=String(c.code||'').trim();
+    if(honorsOn&&HONORS_MAP[code]){
+      const h=HONORS_MAP[code];
+      const nm=/honors/i.test(c.name||'')?c.name:(c.name||'').replace(/\s*$/,'')+' Honors';
+      return {...c,code:h,name:nm};
+    }
+    if(!honorsOn&&HONORS_REVERSE[code]){
+      const base=HONORS_REVERSE[code];
+      const nm=(c.name||'').replace(/\s*Honors\s*$/i,'').trim();
+      return {...c,code:base,name:nm};
+    }
+    return c;
+  })}));
+}
+// Drop auto-generated track courses whose code already appears in earlier sems.
+// Custom/user-edited base courses keep their original `b<N>` IDs and aren't touched.
+// Manual additions (`uid()`-based IDs) are also untouched.
+function pruneTrackDupes(earlierSems,trackCourses){
+  const codes=new Set();
+  for(const sem of earlierSems)for(const c of sem.courses){
+    const k=String(c.code||'').trim().toUpperCase();if(k)codes.add(k);
+  }
+  return trackCourses.filter(c=>{
+    const k=String(c.code||'').trim().toUpperCase();
+    return !k||!codes.has(k);
+  });
+}
 function syncBusinessTracks(sch,nextTracks=businessTrackKeys(sch)){
   const clean=businessTrackKeys({bizTracks:nextTracks});
   const majorKey=clean.find(k=>BUSINESS_TRACKS[k].kind==='major')||null;
   const canfieldKey=clean.includes('canfield')?'canfield':null;
   const prev=new Map((sch.sems||[]).map(s=>[s.id,s]));
   const baseIds=new Set(BUSINESS_DS.map(s=>s.id));
-  const base=(sch.sems?.length?sch.sems:dc(BUSINESS_DS)).filter(s=>baseIds.has(s.id)&&s.id!=='major'&&s.id!=='canfield');
+  const baseRaw=(sch.sems?.length?sch.sems:dc(BUSINESS_DS)).filter(s=>baseIds.has(s.id)&&s.id!=='major'&&s.id!=='canfield');
+  const base=applyHonorsSwap(baseRaw,!!canfieldKey);
   const major=majorKey
-    ?{id:'major',label:'Major Track - '+BUSINESS_TRACKS[majorKey].name,courses:businessTrackCourses(majorKey,prev.get('major'))}
+    ?{id:'major',label:'Major Track - '+BUSINESS_TRACKS[majorKey].name,courses:pruneTrackDupes(base,businessTrackCourses(majorKey,prev.get('major')))}
     :dc(BUSINESS_DS.find(s=>s.id==='major'));
   const sems=[...base,major];
-  if(canfieldKey)sems.push({id:'canfield',label:'Canfield Track - Canfield Business Honors',courses:businessTrackCourses('canfield',prev.get('canfield'))});
+  if(canfieldKey)sems.push({id:'canfield',label:'Canfield Track - Canfield Business Honors',courses:pruneTrackDupes(sems,businessTrackCourses('canfield',prev.get('canfield')))});
   return {...sch,kind:'business',bizTracks:clean,sems,updatedAt:Date.now()};
 }
 function toggleBusinessTrack(sch,key){
