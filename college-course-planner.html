@@ -194,6 +194,22 @@ body{font-family:-apple-system,'Segoe UI',system-ui,sans-serif;background:var(--
 .sta{width:100%;height:90px;padding:9px;border:1px solid var(--border2);border-radius:7px;font-family:monospace;font-size:10px;background:var(--surface2);color:var(--text);resize:vertical;outline:none;margin-bottom:10px}
 .copied{font-size:11px;color:var(--green);display:none}
 .copied.show{display:block}
+.start-title{font-size:16px;font-weight:700;margin-bottom:7px}
+.start-copy{font-size:13px;color:var(--text2);line-height:1.45;margin-bottom:10px}
+.start-update{font-size:11px;color:var(--text3);padding:8px 10px;border-radius:7px;background:var(--surface2);margin-top:8px}
+.start-actions{display:flex;gap:8px;justify-content:flex-end;align-items:center;margin-top:14px;flex-wrap:wrap}
+.start-check{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text2);margin-right:auto;cursor:pointer;user-select:none}
+.linkbtn{padding:6px 12px;border-radius:6px;border:1px solid var(--border2);background:var(--surface2);color:var(--text);cursor:pointer;font-size:12px;text-decoration:none}
+.linkbtn.p{background:var(--accent);border-color:var(--accent);color:#fff}
+.linkbtn:hover{background:var(--border)}
+.linkbtn.p:hover{background:var(--accent-d)}
+.top-banner{background:var(--core-bg);color:var(--core-txt);border-bottom:1px solid var(--core-brd);padding:7px 16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:12px}
+.top-banner.update{background:#1A2A4A;color:#fff;border-bottom:1px solid #2A4A8A}
+.top-banner .grow{flex:1;min-width:140px}
+.top-banner button,.top-banner a{padding:3px 9px;border-radius:5px;border:1px solid currentColor;background:transparent;color:inherit;cursor:pointer;font-size:11px;text-decoration:none}
+.top-banner button:hover,.top-banner a:hover{background:rgba(255,255,255,.12)}
+.top-banner .ghost{opacity:.7;border-color:transparent}
+.saved-stamp{font-size:10px;color:rgba(255,255,255,.7);margin-left:4px;white-space:nowrap}
 .share-tabs{display:flex;gap:5px;margin-bottom:10px}
 .share-tab{padding:4px 10px;border-radius:6px;border:1px solid var(--border2);background:transparent;color:var(--text2);cursor:pointer;font-size:11px}
 .share-tab.on{background:var(--accent);color:#fff;border-color:var(--accent)}
@@ -433,6 +449,16 @@ body{font-family:-apple-system,'Segoe UI',system-ui,sans-serif;background:var(--
 </script>
 <script>
 // ─── Static data ──────────────────────────────────────────────────────────────
+const APP_VERSION='2026.05.24.3';
+const UPDATE_URL='https://raw.githubusercontent.com/rorohecker/college-course-planner/main/college-course-planner.html';
+const REPO_URL='https://github.com/rorohecker/college-course-planner';
+const START_SEEN_KEY='cp-start-seen';
+const LAST_EXPORT_KEY='cp-last-export';
+const EXPORT_SNOOZE_KEY='cp-export-snooze';
+const UPDATE_DISMISS_KEY='cp-update-dismissed';
+const EXPORT_REMINDER_DAYS=14;
+const EXPORT_SNOOZE_DAYS=7;
+
 const CATS={
   ECE:     {name:'ECE',     bg:'var(--ece-bg)',brd:'var(--ece-brd)',txt:'var(--ece-txt)'},
   MATH:    {name:'Math',    bg:'var(--math-bg)',brd:'var(--math-brd)',txt:'var(--math-txt)'},
@@ -452,6 +478,15 @@ const LAYOUT=[
   {type:'pair',label:'Year 4',ids:['y4f','y4s']},
 ];
 const KNOWN=new Set(LAYOUT.flatMap(l=>l.ids));
+const BUSINESS_LAYOUT=[
+  {type:'pair',label:'BBA Foundations',ids:['lower','core']},
+  {type:'pair',label:'Shared Business Requirements',ids:['upper','human']},
+  {type:'pair',label:'Business Tracks',ids:['major','canfield']},
+  {type:'full',label:'Degree Completion',ids:['electives']},
+];
+const BUSINESS_KNOWN=new Set(BUSINESS_LAYOUT.flatMap(l=>l.ids));
+const layoutFor=sch=>sch?.kind==='business'?BUSINESS_LAYOUT:LAYOUT;
+const knownFor=sch=>sch?.kind==='business'?BUSINESS_KNOWN:KNOWN;
 
 const DS=[
   {id:'ap',label:'AP / Pre-College Credits',courses:[
@@ -530,6 +565,58 @@ const DS=[
   ]},
 ];
 
+const BUSINESS_DS=[
+  {id:'lower',label:'Lower-Division Business Core',courses:[
+    {id:'b1',code:'MAN 101',name:'Introduction to Management',cat:'BUSINESS',credits:1,done:false,note:'Freshmen: MAN 101S; transfer: MAN 101T',grade:''},
+    {id:'b2',code:'B A 101',name:'Professional Development and Career Planning',cat:'BUSINESS',credits:1,done:false,note:'Freshmen: B A 101S; transfer: B A 101T',grade:''},
+    {id:'b3',code:'ECO 304K',name:'Introduction to Microeconomics',cat:'BUSINESS',credits:3,done:false,note:'Fulfills social science core',grade:''},
+    {id:'b4',code:'ECO 304L',name:'Introduction to Macroeconomics',cat:'BUSINESS',credits:3,done:false,note:'',grade:''},
+    {id:'b5',code:'M 408Q',name:'Business Calculus',cat:'MATH',credits:4,done:false,note:'Fulfills math core',grade:''},
+    {id:'b6',code:'B A 324',name:'Business Communication',cat:'BUSINESS',credits:3,done:false,note:'Must complete or be enrolled with STA 235 to declare major',grade:''},
+    {id:'b7',code:'STA 235',name:'Data Science for Business Applications',cat:'BUSINESS',credits:3,done:false,note:'Must complete or be enrolled with B A 324 to declare major',grade:''},
+  ]},
+  {id:'core',label:'University Core Curriculum',courses:[
+    {id:'b8',code:'UGS 302/303',name:'First-Year Signature Course',cat:'CORE',credits:3,done:false,note:'',grade:''},
+    {id:'b9',code:'RHE 306',name:'Rhetoric and Writing',cat:'CORE',credits:3,done:false,note:'',grade:''},
+    {id:'b10',code:'E 316L/M/N/P',name:'Humanities',cat:'CORE',credits:3,done:false,note:'',grade:''},
+    {id:'b11',code:'GOV 310L',name:'American Government',cat:'CORE',credits:3,done:false,note:'',grade:''},
+    {id:'b12',code:'GOV 312L',name:'American Government',cat:'CORE',credits:3,done:false,note:'',grade:''},
+    {id:'b13',code:'HIS',name:'American History',cat:'CORE',credits:3,done:false,note:'',grade:''},
+    {id:'b14',code:'HIS',name:'American History',cat:'CORE',credits:3,done:false,note:'',grade:''},
+    {id:'b15',code:'SCI/TECH I',name:'Science and Technology Part I',cat:'CORE',credits:3,done:false,note:'',grade:''},
+    {id:'b16',code:'SCI/TECH I',name:'Science and Technology Part I',cat:'CORE',credits:3,done:false,note:'',grade:''},
+    {id:'b17',code:'SCI/TECH I/II',name:'Science and Technology Part I or II',cat:'CORE',credits:3,done:false,note:'',grade:''},
+    {id:'b18',code:'VAPA',name:'Visual and Performing Arts',cat:'CORE',credits:3,done:false,note:'',grade:''},
+    {id:'b19',code:'WR FLAG',name:'Intensive Writing course not used elsewhere in core',cat:'CORE',credits:3,done:false,note:'Use a course that carries the writing flag',grade:''},
+  ]},
+  {id:'upper',label:'Upper-Division Business Core',courses:[
+    {id:'b20',code:'STA 301',name:'Introduction to Data Science',cat:'BUSINESS',credits:3,done:false,note:'',grade:''},
+    {id:'b21',code:'MIS 301',name:'Introduction to Information Technology Management',cat:'BUSINESS',credits:3,done:false,note:'',grade:''},
+    {id:'b22',code:'ACC 311',name:'Financial Accounting',cat:'BUSINESS',credits:3,done:false,note:'',grade:''},
+    {id:'b23',code:'ACC 312',name:'Managerial Accounting',cat:'BUSINESS',credits:3,done:false,note:'',grade:''},
+    {id:'b24',code:'D S 235',name:'Introduction to Decision Science',cat:'BUSINESS',credits:3,done:false,note:'',grade:''},
+    {id:'b25',code:'O M 235',name:'Operations Management',cat:'BUSINESS',credits:3,done:false,note:'',grade:''},
+    {id:'b26',code:'LEB 323/BGS 337',name:'Business Law and Ethics',cat:'BUSINESS',credits:3,done:false,note:'',grade:''},
+    {id:'b27',code:'MAN 336',name:'Organizational Behavior',cat:'BUSINESS',credits:3,done:false,note:'',grade:''},
+    {id:'b28',code:'MKT 337',name:'Principles of Marketing',cat:'BUSINESS',credits:3,done:false,note:'',grade:''},
+    {id:'b29',code:'FIN 357',name:'Business Finance',cat:'BUSINESS',credits:3,done:false,note:'',grade:''},
+  ]},
+  {id:'human',label:'Human Behavior Requirement',courses:[
+    {id:'b30',code:'ANT/EDP/PSY/SOC',name:'Human Behavior elective',cat:'CORE',credits:3,done:false,note:'No statistics courses',grade:''},
+  ]},
+  {id:'major',label:'Major Track - Undeclared Business',courses:[
+    {id:'b31',code:'UNDECLARED',name:'Choose a business major track when ready',cat:'BUSINESS',credits:0,done:false,note:'Use the Track picker to add a BBA major. Canfield can be paired with one major track.',grade:''},
+  ]},
+  {id:'electives',label:'Electives and Experience',courses:[
+    {id:'b32',code:'BA 353',name:'Experiential Learning / Internship',cat:'BUSINESS',credits:3,done:false,note:'Usually fulfilled with approved internship credit',grade:''},
+    {id:'b33',code:'UD NON-BUS 1',name:'Upper-Division Non-Business Elective',cat:'OTHER',credits:3,done:false,note:'',grade:''},
+    {id:'b34',code:'UD NON-BUS 2',name:'Upper-Division Non-Business Elective',cat:'OTHER',credits:3,done:false,note:'',grade:''},
+    {id:'b35',code:'FREE ELEC 1',name:'Free Elective',cat:'OTHER',credits:3,done:false,note:'BBA students usually need 9-15 free elective hours',grade:''},
+    {id:'b36',code:'FREE ELEC 2',name:'Free Elective',cat:'OTHER',credits:3,done:false,note:'',grade:''},
+    {id:'b37',code:'FREE ELEC 3',name:'Free Elective',cat:'OTHER',credits:3,done:false,note:'',grade:''},
+  ]},
+];
+
 // ECE Technical Component tracks (Chandra Dept Tech Core Packet, Dec 2025).
 // Each track: required cores + approved electives. ECB students take fewer electives.
 const TRACKS={
@@ -567,6 +654,89 @@ const TRACKS={
     electives:['ECE 316','ECE 360G','ECE 360P','ECE 360T','ECE 361C','ECE 361G','ECE 361Q','ECE 361M','ECE 361N','ECE 371P','ECE 372N','ECE 379K','ECE 445L','ECE 445M','ECE 460J','ECE 460N','ECE 461P','ECE 461S','ECE 461T']},
 };
 
+const BUSINESS_TRACKS={
+  canfield:{name:'Canfield Business Honors',kind:'honors',short:'Canfield',note:'Honors add-on. Canfield can stay selected alongside one BBA major track.',courses:[
+    {code:'B A 151H',name:'Honors Lyceum',credits:1},
+    {code:'MAN 327H',name:'Entrepreneurship and Innovation Honors',credits:3},
+    {code:'LEB 323H',name:'Business Law and Ethics Honors',credits:3},
+    {code:'MAN 374H',name:'General Management and Strategy Honors',credits:3},
+    {code:'UD BUS ELEC 1',name:'Upper-Division Business Elective',credits:3},
+    {code:'UD BUS ELEC 2',name:'Upper-Division Business Elective',credits:3},
+    {code:'HONORS CORE',name:'Use honors versions of shared BBA core where available',credits:0,note:'MAN 101H, B A 101H, B A 324H, STA 235H, STA 301H, MIS 301H, ACC 311H, ACC 312H, D S 235H, O M 235H, MKT 337H, MAN 336H, FIN 357H'},
+  ]},
+  accounting:{name:'Accounting',kind:'major',short:'Accounting',courses:[
+    {code:'ACC 326',name:'Financial Accounting - Intermediate',credits:3},
+    {code:'ACC 327',name:'Financial Statement Analysis',credits:3},
+    {code:'ACC 329',name:'Managerial Accounting and Control',credits:3},
+    {code:'ACC 362',name:'Auditing and Control',credits:3,note:'ACC 367P or ACC 372T may substitute only in approved cases'},
+    {code:'ACC 364',name:'Accounting Systems',credits:3},
+    {code:'FIN 321K',name:'Financial Management',credits:3},
+    {code:'BA 353',name:'Approved Internship',credits:3},
+    {code:'MAN 374',name:'General Management and Strategy',credits:3},
+  ]},
+  impa:{name:'Integrated MPA',kind:'major',short:'iMPA',note:'Application required. This planner tracks the undergraduate-side requirements only.',courses:[
+    {code:'ACC 151',name:'iMPA Seminar I',credits:1},
+    {code:'ACC 152',name:'iMPA Seminar II',credits:1},
+    {code:'ACC 355',name:'Advanced Accounting',credits:3},
+    {code:'ACC 356',name:'Financial Accounting Standards and Analysis',credits:3},
+    {code:'ACC 358C',name:'Accounting Data and Analytics',credits:3},
+    {code:'ACC 359',name:'Auditing and Control',credits:3},
+    {code:'MAN 374',name:'General Management and Strategy',credits:3},
+    {code:'FIN 367',name:'Investment Management',credits:3},
+    {code:'FIN 321K',name:'Financial Management',credits:3},
+    {code:'UG BUS ELEC',name:'Undergraduate Business Elective',credits:3},
+  ]},
+  bax:{name:'Business Analytics',kind:'major',short:'BAX',courses:[
+    {code:'BAX 304',name:'Business Analytics Programming',credits:3},
+    {code:'BAX 325',name:'Database Management',credits:3},
+    {code:'BAX 357',name:'Predictive Analytics and Data Mining',credits:3},
+    {code:'BAX 358',name:'Optimization and Decision Analytics',credits:3},
+    {code:'BAX ELEC 1',name:'Business Analytics Elective',credits:3,note:'Upper-division'},
+    {code:'BAX ELEC 2',name:'Business Analytics Elective',credits:3,note:'Upper-division'},
+    {code:'BA 353',name:'Approved Internship',credits:3},
+    {code:'BAX 375',name:'Business Analytics Capstone',credits:3},
+  ]},
+  finance:{name:'Finance',kind:'major',short:'Finance',courses:[
+    {code:'FIN 367',name:'Investment Management',credits:3},
+    {code:'FIN 374C',name:'Valuation',credits:3},
+    {code:'ACC 326',name:'Financial Accounting - Intermediate',credits:3},
+    {code:'FIN ELEC 1',name:'Finance Elective',credits:3,note:'Upper-division'},
+    {code:'FIN ELEC 2',name:'Finance Elective',credits:3,note:'Upper-division'},
+    {code:'FIN ELEC 3',name:'Finance Elective',credits:3,note:'Upper-division'},
+    {code:'BA 353',name:'Approved Internship',credits:3},
+    {code:'FIN 370',name:'Integrative Finance',credits:3},
+  ]},
+  ib:{name:'International Business Skills',kind:'major',short:'IB Skills',courses:[
+    {code:'I B 350',name:'International Trade',credits:3,note:'Offered spring only'},
+    {code:'I B ELEC 1',name:'International Business Elective',credits:3,note:'Upper-division'},
+    {code:'I B ELEC 2',name:'International Business Elective',credits:3,note:'Upper-division'},
+    {code:'I B ELEC 3',name:'International Business Elective',credits:3,note:'Upper-division'},
+    {code:'I B ELEC 4',name:'International Business Elective',credits:3,note:'Upper-division'},
+    {code:'BA 353',name:'Approved Internship',credits:3},
+    {code:'I B 378',name:'International Business Capstone',credits:3},
+    {code:'INTL EXP',name:'Approved International Experience',credits:0,note:'Must be approved by the I B department'},
+  ]},
+  mis:{name:'Management Information Systems',kind:'major',short:'MIS',courses:[
+    {code:'MIS 304',name:'Introduction to Problem Solving and Programming',credits:3},
+    {code:'MIS 325',name:'Database Management',credits:3},
+    {code:'MIS 333K',name:'Web Application Development',credits:3},
+    {code:'MIS ELEC 1',name:'MIS Elective',credits:3,note:'Any MIS course not already required'},
+    {code:'MIS ELEC 2',name:'MIS Elective',credits:3,note:'Any MIS course not already required'},
+    {code:'BA 353',name:'Approved Internship',credits:3},
+    {code:'MIS 374',name:'Business System Development',credits:3},
+    {code:'MIS 375',name:'Strategic Information Technology Management',credits:3},
+  ]},
+  marketing:{name:'Marketing',kind:'major',short:'Marketing',courses:[
+    {code:'MKT 360',name:'Information and Analysis',credits:3},
+    {code:'MKT ELEC 1',name:'Marketing Elective',credits:3,note:'Upper-division'},
+    {code:'MKT ELEC 2',name:'Marketing Elective',credits:3,note:'Upper-division'},
+    {code:'MKT ELEC 3',name:'Marketing Elective',credits:3,note:'Upper-division'},
+    {code:'MKT ELEC 4',name:'Marketing Elective',credits:3,note:'Upper-division'},
+    {code:'BA 353',name:'Approved Internship',credits:3},
+    {code:'MKT 370',name:'Marketing Policies',credits:3},
+  ]},
+};
+
 // UT grade points (A+ counts as 4.0 per UT policy). CR/NC/Q/W/IP excluded from GPA.
 const GRADE_PTS={'A+':4.0,'A':4.0,'A-':3.67,'B+':3.33,'B':3.0,'B-':2.67,'C+':2.33,'C':2.0,'C-':1.67,'D+':1.33,'D':1.0,'D-':0.67,'F':0,'CR':null,'NC':null,'Q':null,'W':null,'IP':null};
 const GRADE_OPTS=['','A+','A','A-','B+','B','B-','C+','C','C-','D+','D','D-','F','CR','NC','Q','W','IP'];
@@ -595,16 +765,16 @@ const SEM_TEMPLATES={
 const CATALOG=JSON.parse(document.getElementById('catalog-data').textContent);
 
 // Curriculum templates. Active schedule can be reset to any of these.
-// "ecb" is the existing default (DS). Others wipe BHP-specific courses.
 const CURRICULUM_TEMPLATES={
-  ecb:{label:'ECE + Business Honors (ECB Dual Degree)',short:'ECB',build:()=>dc(DS)},
-  eceHonors:{label:'ECE Honors only (no BHP)',short:'ECE Honors',build:()=>{
+  ecb:{label:'ECE + Business Honors (ECB Dual Degree)',short:'ECB',kind:'ecb',build:()=>dc(DS)},
+  business:{label:'Undeclared Business (BBA)',short:'Business',kind:'business',build:()=>dc(BUSINESS_DS)},
+  eceHonors:{label:'ECE Honors only (no BHP)',short:'ECE Honors',kind:'ecb',build:()=>{
     const s=dc(DS);
     // Drop pure-BHP courses but keep economics (also required for ECE general core).
     const keep=c=>c.cat!=='BUSINESS'||c.code.startsWith('ECO ');
     return s.map(sem=>({...sem,courses:sem.courses.filter(keep)}));
   }},
-  blank:{label:'Blank slate (only AP credits + physics)',short:'Blank',build:()=>{
+  blank:{label:'Blank slate (only AP credits + physics)',short:'Blank',kind:'ecb',build:()=>{
     const s=dc(DS);
     return s.map(sem=>['ap','phy'].includes(sem.id)?sem:{...sem,courses:[]});
   }},
@@ -629,6 +799,13 @@ const S={
   searchQ:'',gpaTarget:'',
   lastPct:0,
   tabConflict:false,
+  startNote:true,
+  update:{state:'idle',latest:null,checkedAt:null,error:null},
+  updateDismissed:false,
+  lastSaved:null,
+  lastExportAt:null,
+  exportSnoozedUntil:0,
+  exportReminder:false,
 };
 
 const HISTORY={past:[],future:[],MAX:50};
@@ -643,15 +820,137 @@ function nextName(){
   return`Plan ${Date.now().toString(36)}`;
 }
 
+function versionCmp(a,b){
+  const pa=String(a||'').split('.').map(x=>parseInt(x,10)||0);
+  const pb=String(b||'').split('.').map(x=>parseInt(x,10)||0);
+  const n=Math.max(pa.length,pb.length);
+  for(let i=0;i<n;i++){if((pa[i]||0)!==(pb[i]||0))return(pa[i]||0)>(pb[i]||0)?1:-1;}
+  return 0;
+}
+function updateLine(){
+  const u=S.update||{state:'idle'};
+  if(u.state==='checking')return'Checking GitHub for the latest planner...';
+  if(u.state==='available')return`Update available: version ${esc(u.latest)} is newer than ${esc(APP_VERSION)}.`;
+  if(u.state==='current')return`You are up to date on version ${esc(APP_VERSION)}.`;
+  if(u.state==='offline')return'Could not check GitHub right now. Try again when you are online.';
+  return`Current version: ${esc(APP_VERSION)}.`;
+}
+async function checkForUpdates(showModal=false){
+  if(showModal){S.modal='update';S.update={state:'checking',latest:null,checkedAt:null,error:null};render();}
+  if(typeof fetch!=='function'){
+    S.update={state:'offline',latest:null,checkedAt:Date.now(),error:'fetch unavailable'};render();return;
+  }
+  try{
+    S.update={state:'checking',latest:null,checkedAt:null,error:null};
+    if(showModal)render();
+    const res=await fetch(UPDATE_URL+'?v='+Date.now(),{cache:'no-store'});
+    if(!res.ok)throw new Error('HTTP '+res.status);
+    const text=await res.text();
+    const latest=(text.match(/const APP_VERSION=['"]([^'"]+)['"]/)||[])[1];
+    if(!latest)throw new Error('Missing version');
+    const available=versionCmp(latest,APP_VERSION)>0;
+    S.update={state:available?'available':'current',latest,checkedAt:Date.now(),error:null};
+    if(available){
+      try{const dismissed=localStorage.getItem(UPDATE_DISMISS_KEY);S.updateDismissed=dismissed===latest;}catch(e){S.updateDismissed=false;}
+    }
+    if(showModal&&typeof document!=='undefined')document.title=available?'(update) College Course Planner':'College Course Planner';
+  }catch(err){
+    S.update={state:'offline',latest:null,checkedAt:Date.now(),error:err?.message||String(err)};
+  }
+  render();
+}
+
+function readStartSeen(){try{return localStorage.getItem(START_SEEN_KEY)==='1';}catch(e){return false;}}
+function markStartSeen(){try{localStorage.setItem(START_SEEN_KEY,'1');}catch(e){}}
+function readLastExport(){try{return parseInt(localStorage.getItem(LAST_EXPORT_KEY)||'0',10)||0;}catch(e){return 0;}}
+function writeLastExport(ts){try{localStorage.setItem(LAST_EXPORT_KEY,String(ts));}catch(e){}S.lastExportAt=ts;}
+function readExportSnooze(){try{return parseInt(localStorage.getItem(EXPORT_SNOOZE_KEY)||'0',10)||0;}catch(e){return 0;}}
+function writeExportSnooze(ts){try{localStorage.setItem(EXPORT_SNOOZE_KEY,String(ts));}catch(e){}S.exportSnoozedUntil=ts;}
+function recomputeExportReminder(){
+  const now=Date.now();
+  const last=S.lastExportAt||0;
+  const snooze=S.exportSnoozedUntil||0;
+  const ageMs=now-last;
+  const due=last===0||ageMs>EXPORT_REMINDER_DAYS*86400000;
+  S.exportReminder=due&&now>snooze;
+}
+function relTime(ts){
+  if(!ts)return'never';
+  const s=Math.max(0,Math.round((Date.now()-ts)/1000));
+  if(s<5)return'just now';
+  if(s<60)return s+'s ago';
+  const m=Math.round(s/60);if(m<60)return m+'m ago';
+  const h=Math.round(m/60);if(h<24)return h+'h ago';
+  const d=Math.round(h/24);return d+'d ago';
+}
+
+function businessTrackKeys(sch=getAct()){
+  return [...new Set((sch?.bizTracks||[]).filter(k=>BUSINESS_TRACKS[k]))];
+}
+function businessTrackLabel(sch=getAct()){
+  const active=businessTrackKeys(sch);
+  return active.length?active.map(k=>BUSINESS_TRACKS[k].short).join(' + '):'Undeclared Business';
+}
+function businessTrackCourses(key,prev){
+  const prevByCode=new Map((prev?.courses||[]).map(c=>[String(c.code).toUpperCase(),c]));
+  return BUSINESS_TRACKS[key].courses.map((c,i)=>{
+    const old=prevByCode.get(String(c.code).toUpperCase());
+    return {
+      id:`biz_${key}_${i+1}`,code:c.code,name:c.name,cat:'BUSINESS',
+      credits:c.credits,done:old?.done||false,note:c.note||'',grade:old?.grade||'',bizTrack:key
+    };
+  });
+}
+function syncBusinessTracks(sch,nextTracks=businessTrackKeys(sch)){
+  const clean=businessTrackKeys({bizTracks:nextTracks});
+  const majorKey=clean.find(k=>BUSINESS_TRACKS[k].kind==='major')||null;
+  const canfieldKey=clean.includes('canfield')?'canfield':null;
+  const prev=new Map((sch.sems||[]).map(s=>[s.id,s]));
+  const baseIds=new Set(BUSINESS_DS.map(s=>s.id));
+  const base=(sch.sems?.length?sch.sems:dc(BUSINESS_DS)).filter(s=>baseIds.has(s.id)&&s.id!=='major'&&s.id!=='canfield');
+  const major=majorKey
+    ?{id:'major',label:'Major Track - '+BUSINESS_TRACKS[majorKey].name,courses:businessTrackCourses(majorKey,prev.get('major'))}
+    :dc(BUSINESS_DS.find(s=>s.id==='major'));
+  const sems=[...base,major];
+  if(canfieldKey)sems.push({id:'canfield',label:'Canfield Track - Canfield Business Honors',courses:businessTrackCourses('canfield',prev.get('canfield'))});
+  return {...sch,kind:'business',bizTracks:clean,sems,updatedAt:Date.now()};
+}
+function toggleBusinessTrack(sch,key){
+  if(!BUSINESS_TRACKS[key])return sch;
+  const active=businessTrackKeys(sch);
+  const has=active.includes(key);
+  let next;
+  if(has)next=active.filter(k=>k!==key);
+  else if(BUSINESS_TRACKS[key].kind==='honors')next=[...active,key];
+  else next=[...active.filter(k=>BUSINESS_TRACKS[k].kind==='honors'),key];
+  return syncBusinessTracks(sch,next);
+}
+function normalizeSchedule(sch){
+  const looksBusiness=(sch.sems||[]).some(s=>['lower','upper','major','canfield','electives','human'].includes(s.id))||(sch.bizTracks||[]).length>0;
+  const kind=sch.kind||(looksBusiness?'business':'ecb');
+  if(kind==='business')return syncBusinessTracks({...sch,kind:'business'},businessTrackKeys(sch));
+  return {kind:'ecb',...sch};
+}
+function makeSchedule(name,color,templateKey='ecb'){
+  const t=CURRICULUM_TEMPLATES[templateKey]||CURRICULUM_TEMPLATES.ecb;
+  const id=sid();
+  const sch={id,name,color,sems:t.build(),createdAt:Date.now(),updatedAt:Date.now(),kind:t.kind||templateKey};
+  return normalizeSchedule(sch);
+}
+
 // ─── Storage ──────────────────────────────────────────────────────────────────
 const SK='cp-v3',SNAPK='cp-snap-v1';
 let _saveTimer=null;
 let _saveRev=0;            // bumps every mutation; used to invalidate memo caches.
 function bumpRev(){_saveRev++;}
+let _dirtySinceBackup=false;
+const UNLOAD_WARN_KEY='cp-unload-warn';
+function unloadWarnEnabled(){try{return localStorage.getItem(UNLOAD_WARN_KEY)!=='off';}catch(e){return true;}}
 // Debounced write. Rapid edits (typing in a target field, dragging quickly)
 // only commit to disk after 250ms of quiet. beforeunload also flushes.
 function save(){
   bumpRev();
+  _dirtySinceBackup=true;
   if(_saveTimer)clearTimeout(_saveTimer);
   _saveTimer=setTimeout(_saveNow,250);
 }
@@ -660,9 +959,17 @@ async function _saveNow(){
   const d=JSON.stringify({schedules:S.schedules,activeId:S.activeId});
   try{if(window.storage)await window.storage.set(SK,d);else localStorage.setItem(SK,d);}catch(e){}
   try{tabCh?.postMessage({t:'save',ts:Date.now(),id:tabId});}catch(e){}
+  S.lastSaved=Date.now();
   showSavedPulse();
+  const stamp=document.getElementById('saved-stamp');if(stamp)stamp.textContent='saved '+relTime(S.lastSaved);
 }
-window.addEventListener('beforeunload',()=>{if(_saveTimer){clearTimeout(_saveTimer);_saveNow();}});
+window.addEventListener('beforeunload',e=>{
+  if(_saveTimer){clearTimeout(_saveTimer);_saveNow();}
+  if(_dirtySinceBackup&&unloadWarnEnabled()){
+    // Browsers ignore custom text and show their generic prompt; reminder shows up either way.
+    e.preventDefault();e.returnValue='Save a backup of your plan before closing?';return e.returnValue;
+  }
+});
 function showSavedPulse(){
   const el=document.getElementById('saved-pulse');if(!el)return;
   el.classList.remove('on');void el.offsetWidth;el.classList.add('on');
@@ -671,20 +978,20 @@ async function load(){
   try{
     let d=null;
     if(window.storage){const r=await window.storage.get(SK);d=r?.value;}else d=localStorage.getItem(SK);
-    if(d){const p=JSON.parse(d);if(p.schedules?.length){S.schedules=p.schedules;S.activeId=p.activeId||p.schedules[0].id;return true;}}
+    if(d){const p=JSON.parse(d);if(p.schedules?.length){S.schedules=p.schedules.map(normalizeSchedule);S.activeId=p.activeId||p.schedules[0].id;return true;}}
   }catch(e){}
   return false;
 }
 function initDefault(){
-  const id=sid();
-  S.schedules=[{id,name:'Main Plan',color:COLORS[0],sems:dc(DS),createdAt:Date.now(),updatedAt:Date.now(),kind:'ecb'}];
-  S.activeId=id;
+  const sch=makeSchedule('Main Plan',COLORS[0],'ecb');
+  S.schedules=[sch];
+  S.activeId=sch.id;
 }
 function encodeShare(){return btoa(encodeURIComponent(JSON.stringify({schedules:S.schedules,activeId:S.activeId})));}
 function decodeShare(code){
   const p=JSON.parse(decodeURIComponent(atob(code.trim())));
-  if(p.schedules?.length)return p;
-  if(Array.isArray(p)&&p.length){const id=sid();return{schedules:[{id,name:'Imported',color:COLORS[0],sems:p,createdAt:Date.now(),updatedAt:Date.now(),kind:'ecb'}],activeId:id};}
+  if(p.schedules?.length)return {...p,schedules:p.schedules.map(normalizeSchedule)};
+  if(Array.isArray(p)&&p.length){const id=sid();return{schedules:[normalizeSchedule({id,name:'Imported',color:COLORS[0],sems:p,createdAt:Date.now(),updatedAt:Date.now()})],activeId:id};}
   throw new Error('bad');
 }
 
@@ -723,8 +1030,9 @@ function toMarkdown(){
     for(const c of sem.courses)md+=`- ${c.done?'[x]':'[ ]'} **${c.code}** ${c.name} — ${c.credits}cr${c.grade?` (${c.grade})`:''}${c.note?`  \n  _${c.note}_`:''}\n`;
     md+=`\n`;
   };
-  for(const row of LAYOUT)for(const id of row.ids){const s=sems.find(x=>x.id===id);if(s)writeSem(s);}
-  for(const s of sems.filter(x=>!KNOWN.has(x.id)))writeSem(s);
+  const layout=layoutFor(getAct()),known=knownFor(getAct());
+  for(const row of layout)for(const id of row.ids){const s=sems.find(x=>x.id===id);if(s)writeSem(s);}
+  for(const s of sems.filter(x=>!known.has(x.id)))writeSem(s);
   return md;
 }
 
@@ -823,6 +1131,10 @@ function gradedRows(){
 let _trackCache={rev:-1,val:null,actId:null};
 function trackProgress(){
   if(_trackCache.rev===_saveRev&&_trackCache.actId===S.activeId)return _trackCache.val;
+  if((getAct()?.kind||'ecb')==='business'){
+    _trackCache={rev:_saveRev,actId:S.activeId,val:null};
+    return null;
+  }
   const tk=getAct()?.track;
   let val=null;
   if(tk&&TRACKS[tk]){
@@ -836,6 +1148,16 @@ function trackProgress(){
   }
   _trackCache={rev:_saveRev,actId:S.activeId,val};
   return val;
+}
+
+function businessProgress(){
+  const sch=getAct();
+  if(!sch||sch.kind!=='business')return null;
+  const tracks=businessTrackKeys(sch);
+  const sems=getAS().filter(s=>['major','canfield'].includes(s.id));
+  const courses=sems.flatMap(s=>s.courses).filter(c=>Number(c.credits||0)>0);
+  const done=courses.filter(c=>c.done).length;
+  return {tracks,total:courses.length,done,label:businessTrackLabel(sch)};
 }
 
 // ─── Confetti ─────────────────────────────────────────────────────────────────
@@ -980,13 +1302,15 @@ function rCompareView(){
   const shAll=[...cA].filter(c=>cB.has(c)).length;
   const crA=allA.reduce((t,c)=>t+c.credits,0),crB=allB.reduce((t,c)=>t+c.credits,0);
   let body='';
-  for(const row of LAYOUT){
+  const layout=layoutFor(schA);
+  const known=knownFor(schA);
+  for(const row of layout){
     const relevant=row.ids.filter(id=>allIds.includes(id));
     if(!relevant.length)continue;
     if(row.label)body+=`<div class="yr-lbl">${row.label}</div>`;
     for(const id of relevant)body+=rCmpSem(id,semsA.find(s=>s.id===id),semsB.find(s=>s.id===id),schA,schB);
   }
-  const customIds=allIds.filter(id=>!KNOWN.has(id));
+  const customIds=allIds.filter(id=>!known.has(id));
   if(customIds.length){
     body+=`<div class="yr-lbl">Custom Semesters</div>`;
     for(const id of customIds)body+=rCmpSem(id,semsA.find(s=>s.id===id),semsB.find(s=>s.id===id),schA,schB);
@@ -1003,6 +1327,8 @@ function rCompareView(){
 
 function rMain(){
   const sems=getAS();
+  const layout=layoutFor(getAct());
+  const known=knownFor(getAct());
   let html='';
   if(S.showAddSem)html+=`<div class="asf">
     <select onchange="S.addSemKind=this.value;render()">
@@ -1014,13 +1340,13 @@ function rMain(){
     <button data-a="addsem" style="background:var(--accent);color:#fff;border:none">Add</button>
     <button data-a="cancelsem" style="background:transparent;border:1px solid var(--border2);color:var(--text2)">Cancel</button>
   </div>`;
-  for(const row of LAYOUT){
+  for(const row of layout){
     const rs=row.ids.map(id=>sems.find(s=>s.id===id)).filter(Boolean);
     if(!rs.length)continue;
     if(row.label)html+=`<div class="yr-lbl">${row.label}</div>`;
-    html+=`<div class="sem-row${row.type==='full'?' full':''}">${rs.map(rSem).join('')}</div>`;
+    html+=`<div class="sem-row${row.type==='full'||rs.length===1?' full':''}">${rs.map(rSem).join('')}</div>`;
   }
-  const custom=sems.filter(s=>!KNOWN.has(s.id));
+  const custom=sems.filter(s=>!known.has(s.id));
   if(custom.length)html+=`<div class="yr-lbl">Custom Semesters</div><div class="sem-row full">${custom.map(rSem).join('')}</div>`;
   return `<div class="main">${html}</div>`;
 }
@@ -1069,8 +1395,64 @@ function rSelToolbar(){
   </div>`;
 }
 
+function rBanners(){
+  let html='';
+  if(S.update?.state==='available'&&!S.updateDismissed){
+    html+=`<div class="top-banner update">
+      <span class="grow">⬆ Update available — v${esc(S.update.latest||'?')} is out (you're on v${esc(APP_VERSION)}).</span>
+      <a href="${esc(UPDATE_URL)}" target="_blank" rel="noopener">Open latest</a>
+      <a href="${esc(REPO_URL+'/commits/main')}" target="_blank" rel="noopener" class="ghost">What's new</a>
+      <button data-a="dismiss-update" class="ghost" title="Dismiss until next version">×</button>
+    </div>`;
+  }
+  if(S.exportReminder&&!S.startNote){
+    html+=`<div class="top-banner">
+      <span class="grow">💾 It's been a while since your last backup (${esc(relTime(S.lastExportAt))}). Browser storage can get wiped — save a JSON copy.</span>
+      <button data-a="open-backup">Backup now</button>
+      <button data-a="snooze-export" class="ghost">Remind me in 7 days</button>
+    </div>`;
+  }
+  return html;
+}
+
+function rStartNote(){
+  const updateAction=S.update?.state==='available'
+    ?`<a class="linkbtn p" href="${esc(UPDATE_URL)}" target="_blank" rel="noopener">Open latest copy</a>`
+    :`<button class="linkbtn" data-a="manual-update">Check updates</button>`;
+  return `<div class="mbk">
+    <div class="modal" style="max-width:470px">
+      <div class="mbody">
+        <div class="start-title">Save this somewhere you'll remember</div>
+        <p class="start-copy"><b>Save this planner somewhere easy to access</b> so you don't waste time redownloading it. Bookmark the file, drop it on your desktop, or pin the tab.</p>
+        <p class="start-copy">Your edits autosave in this browser, but moving folders or clearing site data will wipe them — use the <b>Backup</b> button now and then to keep a JSON copy.</p>
+        <div class="start-update">${updateLine()}</div>
+        <div class="start-actions">
+          <label class="start-check"><input type="checkbox" id="start-suppress" checked> Don't show this again</label>
+          ${updateAction}
+          <button class="linkbtn p" data-a="hide-start-note">Got it</button>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
 function rModal(){
   if(!S.modal)return'';
+
+  if(S.modal==='update')return`<div class="mbk" id="mbk">
+    <div class="modal" style="max-width:470px">
+      <div class="mhdr"><h3>Planner Updates</h3><button class="mclose" data-a="close-modal">×</button></div>
+      <div class="mbody">
+        <p style="font-size:13px;color:var(--text2);line-height:1.45;margin-bottom:10px">${updateLine()}</p>
+        <p style="font-size:11px;color:var(--text3);line-height:1.45">This file checks the GitHub copy automatically on startup. A browser cannot overwrite a local HTML file by itself, so use the latest-copy link when an update is available.</p>
+      </div>
+      <div class="mfooter">
+        <button class="linkbtn" data-a="manual-update">Check Again</button>
+        ${S.update?.state==='available'?`<a class="linkbtn p" href="${esc(UPDATE_URL)}" target="_blank" rel="noopener">Open latest copy</a>`:''}
+        <button data-a="close-modal" style="padding:6px 14px;border:1px solid var(--border2);border-radius:6px;cursor:pointer;font-size:12px;background:var(--surface2);color:var(--text)">Close</button>
+      </div>
+    </div>
+  </div>`;
 
   if(S.modal==='export'){
     const tab=S.modalTab||'code';
@@ -1133,7 +1515,7 @@ function rModal(){
           ${isRen
             ?`<div class="si-name"><input id="ren-inp" value="${esc(sch.name)}" onkeydown="if(event.key==='Enter')commitRename('${sch.id}');if(event.key==='Escape'){S.renamingId=null;render();}"></div>`
             :`<div class="si-name">${esc(sch.name)}</div>`}
-          <div class="si-meta">${all.length} courses · ${cr}cr · ${done} done${sch.track?` · track: ${TRACKS[sch.track]?.short||sch.track}`:''}</div>
+          <div class="si-meta">${all.length} courses · ${cr}cr · ${done} done${sch.kind==='business'?` · track: ${esc(businessTrackLabel(sch))}`:sch.track?` · track: ${TRACKS[sch.track]?.short||sch.track}`:''}</div>
         </div>
         <div class="si-acts">
           ${isRen
@@ -1293,6 +1675,10 @@ function rModal(){
             <button onclick="downloadBackup()" style="padding:10px 14px;background:var(--accent);color:#fff;border:none;border-radius:7px;cursor:pointer;font-size:13px;font-weight:600">⬇ Download backup.json</button>
             <button onclick="pickRestoreFile()" style="padding:10px 14px;background:var(--surface2);color:var(--text);border:1px solid var(--border2);border-radius:7px;cursor:pointer;font-size:13px">⬆ Restore from file…</button>
           </div>
+          <label style="display:flex;align-items:center;gap:8px;margin-top:14px;font-size:12px;color:var(--text2);cursor:pointer">
+            <input type="checkbox" ${unloadWarnEnabled()?'checked':''} onchange="setUnloadWarn(this.checked)">
+            Warn me before closing if I've edited the plan since my last backup
+          </label>
         </div>
         <div class="mfooter"><button data-a="close-modal" style="padding:6px 14px;border:1px solid var(--border2);border-radius:6px;cursor:pointer;font-size:12px;background:var(--surface2);color:var(--text)">Close</button></div>
       </div>
@@ -1353,6 +1739,40 @@ function rModal(){
   }
 
   if(S.modal==='track'){
+    if(getAct()?.kind==='business'){
+      const cur=getAct(),active=businessTrackKeys(cur),prog=businessProgress();
+      const cards=Object.entries(BUSINESS_TRACKS).map(([k,t])=>{
+        const sel=active.includes(k);
+        return`<div class="tk-card${sel?' sel':''}" onclick="toggleBusinessTrackKey('${k}')">
+          <div class="tk-name">${esc(t.name)}</div>
+          <div class="tk-grad">${t.kind==='honors'?'Canfield dual track':'BBA major track'}${t.note?` · ${esc(t.note)}`:''}</div>
+        </div>`;
+      }).join('');
+      const sections=getAS().filter(s=>['major','canfield'].includes(s.id));
+      const progBox=`
+        <div class="tk-prog">
+          <div style="display:flex;justify-content:space-between;align-items:center"><b style="font-size:12px">${esc(prog?.label||'Undeclared Business')}</b><span style="font-size:11px;color:var(--text2)">${prog?.done||0}/${prog?.total||0} track courses done</span></div>
+          <div class="tp-bar"><div class="tp-fill" style="width:${prog?.total?Math.min(100,prog.done/prog.total*100):0}%"></div></div>
+          <div class="tk-h">Active track requirements</div>
+          <div class="tk-list">${sections.map(s=>`<div><b>${esc(s.label)}</b></div>${s.courses.map(c=>`<div class="${c.done?'ok':'miss'}">${c.done?'✓':'＋'} ${esc(c.code)} — ${esc(c.name)}${c.note?` <span style="color:var(--text3)">(${esc(c.note)})</span>`:''}</div>`).join('')}`).join('')}</div>
+        </div>`;
+      return`<div class="mbk" id="mbk">
+        <div class="modal" style="max-width:720px">
+          <div class="mhdr"><h3>Business Major Track</h3><button class="mclose" data-a="close-modal">×</button></div>
+          <div class="mbody">
+            ${progBox}
+            <div class="tk-h">Pick tracks</div>
+            <p style="font-size:12px;color:var(--text2);margin-bottom:10px">Choose one BBA major track. Canfield Business Honors can be added as a second track and will stay selected while you switch majors.</p>
+            <div class="tk-grid">${cards}</div>
+            ${active.length?`<button onclick="clearBusinessTracks()" style="margin-top:8px;padding:5px 11px;font-size:11px;background:transparent;border:1px solid var(--border2);border-radius:6px;color:var(--text2);cursor:pointer">Clear business tracks</button>`:''}
+          </div>
+          <div class="mfooter">
+            <span class="left">Built from the 2024-2026 McCombs advising sheets. Always confirm with your academic advisor.</span>
+            <button data-a="close-modal" style="padding:6px 14px;border:1px solid var(--border2);border-radius:6px;cursor:pointer;font-size:12px;background:var(--surface2);color:var(--text)">Close</button>
+          </div>
+        </div>
+      </div>`;
+    }
     const cur=getAct();const sel=cur?.track||'';
     const prog=trackProgress();
     const kind=cur?.kind||'ecb';
@@ -1407,7 +1827,7 @@ function rModal(){
       ['C','Compare schedules'],
       ['S','Search across schedules'],
       ['G','Open GPA calculator'],
-      ['T','ECE track picker'],
+      ['T','Track picker'],
       ['H','Version history'],
       ['L','Saved schedules list'],
       ['P','Print or save as PDF'],
@@ -1451,17 +1871,22 @@ function render(){
     }).join('');
 
   const prog=trackProgress();
-  const trackPill=act?`<div class="track-pill" onclick="S.modal='track';render()" title="ECE Technical Component">
-      🎯 ${prog?`${esc(prog.track.short)} <span style="opacity:.7">${prog.coreHit}/${prog.coreTotal}c · ${prog.electHit}/${prog.need}e</span>`:'Pick a track'}
+  const bizProg=businessProgress();
+  const trackPill=act?`<div class="track-pill" onclick="S.modal='track';render()" title="${act.kind==='business'?'Business major track':'ECE Technical Component'}">
+      🎯 ${act.kind==='business'
+        ?`${esc(bizProg?.label||'Undeclared Business')} <span style="opacity:.7">${bizProg?.done||0}/${bizProg?.total||0}</span>`
+        :prog?`${esc(prog.track.short)} <span style="opacity:.7">${prog.coreHit}/${prog.coreTotal}c · ${prog.electHit}/${prog.need}e</span>`:'Pick a track'}
     </div>`:'';
 
   document.getElementById('root').innerHTML=`
+    ${S.startNote?rStartNote():''}
     ${rModal()}
+    ${rBanners()}
     ${S.tabConflict?`<div class="tab-warn">⚠ Another tab has this planner open. Whichever tab saves last wins. <button onclick="S.tabConflict=false;render()">Got it</button></div>`:''}
     <div class="hdr">
       <div class="hdr-top">
         <div>
-          <div class="hdr-sub">UT Austin · ECE + Business Honors</div>
+          <div class="hdr-sub">UT Austin · ${act?.kind==='business'?'McCombs BBA':'ECE + Business Honors'}</div>
           <h1>College Course Planner <span style="font-size:11px;opacity:.5;font-weight:400">2024–2026</span></h1>
           <div style="margin-top:4px;display:flex;align-items:center;gap:7px;flex-wrap:wrap">
             <div class="sched-pill" onclick="S.modal='schedules';render()">
@@ -1471,6 +1896,7 @@ function render(){
             </div>
             ${trackPill}
             ${S.schedules.length>1?`<span style="font-size:10px;opacity:.6">${S.schedules.length} schedules</span>`:''}
+            <span id="saved-stamp" class="saved-stamp" title="Autosaved to this browser">${S.lastSaved?'saved '+esc(relTime(S.lastSaved)):''}</span>
           </div>
         </div>
         <div class="hdr-right">
@@ -1492,6 +1918,7 @@ function render(){
             <button class="hbtn" onclick="S.modal='backup';render()" title="Download or restore backup file">💾 Backup</button>
             <button class="hbtn" onclick="S.modalTab='code';S.modal='export';render()" title="Share">📤 Share</button>
             <button class="hbtn" onclick="S.modal='import';render()" title="Import">📥 Import</button>
+            <button class="hbtn" onclick="checkForUpdates(true)" title="Check for updates">Update</button>
             <button class="hbtn ghost" onclick="undo()" title="Undo (Ctrl+Z)" ${HISTORY.past.length?'':'disabled'}>↶</button>
             <button class="hbtn ghost" onclick="redo()" title="Redo (Ctrl+Shift+Z)" ${HISTORY.future.length?'':'disabled'}>↷</button>
             <button class="hbtn ghost" onclick="S.modal='kbhelp';render()" title="Keyboard shortcuts">?</button>
@@ -1529,13 +1956,28 @@ document.addEventListener('click',e=>{
   const el=e.target.closest('[data-a]');if(!el)return;
   const a=el.dataset.a,sem=el.dataset.sem,cid=el.dataset.cid;
   if(a==='filter')mutate(()=>S.filter=el.dataset.cat||null);
-  else if(a==='toggle'){e.stopPropagation();mutate(()=>setAS(getAS().map(s=>s.id!==sem?s:{...s,courses:s.courses.map(c=>c.id!==cid?c:{...c,done:!c.done})})));}
+  else if(a==='hide-start-note'){
+    const cb=document.getElementById('start-suppress');
+    if(!cb||cb.checked)markStartSeen();
+    S.startNote=false;render();
+  }
+  else if(a==='manual-update'){checkForUpdates(!S.startNote);}
+  else if(a==='dismiss-update'){
+    if(S.update?.latest){try{localStorage.setItem(UPDATE_DISMISS_KEY,S.update.latest);}catch(e){}}
+    S.updateDismissed=true;render();
+  }
+  else if(a==='snooze-export'){
+    writeExportSnooze(Date.now()+EXPORT_SNOOZE_DAYS*86400000);
+    recomputeExportReminder();render();
+  }
+  else if(a==='open-backup'){S.modal='backup';render();}
+  else if(a==='toggle'){e.stopPropagation();mutate(()=>setAS(getAS().map(s=>s.id!==sem?s:{...s,courses:s.courses.map(c=>c.id!==cid?c:{...c,done:!c.done})})));} 
   else if(a==='edit'){
     e.stopPropagation();
     const sems=getAS();const s=sems.find(x=>x.id===sem);const c=s?.courses.find(x=>x.id===cid);
     if(c){S.edit={semId:sem,courseId:cid,isNew:false};S.form={...c,semId:sem};render();window.scrollTo(0,0);}
   }
-  else if(a==='add'){S.edit={semId:sem,isNew:true};S.form={id:uid(),code:'',name:'',cat:'ECE',credits:3,done:false,note:'',grade:'',semId:sem};render();window.scrollTo(0,0);}
+  else if(a==='add'){S.edit={semId:sem,isNew:true};S.form={id:uid(),code:'',name:'',cat:getAct()?.kind==='business'?'BUSINESS':'ECE',credits:3,done:false,note:'',grade:'',semId:sem};render();window.scrollTo(0,0);}
   else if(a==='cancel'){S.edit=null;S.form={};render();}
   else if(a==='save'){
     const code=document.getElementById('f-code').value.trim();
@@ -1599,14 +2041,14 @@ window.bulkMove=()=>{
 // ─── Schedule actions ─────────────────────────────────────────────────────────
 window.switchSched=id=>mutate(()=>{S.activeId=id;S.compareMode=false;S.edit=null;S.form={};S.modal=null;});
 window.newSched=()=>mutate(()=>{
-  const id=sid();
-  S.schedules.push({id,name:nextName(),color:nextColor(),sems:dc(DS),createdAt:Date.now(),updatedAt:Date.now(),kind:'ecb'});
-  S.activeId=id;S.modal=null;S.edit=null;S.form={};
+  const sch=makeSchedule(nextName(),nextColor(),'ecb');
+  S.schedules.push(sch);
+  S.activeId=sch.id;S.modal=null;S.edit=null;S.form={};
 });
 window.dupSched=srcId=>mutate(()=>{
   const src=S.schedules.find(s=>s.id===srcId);if(!src)return;
   const id=sid();
-  S.schedules.push({id,name:src.name+' (copy)',color:nextColor(),sems:dc(src.sems),createdAt:Date.now(),updatedAt:Date.now(),track:src.track,kind:src.kind||'ecb'});
+  S.schedules.push(normalizeSchedule({id,name:src.name+' (copy)',color:nextColor(),sems:dc(src.sems),createdAt:Date.now(),updatedAt:Date.now(),track:src.track,bizTracks:businessTrackKeys(src),kind:src.kind||'ecb'}));
   S.activeId=id;S.modal=null;
 });
 window.delSched=id=>{if(S.schedules.length<=1)return;mutate(()=>{S.schedules=S.schedules.filter(s=>s.id!==id);if(S.activeId===id)S.activeId=S.schedules[0].id;if(S.compareId===id){S.compareId=null;S.compareMode=false;}});};
@@ -1631,6 +2073,12 @@ window.updateTarget=()=>{
 };
 window.setTrack=key=>mutate(()=>{
   S.schedules=S.schedules.map(s=>s.id!==S.activeId?s:{...s,track:key||null});
+});
+window.toggleBusinessTrackKey=key=>mutate(()=>{
+  S.schedules=S.schedules.map(s=>s.id!==S.activeId?s:toggleBusinessTrack(s,key));
+});
+window.clearBusinessTracks=()=>mutate(()=>{
+  S.schedules=S.schedules.map(s=>s.id!==S.activeId?s:syncBusinessTracks(s,[]));
 });
 window.setKind=k=>mutate(()=>{
   S.schedules=S.schedules.map(s=>s.id!==S.activeId?s:{...s,kind:k});
@@ -1766,7 +2214,7 @@ document.addEventListener('keydown',e=>{
   if((e.ctrlKey||e.metaKey)&&(e.key.toLowerCase()==='y'||(e.shiftKey&&e.key.toLowerCase()==='z'))){e.preventDefault();redo();return;}
   if(inField)return;
   const k=e.key.toLowerCase();
-  if(k==='n'){const sems=getAS().filter(s=>!s.isOff);const target=sems[0];if(target){S.edit={semId:target.id,isNew:true};S.form={id:uid(),code:'',name:'',cat:'ECE',credits:3,done:false,note:'',grade:'',semId:target.id};render();window.scrollTo(0,0);}e.preventDefault();}
+  if(k==='n'){const sems=getAS().filter(s=>!s.isOff);const target=sems[0];if(target){S.edit={semId:target.id,isNew:true};S.form={id:uid(),code:'',name:'',cat:getAct()?.kind==='business'?'BUSINESS':'ECE',credits:3,done:false,note:'',grade:'',semId:target.id};render();window.scrollTo(0,0);}e.preventDefault();}
   else if(k==='c'){S.cmpPickId=null;S.modal='compare-pick';render();e.preventDefault();}
   else if(k==='s'){S.modal='search';render();e.preventDefault();}
   else if(k==='g'){S.modal='gpa';render();e.preventDefault();}
@@ -1869,7 +2317,13 @@ window.downloadBackup=()=>{
   a.href=url;a.download=`course-plan-${new Date().toISOString().slice(0,10)}.json`;
   document.body.appendChild(a);a.click();a.remove();
   setTimeout(()=>URL.revokeObjectURL(url),1000);
+  writeLastExport(Date.now());
+  writeExportSnooze(0);
+  recomputeExportReminder();
+  _dirtySinceBackup=false;
+  render();
 };
+window.setUnloadWarn=on=>{try{localStorage.setItem(UNLOAD_WARN_KEY,on?'on':'off');}catch(e){}render();};
 window.pickRestoreFile=()=>document.getElementById('restore-file-input').click();
 document.getElementById('restore-file-input').addEventListener('change',async e=>{
   const file=e.target.files[0];if(!file)return;
@@ -1943,7 +2397,7 @@ window.applyCurriculum=key=>{
   saveSnapshotNow('pre-curriculum-swap');
   mutate(()=>{
     const id=S.activeId;
-    S.schedules=S.schedules.map(s=>s.id!==id?s:{...s,sems:t.build(),updatedAt:Date.now()});
+    S.schedules=S.schedules.map(s=>s.id!==id?s:normalizeSchedule({...s,sems:t.build(),kind:t.kind||key,track:null,bizTracks:[],updatedAt:Date.now()}));
     S.modal=null;S.edit=null;S.form={};
   },{reason:'curriculum-swap'});
 };
@@ -2084,8 +2538,20 @@ function prewarmModals(){
 (async()=>{
   const ok=await load();
   if(!ok)initDefault();
-  S.schedules=S.schedules.map(s=>({kind:'ecb',...s}));
+  S.schedules=S.schedules.map(s=>normalizeSchedule(s));
+  if(readStartSeen())S.startNote=false;
+  S.lastExportAt=readLastExport();
+  if(!S.lastExportAt){writeLastExport(Date.now());}
+  S.exportSnoozedUntil=readExportSnooze();
+  recomputeExportReminder();
   render();
+  checkForUpdates(false);
+  setInterval(()=>{
+    const stamp=document.getElementById('saved-stamp');
+    if(stamp&&S.lastSaved)stamp.textContent='saved '+relTime(S.lastSaved);
+    const prev=S.exportReminder;recomputeExportReminder();
+    if(prev!==S.exportReminder)render();
+  },30000);
   if('requestIdleCallback'in window)requestIdleCallback(prewarmModals,{timeout:2000});
   else setTimeout(prewarmModals,500);
 })();

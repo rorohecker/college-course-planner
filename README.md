@@ -1,12 +1,14 @@
 # College Course Planner
 
-A college course planner for UT Austin students. Built originally for the Engineering and Business Honors (ECB) program, but it works just as well for any major and at any school once you swap in the curriculum. It runs entirely in your browser as a single HTML file, with no backend, no signup, and no install.
+A college course planner for UT Austin students. Built originally for the Engineering and Business Honors (ECB) program, it now also ships a McCombs BBA template with all eight major tracks and Canfield Business Honors as a dual-track option. It runs entirely in your browser as a single HTML file, with no backend, no signup, and no install.
 
 If you have ever wished UT IDA could let you build and compare what-if schedules without clicking through a dozen menus, this is meant to be that tool.
 
 ## What it does
 
 - Drop-in ECB default curriculum covering AP credits, summer physics, and all eight semesters of the four year plan.
+- Swap to an Undeclared Business BBA template at any time from the curriculum picker, with McCombs major tracks (Finance, Accounting, MIS, Marketing, BAX, IB Skills, iMPA) and Canfield Business Honors layered on top.
+- Auto-checks GitHub on startup so you know when a newer version is published, with one click to grab the latest copy.
 - Build multiple schedule plans side by side and compare them. The compare view highlights which courses you share between plans and which ones are unique to each.
 - Drag courses between semesters to rearrange your plan.
 - Track degree completion with per semester progress and a total credit count.
