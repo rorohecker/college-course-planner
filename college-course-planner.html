@@ -450,7 +450,7 @@ body{font-family:-apple-system,'Segoe UI',system-ui,sans-serif;background:var(--
 </script>
 <script>
 // ─── Static data ──────────────────────────────────────────────────────────────
-const APP_VERSION='2026.05.25.3';
+const APP_VERSION='2026.05.25.4';
 // Raw URL is used only for parsing APP_VERSION on the live copy — never as a user link
 // (raw.githubusercontent.com serves text/plain, so the browser shows source instead of rendering).
 const UPDATE_URL='https://raw.githubusercontent.com/rorohecker/college-course-planner/main/college-course-planner.html';
@@ -2538,37 +2538,48 @@ document.getElementById('restore-file-input').addEventListener('change',async e=
 // real courses but don't match anything in the plan get reported back so the
 // user can add them.
 function parseTranscript(text){
-  // Handles both casual paste ("ECE 302H A") and the UT Academic Summary PDF format:
-  //   "ECE 302H    INTRO ELECTRICAL ENGR: HONORS    C+    18215    In residence    3.0    6.99"
-  //   "B A 324H   BUSN COMM: ORAL/WRIT: HON         A-    2250     In residence    3.0    11.01"
-  //   "B A S353   INTERNSHIP IN BUSINESS ADMIN      Z     69138    Extension       3.0    0.00"
-  // Course code = dept (1-4 letters, optional second word of 1-3 letters)
-  //               + optional 1-letter prefix + 3 digits + optional 1-letter suffix.
-  const lines=text.split(/[\r\n]+/);
-  const codeRe=/\b([A-Z]{1,4}(?:\s+[A-Z]{1,3})?)\s+([A-Z]?)(\d{3})([A-Z]?)\b/;
-  // Grades: standard letters, CR/NC, W/Q/IP, plus Z (in-progress for internships, etc).
-  // Use (?=\W|$) lookahead instead of \b at the end — '+' and '-' are non-word
-  // characters, so '\bB+\b' fails when followed by a space (non-word → non-word
-  // is not a word boundary). With \b the engine would silently drop to matching
-  // just 'B' and lose the suffix.
+  // UT Academic Summary PDFs split most table rows across multiple lines:
+  //   M 408C
+  //   DIFFEREN AND INTEGRAL
+  //   CALCULUS CR 26050
+  //   Credit by
+  //   exam 4.0 0.00
+  // and even rows that fit on one printed line still have the 'Type' wrap below.
+  // Strategy: a row starts when a line BEGINS with a course code. Continuation
+  // lines (no leading code) get appended until the next code-starting line.
+  // Grade is searched in the joined chunk, after the code, with +/- preserved.
+  const lines=text.split(/[\r\n]+/).map(l=>l.replace(/\s+/g,' ').trim()).filter(l=>l);
+  // Code at line start = real course row. Dept = 1-4 letters, optional second
+  // word of 1-3 letters ('B A', 'A S'); number = optional 1-letter prefix
+  // ('S' in 'S353'), 3 digits, optional 1-letter suffix.
+  const lineCodeRe=/^([A-Z]{1,4}(?:\s+[A-Z]{1,3})?)\s+([A-Z]?)(\d{3})([A-Z]?)\b/;
+  // Grades incl. CR/NC, W/Q/IP, and Z (in-progress) — Z maps to IP for GPA.
+  // (?=\W|$) lookahead so 'A-' / 'B+' (whose suffix is non-word) match before a space.
   const gradeRe=/\b(A\+|A-|B\+|B-|C\+|C-|D\+|D-|A|B|C|D|F|CR|NC|W|Q|IP|Z)(?=\W|$)/;
+  // Page/header lines that fall between row continuation lines — skip without
+  // breaking the current row, since the PDF inserts them mid-row.
+  const skipRe=/^(Academic Summary|Course\s+Title|Page \d|Total Hours|(Fall|Spring|Summer|Winter) \d{4} Courses?|(Lower|Upper) Division|Graduate Level|Overall|GPA|Grade Points|Hours:|Major \d|School \d|EID:|Name:|Classification:|Date Degree|First Semester|Last Semester)/i;
   const out=[];
-  for(const raw of lines){
-    const line=raw.replace(/\s+/g,' ').trim();
-    if(!line)continue;
-    const mc=line.match(codeRe);
-    if(!mc)continue;
-    const dept=mc[1].replace(/\s+/g,' ').trim();
-    const num=(mc[2]||'')+mc[3]+(mc[4]||'');
+  for(let i=0;i<lines.length;i++){
+    const m=lines[i].match(lineCodeRe);
+    if(!m)continue;
+    const dept=m[1].replace(/\s+/g,' ').trim();
+    const num=(m[2]||'')+m[3]+(m[4]||'');
     const code=`${dept} ${num}`;
-    // Search for grade only AFTER the course code to avoid catching letters
-    // inside the code itself (e.g. the 'A' in 'B A 324H').
-    const after=line.slice((mc.index||0)+mc[0].length);
-    const mg=after.match(gradeRe);
+    // Walk forward collecting continuation lines until we hit the next row-starting code.
+    let chunk=lines[i].slice(m[0].length);
+    let j=i+1;
+    while(j<lines.length){
+      const next=lines[j];
+      if(lineCodeRe.test(next))break;
+      if(skipRe.test(next)){j++;continue;}
+      chunk+=' '+next;j++;
+    }
+    const mg=chunk.match(gradeRe);
     if(!mg)continue;
     let grade=mg[1];
-    if(grade==='Z')grade='IP'; // in-progress courses get IP per UT GPA rules
-    out.push({code,grade,raw:line});
+    if(grade==='Z')grade='IP';
+    out.push({code,grade,raw:(lines[i]+(chunk.trim()?' '+chunk.trim():'')).trim()});
   }
   return out;
 }
