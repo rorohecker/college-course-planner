@@ -450,7 +450,7 @@ body{font-family:-apple-system,'Segoe UI',system-ui,sans-serif;background:var(--
 </script>
 <script>
 // ─── Static data ──────────────────────────────────────────────────────────────
-const APP_VERSION='2026.05.25.4';
+const APP_VERSION='2026.05.25.5';
 // Raw URL is used only for parsing APP_VERSION on the live copy — never as a user link
 // (raw.githubusercontent.com serves text/plain, so the browser shows source instead of rendering).
 const UPDATE_URL='https://raw.githubusercontent.com/rorohecker/college-course-planner/main/college-course-planner.html';
@@ -2584,24 +2584,62 @@ function parseTranscript(text){
   return out;
 }
 function applyTranscript(parsed){
-  // Normalize codes for matching (strip H/Honors suffix to be tolerant).
-  const norm=s=>String(s||'').trim().toUpperCase().replace(/\s+/g,' ').replace(/H$/,'');
-  const updates=new Map();
-  for(const p of parsed)updates.set(norm(p.code),p.grade);
-  let matched=0,unmatched=[];
+  // Aggressive normalization: uppercase, strip ALL whitespace, drop trailing H.
+  //   'B A 324H' → 'BA324', 'BA 324H' → 'BA324', 'HIS 315K' → 'HIS315K', 'M 408C' → 'M408C'
+  const normTight=s=>String(s||'').toUpperCase().replace(/\s+/g,'').replace(/H$/,'');
+  // Dept prefix (letters before any digit), e.g. 'B A 324H' → 'BA', 'HIS' → 'HIS'.
+  const deptOf=s=>{
+    const m=String(s||'').toUpperCase().replace(/\s+/g,'').match(/^([A-Z]+)/);
+    return m?m[1]:'';
+  };
+  // Pure placeholders (no digits) like 'HIS' or 'ANT/EDP/PSY/SOC' can match any
+  // transcript course whose dept appears in the slash-list.
+  const isPlaceholder=s=>!/\d/.test(String(s||''));
+  const altsOf=s=>String(s||'').toUpperCase().split(/[\/,]/).map(part=>{
+    const m=part.replace(/\s+/g,'').match(/^([A-Z]+)/);return m?m[1]:'';
+  }).filter(Boolean);
+
+  // Walk transcript entries once; for each, try to find an unfilled planner
+  // slot using progressively looser criteria. Iteration order: transcript order
+  // (semester chronological) → planner order (sem layout).
+  const updates=parsed.map(p=>({
+    norm:normTight(p.code),dept:deptOf(p.code),code:p.code,grade:p.grade,used:false,
+  }));
+
+  let matched=0;
   mutate(()=>{
     setAS(getAS().map(sem=>{
       if(sem.isOff)return sem;
       return{...sem,courses:sem.courses.map(c=>{
-        const g=updates.get(norm(c.code));
-        if(g!=null){matched++;return{...c,done:true,grade:g};}
+        const cn=normTight(c.code);
+        const cd=deptOf(c.code);
+        // (1) Exact normalized code match: handles 'BA 324H' ↔ 'B A 324H',
+        //     'ECE 302H' ↔ 'ECE 302H', etc. Whitespace and trailing H ignored.
+        let upd=updates.find(u=>!u.used&&u.norm===cn);
+        // (2) Number-prefix: planner 'E 316' matches transcript 'E 316P' (and
+        //     any 'E 316X' variant). Requires the planner code to be more
+        //     specific than just a dept (cn.length must exceed dept length).
+        if(!upd&&cn.length>cd.length)upd=updates.find(u=>!u.used&&u.norm.startsWith(cn));
+        // (3) Dept-only placeholder: planner 'HIS' / 'ANT/EDP/PSY/SOC' /
+        //     'GOV 310L' (already concrete, skipped) — fills with the first
+        //     transcript course whose dept is in the alts list.
+        if(!upd&&isPlaceholder(c.code)){
+          const alts=altsOf(c.code);
+          upd=updates.find(u=>!u.used&&alts.includes(u.dept));
+        }
+        if(upd){
+          upd.used=true;matched++;
+          // Promote placeholder/prefix codes to the actual transcript code so
+          // the user can see what was matched in their plan later.
+          const newCode=cn!==upd.norm?upd.code:c.code;
+          return{...c,done:true,grade:upd.grade,code:newCode};
+        }
         return c;
       })};
     }));
   },{reason:'transcript-import'});
-  // Find parsed courses that weren't in any semester.
-  const allCodes=new Set(getAS().flatMap(s=>s.courses).map(c=>norm(c.code)));
-  for(const[code,grade]of updates){if(!allCodes.has(code))unmatched.push({code,grade});}
+
+  const unmatched=updates.filter(u=>!u.used).map(u=>({code:u.code,grade:u.grade}));
   return{matched,unmatched,total:parsed.length};
 }
 window.pasteTranscriptFromClipboard=async()=>{
