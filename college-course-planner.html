@@ -450,7 +450,7 @@ body{font-family:-apple-system,'Segoe UI',system-ui,sans-serif;background:var(--
 </script>
 <script>
 // ─── Static data ──────────────────────────────────────────────────────────────
-const APP_VERSION='2026.05.25.5';
+const APP_VERSION='2026.05.25.6';
 // Raw URL is used only for parsing APP_VERSION on the live copy — never as a user link
 // (raw.githubusercontent.com serves text/plain, so the browser shows source instead of rendering).
 const UPDATE_URL='https://raw.githubusercontent.com/rorohecker/college-course-planner/main/college-course-planner.html';
@@ -2579,10 +2579,49 @@ function parseTranscript(text){
     if(!mg)continue;
     let grade=mg[1];
     if(grade==='Z')grade='IP';
-    out.push({code,grade,raw:(lines[i]+(chunk.trim()?' '+chunk.trim():'')).trim()});
+    // Try to pull credit hours from the chunk: UT rows end with '<credits> <grade points>'
+    // like '3.0 6.99' or '1.0 0.00'. Search after the grade so we don't grab a unique ID.
+    let credits=null;
+    const afterGrade=chunk.slice(chunk.indexOf(mg[0])+mg[0].length);
+    const mcr=afterGrade.match(/\b(\d+(?:\.\d+)?)\s+\d+\.\d{1,2}\b/);
+    if(mcr)credits=parseFloat(mcr[1]);
+    out.push({code,grade,credits,raw:(lines[i]+(chunk.trim()?' '+chunk.trim():'')).trim()});
   }
   return out;
 }
+// UT department → planner category, for auto-adding extra transcript courses.
+// Lists below cover the most common UT depts a student sees on a transcript;
+// anything not listed defaults to OTHER.
+const DEPT_CAT={
+  // Math + Statistics
+  M:'MATH',STA:'MATH',
+  // ECE
+  ECE:'ECE',
+  // Sciences (lab + lecture)
+  PHY:'PHY',CH:'PHY',BIO:'PHY',AST:'PHY',GEO:'PHY',CHE:'PHY',
+  // Business (McCombs)
+  BA:'BUSINESS','B A':'BUSINESS',MAN:'BUSINESS',MKT:'BUSINESS',ACC:'BUSINESS',
+  FIN:'BUSINESS',MIS:'BUSINESS',OM:'BUSINESS','O M':'BUSINESS',DS:'BUSINESS',
+  'D S':'BUSINESS',LEB:'BUSINESS',BAX:'BUSINESS',IB:'BUSINESS','I B':'BUSINESS',
+  ECO:'BUSINESS',BGS:'BUSINESS',
+  // Core: humanities, history, gov, social/behavioral sciences, signature courses
+  HIS:'CORE',GOV:'CORE',RHE:'CORE',E:'CORE',UGS:'CORE',
+  PSY:'CORE',ANT:'CORE',SOC:'CORE',EDP:'CORE',GRG:'CORE',
+  HDF:'CORE',LIN:'CORE',SW:'CORE',WGS:'CORE','A S':'CORE',ARC:'CORE',
+  ARH:'CORE',ART:'CORE',MUS:'CORE','T D':'CORE',
+  // Languages
+  SPN:'OTHER',FR:'OTHER',GER:'OTHER',CHI:'OTHER',JPN:'OTHER',ITL:'OTHER',
+};
+function guessCategory(code){
+  const norm=String(code||'').toUpperCase().replace(/\s+/g,'');
+  const noSpace=norm.match(/^([A-Z]+)/)?.[1]||'';
+  if(DEPT_CAT[noSpace])return DEPT_CAT[noSpace];
+  // Try with internal space preserved (e.g. 'B A', 'O M', 'A S').
+  const withSpace=String(code||'').toUpperCase().match(/^([A-Z]+(?:\s+[A-Z]+)?)/)?.[1]?.replace(/\s+/g,' ').trim()||'';
+  if(DEPT_CAT[withSpace])return DEPT_CAT[withSpace];
+  return 'OTHER';
+}
+
 function applyTranscript(parsed){
   // Aggressive normalization: uppercase, strip ALL whitespace, drop trailing H.
   //   'B A 324H' → 'BA324', 'BA 324H' → 'BA324', 'HIS 315K' → 'HIS315K', 'M 408C' → 'M408C'
@@ -2603,12 +2642,13 @@ function applyTranscript(parsed){
   // slot using progressively looser criteria. Iteration order: transcript order
   // (semester chronological) → planner order (sem layout).
   const updates=parsed.map(p=>({
-    norm:normTight(p.code),dept:deptOf(p.code),code:p.code,grade:p.grade,used:false,
+    norm:normTight(p.code),dept:deptOf(p.code),code:p.code,grade:p.grade,credits:p.credits,used:false,
   }));
 
-  let matched=0;
+  let matched=0,added=0;
   mutate(()=>{
-    setAS(getAS().map(sem=>{
+    // Pass 1: walk planner sems and fill matching slots.
+    const filled=getAS().map(sem=>{
       if(sem.isOff)return sem;
       return{...sem,courses:sem.courses.map(c=>{
         const cn=normTight(c.code);
@@ -2617,30 +2657,53 @@ function applyTranscript(parsed){
         //     'ECE 302H' ↔ 'ECE 302H', etc. Whitespace and trailing H ignored.
         let upd=updates.find(u=>!u.used&&u.norm===cn);
         // (2) Number-prefix: planner 'E 316' matches transcript 'E 316P' (and
-        //     any 'E 316X' variant). Requires the planner code to be more
-        //     specific than just a dept (cn.length must exceed dept length).
+        //     any 'E 316X' variant). Requires planner code to be more specific
+        //     than just a dept (cn.length must exceed dept length).
         if(!upd&&cn.length>cd.length)upd=updates.find(u=>!u.used&&u.norm.startsWith(cn));
-        // (3) Dept-only placeholder: planner 'HIS' / 'ANT/EDP/PSY/SOC' /
-        //     'GOV 310L' (already concrete, skipped) — fills with the first
-        //     transcript course whose dept is in the alts list.
+        // (3) Dept-only placeholder: planner 'HIS' / 'ANT/EDP/PSY/SOC' fills
+        //     with the first transcript course whose dept is in the alts list.
         if(!upd&&isPlaceholder(c.code)){
           const alts=altsOf(c.code);
           upd=updates.find(u=>!u.used&&alts.includes(u.dept));
         }
         if(upd){
           upd.used=true;matched++;
-          // Promote placeholder/prefix codes to the actual transcript code so
-          // the user can see what was matched in their plan later.
           const newCode=cn!==upd.norm?upd.code:c.code;
           return{...c,done:true,grade:upd.grade,code:newCode};
         }
         return c;
       })};
-    }));
+    });
+
+    // Pass 2: dedupe — any transcript course whose code already exists somewhere
+    // in the (just-filled) plan was implicitly matched and shouldn't be added again.
+    const existingCodes=new Set(filled.flatMap(s=>s.courses).map(c=>normTight(c.code)));
+    const leftover=updates.filter(u=>!u.used&&!existingCodes.has(u.norm));
+
+    // Pass 3: bucket leftovers into an 'Imported credits' semester so they
+    // count toward the user's total and show up in the Extra-credit bar.
+    if(leftover.length){
+      const newCourses=leftover.map(u=>({
+        id:uid(),code:u.code,name:u.code,cat:guessCategory(u.code),
+        credits:Number.isFinite(u.credits)?u.credits:3, // 0 is valid (UGS, A S 000C, etc.)
+        done:true,grade:u.grade,note:'Imported from transcript',
+      }));
+      added=newCourses.length;
+      const idx=filled.findIndex(s=>s.id==='imports');
+      let withImports;
+      if(idx>=0){
+        withImports=filled.map(s=>s.id==='imports'?{...s,courses:[...s.courses,...newCourses]}:s);
+      }else{
+        withImports=[...filled,{id:'imports',label:'Imported transcript credits',courses:newCourses}];
+      }
+      setAS(withImports);
+    }else{
+      setAS(filled);
+    }
   },{reason:'transcript-import'});
 
-  const unmatched=updates.filter(u=>!u.used).map(u=>({code:u.code,grade:u.grade}));
-  return{matched,unmatched,total:parsed.length};
+  return{matched,added,total:parsed.length,
+    unmatched:updates.filter(u=>!u.used).map(u=>({code:u.code,grade:u.grade}))};
 }
 window.pasteTranscriptFromClipboard=async()=>{
   const ta=document.getElementById('transcript-in');if(!ta)return;
@@ -2657,8 +2720,12 @@ window.runTranscriptImport=()=>{
   const parsed=parseTranscript(ta.value);
   if(!parsed.length){document.getElementById('transcript-result').innerHTML='<span style="color:#C00">No courses found. Paste the table of completed courses from UT Direct.</span>';return;}
   const r=applyTranscript(parsed);
-  let html=`<b>${r.matched}</b> of ${r.total} parsed lines updated.`;
-  if(r.unmatched.length)html+=`<br><span style="color:var(--text3)">Not in any semester: ${r.unmatched.slice(0,8).map(u=>`${esc(u.code)} (${u.grade})`).join(', ')}${r.unmatched.length>8?'…':''}. Add them manually or via the catalog autocomplete.</span>`;
+  let html=`<b>${r.matched}</b> matched to existing slots`;
+  if(r.added)html+=`, <b>${r.added}</b> added as extra credit (see "Imported transcript credits" at the bottom of your plan)`;
+  html+=`.`;
+  if(r.matched===0&&r.added===0&&r.total>0){
+    html+=` <span style="color:var(--text3)">All ${r.total} parsed lines were already in your plan with the same code.</span>`;
+  }
   document.getElementById('transcript-result').innerHTML=html;
 };
 
