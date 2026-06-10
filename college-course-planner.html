@@ -477,7 +477,7 @@ body{font-family:-apple-system,'Segoe UI',system-ui,sans-serif;background:var(--
 </script>
 <script>
 // ─── Static data ──────────────────────────────────────────────────────────────
-const APP_VERSION='2026.06.09.5';
+const APP_VERSION='2026.06.09.6';
 // Raw URL is used only for parsing APP_VERSION on the live copy — never as a user link
 // (raw.githubusercontent.com serves text/plain, so the browser shows source instead of rendering).
 const UPDATE_URL='https://raw.githubusercontent.com/rorohecker/college-course-planner/main/college-course-planner.html';
@@ -511,6 +511,14 @@ const LAYOUT=[
   {type:'pair',label:'Year 4',ids:['y4f','y4s']},
 ];
 const KNOWN=new Set(LAYOUT.flatMap(l=>l.ids));
+// ECE Honors & General: physics in Y1 Spring + Y2 Fall (no summer physics row).
+const ECE_STANDALONE_LAYOUT=[
+  {type:'pair',label:'Year 1',ids:['y1f','y1s']},
+  {type:'pair',label:'Year 2',ids:['y2f','y2s']},
+  {type:'pair',label:'Year 3',ids:['y3f','y3s']},
+  {type:'pair',label:'Year 4',ids:['y4f','y4s']},
+];
+const ECE_STANDALONE_KNOWN=new Set(ECE_STANDALONE_LAYOUT.flatMap(l=>l.ids));
 const BUSINESS_LAYOUT=[
   {type:'pair',label:'Year 1',ids:['y1f','y1s']},
   {type:'pair',label:'Year 2',ids:['y2f','y2s']},
@@ -522,8 +530,16 @@ const BUSINESS_LAYOUT=[
   {type:'full',label:'Degree Completion',ids:['electives']},
 ];
 const BUSINESS_KNOWN=new Set(BUSINESS_LAYOUT.flatMap(l=>l.ids));
-const layoutFor=sch=>sch?.kind==='business'?BUSINESS_LAYOUT:LAYOUT;
-const knownFor=sch=>sch?.kind==='business'?BUSINESS_KNOWN:KNOWN;
+const layoutFor=sch=>{
+  if(sch?.kind==='business')return BUSINESS_LAYOUT;
+  if(sch?.kind==='general')return ECE_STANDALONE_LAYOUT;
+  return LAYOUT;
+};
+const knownFor=sch=>{
+  if(sch?.kind==='business')return BUSINESS_KNOWN;
+  if(sch?.kind==='general')return ECE_STANDALONE_KNOWN;
+  return KNOWN;
+};
 
 // ─── ECE + Canfield Business Honors (ECB Dual Degree) · 2026-2028 catalog ──────
 // Source: "26-28 ECB Flowchart". ECB students take 7 advanced technical
@@ -612,11 +628,6 @@ const DS=[
 // The catalog’s “8 courses” in the tech core are filled via track courses into those slots; ATE is the
 // separate “Advanced Technical Elective” (3 hr UD ECE or ECE 316).
 const ECE_HONORS_DS=[
-  {id:'phy',label:'Physics — Summer (between Y1 & Y2)',courses:[
-    {id:'eh7',code:'PHY 303K',name:'Engineering Physics 1',cat:'PHY',credits:3,done:false,note:''},
-    {id:'eh8',code:'PHY 105M',name:'Lab for PHY 303K',cat:'PHY',credits:1,done:false,note:''},
-    {id:'eh9',code:'PHY 303E',name:'Physics II for ECE Majors',cat:'PHY',credits:3,done:false,note:'Pre-req: M 408D, PHY 303K, PHY 105M'},
-  ]},
   {id:'y1f',label:'Year 1 — Fall',courses:[
     {id:'eh10',code:'ECE 402H',name:'Intro to Electrical Engineering Honors',cat:'ECE',credits:4,done:false,note:'Co-req: M 408D'},
     {id:'eh11',code:'ECE 406H',name:'Introduction to Computing Honors',cat:'ECE',credits:4,done:false,note:'Pre-req: M 408C'},
@@ -628,10 +639,13 @@ const ECE_HONORS_DS=[
     {id:'eh15',code:'ECE 419H',name:'Intro to Embedded Systems',cat:'ECE',credits:4,done:false,note:'Pre-req: ECE 406H; Co-req: ECE 412H'},
     {id:'eh16',code:'ECE 412H',name:'Software Design & Implementation I',cat:'ECE',credits:4,done:false,note:'Pre-req: ECE 406H'},
     {id:'eh17',code:'M 427J',name:'Differential Equations',cat:'MATH',credits:4,done:false,note:'Pre-req: M 408D'},
+    {id:'eh7',code:'PHY 303K',name:'Engineering Physics 1',cat:'PHY',credits:3,done:false,note:''},
+    {id:'eh8',code:'PHY 105M',name:'Lab for PHY 303K',cat:'PHY',credits:1,done:false,note:''},
     {id:'eh18',code:'ECE 107H',name:'Engineering Leadership: Honors',cat:'ECE',credits:1,done:false,note:'Spring only'},
     {id:'eh19',code:'SBS',name:'Social & Behavioral Sciences',cat:'CORE',credits:3,done:false,note:'Any approved SBS core course — not ECO 304K/304L'},
   ]},
   {id:'y2f',label:'Year 2 — Fall',courses:[
+    {id:'eh9',code:'PHY 303E',name:'Physics II for ECE Majors',cat:'PHY',credits:3,done:false,note:'Pre-req: M 408D, PHY 303K, PHY 105M'},
     {id:'eh20',code:'ECE 411H',name:'Circuit Theory',cat:'ECE',credits:4,done:false,note:'Pre-req: ECE 402H, PHY 303K, PHY 105M; Co-req: M 427J, PHY 303E'},
     {id:'eh21',code:'ECE 313H',name:'Linear Systems & Signals',cat:'ECE',credits:3,done:false,note:'Pre-req: ECE 402H, M 408C, M 340L'},
     {id:'eh22',code:'M 340L',name:'Matrices & Matrix Calculations',cat:'MATH',credits:3,done:false,note:'Pre-req: M 408D'},
@@ -670,11 +684,6 @@ const ECE_HONORS_DS=[
 // Source: "2628 Flowchart" (non-honors). No ECO 304K/304L. Same structure as
 // honors with the general course numbers and ECE 464K senior design.
 const ECE_GENERAL_DS=[
-  {id:'phy',label:'Physics — Summer (between Y1 & Y2)',courses:[
-    {id:'eg7',code:'PHY 303K',name:'Engineering Physics 1',cat:'PHY',credits:3,done:false,note:''},
-    {id:'eg8',code:'PHY 105M',name:'Lab for PHY 303K',cat:'PHY',credits:1,done:false,note:''},
-    {id:'eg9',code:'PHY 303E',name:'Electromagnetic, Quantum, Semiconductor Physics',cat:'PHY',credits:3,done:false,note:'Pre-req: M 408D, PHY 303K, PHY 105M'},
-  ]},
   {id:'y1f',label:'Year 1 — Fall',courses:[
     {id:'eg10',code:'ECE 402',name:'Intro to Electrical Engineering',cat:'ECE',credits:4,done:false,note:'Co-req: M 408D'},
     {id:'eg11',code:'ECE 406',name:'Introduction to Computing',cat:'ECE',credits:4,done:false,note:'Pre-req: M 408C'},
@@ -686,9 +695,12 @@ const ECE_GENERAL_DS=[
     {id:'eg15',code:'ECE 419K',name:'Intro to Embedded Systems',cat:'ECE',credits:4,done:false,note:'Pre-req: ECE 406; Co-req: ECE 412'},
     {id:'eg16',code:'ECE 412',name:'Software Design & Implementation I',cat:'ECE',credits:4,done:false,note:'Pre-req: ECE 406'},
     {id:'eg17',code:'M 427J',name:'Differential Equations',cat:'MATH',credits:4,done:false,note:'Pre-req: M 408D'},
+    {id:'eg7',code:'PHY 303K',name:'Engineering Physics 1',cat:'PHY',credits:3,done:false,note:''},
+    {id:'eg8',code:'PHY 105M',name:'Lab for PHY 303K',cat:'PHY',credits:1,done:false,note:''},
     {id:'eg18',code:'SBS',name:'Social & Behavioral Sciences',cat:'CORE',credits:3,done:false,note:'Any approved SBS core course — not ECO 304K/304L'},
   ]},
   {id:'y2f',label:'Year 2 — Fall',courses:[
+    {id:'eg9',code:'PHY 303E',name:'Electromagnetic, Quantum, Semiconductor Physics',cat:'PHY',credits:3,done:false,note:'Pre-req: M 408D, PHY 303K, PHY 105M'},
     {id:'eg19',code:'ECE 411',name:'Circuit Theory',cat:'ECE',credits:4,done:false,note:'Pre-req: ECE 402, PHY 303K, PHY 105M; Co-req: M 427J, PHY 303E'},
     {id:'eg20',code:'ECE 313',name:'Linear Systems & Signals',cat:'ECE',credits:3,done:false,note:'Pre-req: ECE 402, M 408C, M 340L'},
     {id:'eg21',code:'M 340L',name:'Matrices & Matrix Calculations',cat:'MATH',credits:3,done:false,note:'Pre-req: M 408D'},
@@ -1448,12 +1460,30 @@ function inferEceKind(sch){
 function stripAdvTechPlaceholders(sems){
   return(sems||[]).map(s=>({...s,courses:(s.courses||[]).filter(c=>!isAdvTechPlaceholder(c.code))}));
 }
+function distributeStandalonePhysics(sems){
+  const phySem=(sems||[]).find(s=>s.id==='phy');
+  if(!phySem?.courses?.length)return sems;
+  const byCode=Object.fromEntries(phySem.courses.map(c=>[normTrackCode(c.code),c]));
+  const plan=(sems||[]).filter(s=>s.id!=='phy');
+  const place=(code,semId)=>{
+    const c=byCode[normTrackCode(code)];
+    if(!c||scheduleHasCode(plan,code))return;
+    const i=plan.findIndex(s=>s.id===semId);
+    if(i<0)return;
+    plan[i]={...plan[i],courses:[...plan[i].courses,c]};
+  };
+  place('PHY 303K','y1s');
+  place('PHY 105M','y1s');
+  place('PHY 303E','y2f');
+  return plan;
+}
 function normalizeSchedule(sch){
   const looksBusiness=(sch.sems||[]).some(s=>['lower','upper','major','canfield','electives','human'].includes(s.id))||(sch.bizTracks||[]).length>0;
   let synced={...sch,sems:syncSemCredits(sch.sems)};
   if(looksBusiness||sch.kind==='business')return syncBusinessTracks({...synced,kind:'business'},businessTrackKeys(synced));
   const kind=inferEceKind(synced)==='general'?'general':'ecb';
   synced={kind,...synced};
+  if(kind==='general')synced={...synced,sems:distributeStandalonePhysics(synced.sems)};
   return syncTrackSchedule(synced);
 }
 function makeSchedule(name,color,templateKey='ecb'){
@@ -2852,7 +2882,7 @@ document.addEventListener('keydown',e=>{
   else if(k==='p'){window.print();e.preventDefault();}
   else if(e.key==='?'){S.modal='kbhelp';render();e.preventDefault();}
   else if(k>='1'&&k<='4'){
-    const yrIdx=parseInt(k);const rowIds=LAYOUT.find(r=>r.label===`Year ${yrIdx}`)?.ids;
+    const yrIdx=parseInt(k);const rowIds=layoutFor(getAct()).find(r=>r.label===`Year ${yrIdx}`)?.ids;
     if(rowIds){const el=document.getElementById('sc-'+rowIds[0]);if(el)el.scrollIntoView({behavior:'smooth',block:'start'});}
     e.preventDefault();
   }
