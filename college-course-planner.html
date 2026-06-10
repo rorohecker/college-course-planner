@@ -470,7 +470,7 @@ body{font-family:-apple-system,'Segoe UI',system-ui,sans-serif;background:var(--
 </script>
 <script>
 // ─── Static data ──────────────────────────────────────────────────────────────
-const APP_VERSION='2026.06.09.2';
+const APP_VERSION='2026.06.09.3';
 // Raw URL is used only for parsing APP_VERSION on the live copy — never as a user link
 // (raw.githubusercontent.com serves text/plain, so the browser shows source instead of rendering).
 const UPDATE_URL='https://raw.githubusercontent.com/rorohecker/college-course-planner/main/college-course-planner.html';
@@ -855,7 +855,9 @@ const BUSINESS_DS=[
 ];
 
 // ECE Technical Component tracks (Chandra Dept Tech Core Packet, Dec 2025).
-// Each track: required cores + approved electives. ECB students take fewer electives.
+// Each track: required cores + approved electives. ECB students take fewer electives;
+// general and honors ECE students pick 3 from their track’s approved list.
+const GENERAL_TRACK_PICK=3;
 const TRACKS={
   CSPNS:{name:'Communication, Signal Processing, Networks and Systems',short:'Comm/SigProc',grad:'DICE',
     cores:[{code:'M 427L',name:'Adv Calculus for Applications II'},{code:'ECE 351M',name:'Digital Signal Processing',alt:'or ECE 325'},{code:'ECE 362K',name:'Intro to Automatic Control',alt:'or ECE 371Q / 360K / 372N'},{code:'ECE 445S',name:'Real-Time DSP Lab',alt:'or ECE 471C'}],
@@ -1005,8 +1007,8 @@ const CURRICULUM_TEMPLATES={
   ecb:{label:'ECE + Canfield Business Honors (ECB Dual Degree · 26-28)',short:'ECB',kind:'ecb',build:()=>dc(DS)},
   ecbPrev:{label:'ECE + Business Honors (ECB Dual Degree · previous)',short:'ECB (prev)',kind:'ecb',build:()=>dc(ECB_PREV_DS)},
   business:{label:'Undeclared Business (BBA)',short:'Business',kind:'business',build:()=>dc(BUSINESS_DS)},
-  eceHonors:{label:'Electrical Engineering Honors (26-28)',short:'ECE Honors',kind:'ecb',build:()=>dc(ECE_HONORS_DS)},
-  eceGeneral:{label:'Electrical & Computer Engineering — General (26-28)',short:'ECE General',kind:'ecb',build:()=>dc(ECE_GENERAL_DS)},
+  eceHonors:{label:'Electrical Engineering Honors (26-28)',short:'ECE Honors',kind:'general',build:()=>dc(ECE_HONORS_DS)},
+  eceGeneral:{label:'Electrical & Computer Engineering — General (26-28)',short:'ECE General',kind:'general',build:()=>dc(ECE_GENERAL_DS)},
   blank:{label:'Blank slate (only AP credits + physics)',short:'Blank',kind:'ecb',build:()=>{
     const s=dc(DS);
     return s.map(sem=>['ap','phy'].includes(sem.id)?sem:{...sem,courses:[]});
@@ -1038,14 +1040,36 @@ const esc=s=>String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>
 const dc=x=>JSON.parse(JSON.stringify(x));
 
 // UT convention: first digit of the course number = credit hours (ECE 402 → 4cr).
-function hasCourseNumber(code){return /\d/.test(String(code||''));}
+// Degree-plan placeholders (ATC-*, ATE, FREE-*) keep fixed defaults until replaced.
+function isAdvTechPlaceholder(code){
+  const c=String(code||'').trim().toUpperCase();
+  return c==='ATE'||c.startsWith('ATC-');
+}
+function isFreeElectivePlaceholder(code){
+  return String(code||'').trim().toUpperCase().startsWith('FREE-');
+}
+function isDegreePlaceholderCode(code){
+  return isAdvTechPlaceholder(code)||isFreeElectivePlaceholder(code);
+}
+function defaultCreditsForPlaceholder(code){
+  const c=String(code||'').trim().toUpperCase();
+  if(c==='ATC-LAB')return 1;
+  return 3;
+}
+function hasCourseNumber(code){
+  if(isDegreePlaceholderCode(code))return false;
+  return /\d/.test(String(code||''));
+}
 function parseCreditsFromCode(code){
+  if(isDegreePlaceholderCode(code))return defaultCreditsForPlaceholder(code);
   const nums=[...String(code||'').trim().toUpperCase().matchAll(/(\d+)/g)];
   if(!nums.length)return 3;
   return parseInt(nums[nums.length-1][1][0],10);
 }
 function syncCourseCredits(c){
-  if(!c||!hasCourseNumber(c.code))return c;
+  if(!c||!c.code)return c;
+  if(isDegreePlaceholderCode(c.code))return{...c,credits:defaultCreditsForPlaceholder(c.code)};
+  if(!hasCourseNumber(c.code))return c;
   return{...c,credits:parseCreditsFromCode(c.code)};
 }
 function syncSemCredits(sems){
@@ -1303,12 +1327,22 @@ function toggleBusinessTrack(sch,key){
   else next=[...active.filter(k=>BUSINESS_TRACKS[k].kind==='honors'),key];
   return syncBusinessTracks(sch,next);
 }
+function trackElectiveNeed(sch,trackKey){
+  if(!trackKey||!TRACKS[trackKey])return 0;
+  return(sch?.kind||'ecb')==='general'?GENERAL_TRACK_PICK:TRACKS[trackKey].pickECB;
+}
+function inferEceKind(sch){
+  if(sch?.kind==='general'||sch?.kind==='business')return sch.kind;
+  const courses=(sch.sems||[]).flatMap(s=>s.courses||[]);
+  if(courses.some(c=>/^(eh|eg)\d+$/.test(String(c.id))))return 'general';
+  return sch?.kind||'ecb';
+}
 function normalizeSchedule(sch){
   const looksBusiness=(sch.sems||[]).some(s=>['lower','upper','major','canfield','electives','human'].includes(s.id))||(sch.bizTracks||[]).length>0;
-  const kind=sch.kind||(looksBusiness?'business':'ecb');
   const synced={...sch,sems:syncSemCredits(sch.sems)};
-  if(kind==='business')return syncBusinessTracks({...synced,kind:'business'},businessTrackKeys(synced));
-  return {kind:'ecb',...synced};
+  if(looksBusiness||sch.kind==='business')return syncBusinessTracks({...synced,kind:'business'},businessTrackKeys(synced));
+  const kind=inferEceKind(synced)==='general'?'general':'ecb';
+  return{kind,...synced};
 }
 function makeSchedule(name,color,templateKey='ecb'){
   const t=CURRICULUM_TEMPLATES[templateKey]||CURRICULUM_TEMPLATES.ecb;
@@ -1519,8 +1553,8 @@ function trackProgress(){
   if(tk&&TRACKS[tk]){
     const t=TRACKS[tk];
     const codes=new Set(getAS().flatMap(s=>s.courses).map(c=>c.code.trim().toUpperCase().replace(/H$/,'')));
-    const isECB=(getAct()?.kind||'ecb')!=='general';
-    const need=isECB?t.pickECB:t.pickAll;
+    const act=getAct();
+    const need=trackElectiveNeed(act,tk);
     const coreHit=t.cores.filter(c=>codes.has(c.code.toUpperCase().replace(/H$/,''))).length;
     const electHit=t.electives.filter(e=>codes.has(e.toUpperCase().replace(/H$/,''))).length;
     val={track:t,key:tk,need,coreHit,coreTotal:t.cores.length,electHit};
@@ -2203,7 +2237,7 @@ GOV 310L   AMERICAN GOVERNMENT   CR   16210   Credit by exam   3.0   0.00</pre>
     const cards=Object.entries(TRACKS).map(([k,t])=>`
       <div class="tk-card${sel===k?' sel':''}" onclick="setTrack('${k}')">
         <div class="tk-name">${esc(t.name)}</div>
-        <div class="tk-grad">Grad track: ${esc(t.grad)} · ECB needs ${t.pickECB} electives, General/Honors ${t.pickAll}</div>
+        <div class="tk-grad">Grad track: ${esc(t.grad)} · ECB ${t.pickECB} electives · General/Honors ${GENERAL_TRACK_PICK}</div>
       </div>`).join('');
     const codes=new Set(getAS().flatMap(s=>s.courses).map(x=>x.code.trim().toUpperCase().replace(/H$/,'')));
     const progBox=prog?`
@@ -2219,7 +2253,7 @@ GOV 310L   AMERICAN GOVERNMENT   CR   16210   Credit by exam   3.0   0.00</pre>
         <div class="tk-h">Approved electives (pick ${prog.need}) <span style="font-weight:400;color:var(--text3);text-transform:none;letter-spacing:0">— click to add</span></div>
         <div class="tk-list" style="columns:2;column-gap:18px">${prog.track.electives.map(e=>{
           const hit=codes.has(e.toUpperCase().replace(/H$/,''));
-          const click=hit?'':`style="cursor:pointer" title="Click to add" onclick="addTrackCourse('${esc(e)}','${esc(e)} (track elective)')"`;
+          const click=hit?'':`style="cursor:pointer" title="Click to add" onclick="addTrackCourse('${esc(e)}','${esc(e)} (track elective)','elective')"`;
           return`<div class="${hit?'ok':'miss'}" ${click}>${hit?'✓':'＋'} ${esc(e)}</div>`;
         }).join('')}</div>
       </div>`:'';
@@ -2317,7 +2351,7 @@ function render(){
     <div class="hdr">
       <div class="hdr-top">
         <div>
-          <div class="hdr-sub">UT Austin · ${act?.kind==='business'?'McCombs BBA':'ECE + Business Honors'}</div>
+          <div class="hdr-sub">UT Austin · ${act?.kind==='business'?'McCombs BBA':act?.kind==='general'?'ECE Honors / General':'ECE + Business Honors'}</div>
           <h1>College Course Planner <span style="font-size:11px;opacity:.5;font-weight:400">2024–2026</span></h1>
           <div style="margin-top:4px;display:flex;align-items:center;gap:7px;flex-wrap:wrap">
             <div class="sched-pill" onclick="S.modal='schedules';render()">
@@ -2610,6 +2644,21 @@ document.addEventListener('dragover',e=>{
 ['dragend','drop','mouseup'].forEach(ev=>document.addEventListener(ev,()=>{dragScrollDir=0;}));
 
 // ─── Add a course from the track picker into the schedule ────────────────────
+function normTrackCode(code){return String(code||'').trim().toUpperCase().replace(/H$/,'');}
+function findAdvTechSlot(sems,order){
+  for(const kind of order){
+    for(const s of sems){
+      if(s.isOff)continue;
+      for(const c of s.courses){
+        const cd=String(c.code).trim().toUpperCase();
+        if(kind==='ate'&&cd==='ATE')return{semId:s.id,cid:c.id};
+        if(kind==='atc-m'&&cd==='ATC-M')return{semId:s.id,cid:c.id};
+        if(kind==='atc'&&cd.startsWith('ATC-'))return{semId:s.id,cid:c.id};
+      }
+    }
+  }
+  return null;
+}
 function categoryForCode(code){
   const c=String(code||'').trim().toUpperCase();
   if(c.startsWith('M '))return'MATH';
@@ -2617,23 +2666,27 @@ function categoryForCode(code){
   if(c.startsWith('ECE'))return'ECE';
   return'ADVANCED';
 }
-window.addTrackCourse=(code,name)=>{
+window.addTrackCourse=(code,name,slot)=>{
   const sems=getAS();
-  // First try to replace an unfilled ATC-* or ATE placeholder so the slot
-  // counters in the default ECB plan stay accurate.
-  let targetSemId=null,replaceCid=null;
-  outer:for(const s of sems){
-    if(s.isOff)continue;
-    for(const c of s.courses){
-      const cd=String(c.code).trim().toUpperCase();
-      if(cd.startsWith('ATC-')||cd==='ATE'){targetSemId=s.id;replaceCid=c.id;break outer;}
-    }
+  const nc=normTrackCode(code);
+  const tk=getAct()?.track;
+  const t=tk?TRACKS[tk]:null;
+  const isElective=slot==='elective'||(t&&t.electives.some(e=>normTrackCode(e)===nc));
+  let target=null;
+  if(isElective){
+    // Track electives fill the Advanced Technical Elective (ATE) slot first.
+    target=findAdvTechSlot(sems,['ate','atc']);
+  }else if(nc==='M 427L'||nc==='M 325K'){
+    target=findAdvTechSlot(sems,['atc-m','atc','ate']);
+  }else{
+    // Required cores fill ATC placeholders; ATE only as fallback.
+    target=findAdvTechSlot(sems,['atc','ate']);
   }
   const cat=categoryForCode(code);
   const credits=parseCreditsFromCode(code);
   mutate(()=>{
-    if(targetSemId&&replaceCid){
-      setAS(getAS().map(s=>s.id!==targetSemId?s:{...s,courses:s.courses.map(c=>c.id!==replaceCid?c:{...c,code,name,cat,credits,note:'Added from track picker'})}));
+    if(target){
+      setAS(getAS().map(s=>s.id!==target.semId?s:{...s,courses:s.courses.map(c=>c.id!==target.cid?c:{...c,code,name,cat,credits,note:'Added from track picker'})}));
     }else{
       // No placeholder left, just append to Year 3 Fall (or the first non-off semester).
       const sem=getAS().find(s=>s.id==='y3f'&&!s.isOff)||getAS().find(s=>!s.isOff);
