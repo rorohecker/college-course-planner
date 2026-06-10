@@ -477,7 +477,7 @@ body{font-family:-apple-system,'Segoe UI',system-ui,sans-serif;background:var(--
 </script>
 <script>
 // ─── Static data ──────────────────────────────────────────────────────────────
-const APP_VERSION='2026.06.10.9';
+const APP_VERSION='2026.06.11.3';
 // Raw URL is used only for parsing APP_VERSION on the live copy — never as a user link
 // (raw.githubusercontent.com serves text/plain, so the browser shows source instead of rendering).
 const UPDATE_URL='https://raw.githubusercontent.com/rorohecker/college-course-planner/main/college-course-planner.html';
@@ -512,9 +512,8 @@ const LAYOUT=[
   {type:'pair',label:'Year 4',ids:['y4f','y4s']},
 ];
 const KNOWN=new Set(LAYOUT.flatMap(l=>l.ids));
-// ECE Honors & General: AP/IB row + in-semester physics II in Y2 Fall (no summer physics row).
+// ECE Honors & General: physics I in Y1 Spring (AP or in-semester), physics II in Y2 Fall.
 const ECE_STANDALONE_LAYOUT=[
-  {type:'full',ids:['ap']},
   {type:'pair',label:'Year 1',ids:['y1f','y1s']},
   {type:'pair',label:'Year 2',ids:['y2f','y2s']},
   {type:'pair',label:'Year 3',ids:['y3f','y3s']},
@@ -544,33 +543,33 @@ const knownFor=sch=>{
 };
 
 // ─── ECE + Canfield Business Honors (ECB Dual Degree) · 2026-2028 catalog ──────
-// Source: "26-28 ECB Flowchart" — course order matches flowchart columns top-to-bottom.
+// Source: "26-28 ECB Flowchart" — column order top-to-bottom; AP/IB in ap+phy rows only.
 const DS=[
   {id:'ap',label:'AP / IB / Pre-College Credits',courses:[
-    {id:'c1',code:'M 408C',name:'Differential & Integral Calculus',cat:'MATH',credits:4,done:false,note:'AP / IB credit'},
-    {id:'c2',code:'RHE 306',name:'Rhetoric & Writing',cat:'CORE',credits:3,done:false,note:'AP / IB credit'},
-    {id:'c3',code:'HIS',name:'US History',cat:'CORE',credits:3,done:false,note:'AP / IB credit'},
-    {id:'c4',code:'GOV 310L',name:'American Government',cat:'CORE',credits:3,done:false,note:'AP / IB credit — core govt part 1'},
-    {id:'c5',code:'E 316',name:'Humanities Credit (L, M, N or P)',cat:'CORE',credits:3,done:false,note:'AP / IB credit'},
-    {id:'c6',code:'VAPA',name:'Visual & Performing Arts',cat:'CORE',credits:3,done:false,note:'AP / IB credit accepted'},
-    {id:'c57',code:'ECO 304K',name:'Intro to Microeconomics (SBS)',cat:'BUSINESS',credits:3,done:false,note:'AP / IB — flowchart lists as beforehand; required before MIS 301H & ACC 311H'},
+    {id:'c1',code:'M 408C',name:'Differential & Integral Calculus',cat:'MATH',credits:4,done:false,note:'AP / IB'},
+    {id:'c2',code:'RHE 306',name:'Rhetoric & Writing',cat:'CORE',credits:3,done:false,note:'AP / IB'},
+    {id:'c3',code:'HIS',name:'US History',cat:'CORE',credits:3,done:false,note:'AP / IB'},
+    {id:'c4',code:'GOV 310L',name:'American Government',cat:'CORE',credits:3,done:false,note:'AP / IB — core govt part 1'},
+    {id:'c5',code:'E 316',name:'Humanities Credit (L, M, N or P)',cat:'CORE',credits:3,done:false,note:'AP / IB'},
+    {id:'c6',code:'VAPA',name:'Visual & Performing Arts',cat:'CORE',credits:3,done:false,note:'AP / IB'},
+    {id:'c57',code:'ECO 304K',name:'Intro to Microeconomics (SBS)',cat:'BUSINESS',credits:3,done:false,note:'AP / IB — before MIS 301H & ACC 311H'},
     {id:'c58',code:'ECO 304L',name:'Intro to Macroeconomics',cat:'BUSINESS',credits:3,done:false,note:'AP / IB or summer before Y2 Fall'},
   ]},
   {id:'phy',label:'Physics — Summer (between Y1 & Y2)',courses:[
-    {id:'c7',code:'PHY 303K',name:'Engineering Physics 1',cat:'PHY',credits:3,done:false,note:'AP Credit or summer after Y1'},
-    {id:'c8',code:'PHY 105M',name:'Lab for PHY 303K',cat:'PHY',credits:1,done:false,note:'AP Credit or summer after Y1'},
-    {id:'c9',code:'PHY 303E',name:'Physics II for ECE Majors',cat:'PHY',credits:3,done:false,note:'Summer before Y2 Fall if not in phy block'},
+    {id:'c7',code:'PHY 303K',name:'Engineering Physics 1',cat:'PHY',credits:3,done:false,note:'AP / IB or summer after Y1'},
+    {id:'c8',code:'PHY 105M',name:'Lab for PHY 303K',cat:'PHY',credits:1,done:false,note:'AP / IB or summer after Y1'},
+    {id:'c9',code:'PHY 303E',name:'Physics II for ECE Majors',cat:'PHY',credits:3,done:false,note:'Summer before Y2 Fall'},
   ]},
   {id:'y1f',label:'Year 1 — Fall',courses:[
-    {id:'c11',code:'ECE 402H',name:'Intro to Electrical Engineering Honors',cat:'ECE',credits:4,done:false,note:'Fall only; Co-req: M 408D'},
-    {id:'c13',code:'M 408D',name:'Seq, Series & Multivariable Calculus',cat:'MATH',credits:4,done:false,note:'Pre-req: M 408C; Co-req: ECE 402H'},
+    {id:'c13',code:'M 408D',name:'Seq, Series & Multivariable Calculus',cat:'MATH',credits:4,done:false,note:'Pre-req: M 408C'},
     {id:'c12',code:'ECE 406H',name:'Introduction to Computing Honors',cat:'ECE',credits:4,done:false,note:'Pre-req: M 408C'},
-    {id:'c16',code:'UGS 302/3',name:'First-Year Signature Course',cat:'CORE',credits:3,done:false,note:''},
+    {id:'c11',code:'ECE 402H',name:'Intro to Electrical Engineering Honors',cat:'ECE',credits:4,done:false,note:'Fall only; Co-req: M 408D'},
     {id:'c14',code:'BA 110G',name:'Professional Dev & Career Planning Honors',cat:'BUSINESS',credits:1,done:false,note:'Fall only'},
     {id:'c15',code:'BA 111G',name:'Leadership & Innovation Honors',cat:'BUSINESS',credits:1,done:false,note:''},
+    {id:'c26',code:'BA 324H',name:'Business Communication',cat:'BUSINESS',credits:3,done:false,note:'Fall only; Core 010; Pre-req: RHE 306, BA 110G'},
   ]},
   {id:'y1s',label:'Year 1 — Spring',courses:[
-    {id:'c17',code:'ECE 419H',name:'Intro to Embedded Systems',cat:'ECE',credits:4,done:false,note:'Pre-req: ECE 406H; Co-req: ECE 412H'},
+    {id:'c17',code:'ECE 419H',name:'Intro to Embedded Systems',cat:'ECE',credits:4,done:false,note:'Spring only; Pre-req: ECE 406H; Co-req: ECE 412H'},
     {id:'c18',code:'ECE 412H',name:'Software Design & Implementation I',cat:'ECE',credits:4,done:false,note:'Spring only; Pre-req: ECE 406H'},
     {id:'c19',code:'M 427J',name:'Differential Equations',cat:'MATH',credits:4,done:false,note:'Pre-req: M 408D'},
     {id:'c21',code:'MIS 301H',name:'Intro to Info Tech Mgmt Honors',cat:'BUSINESS',credits:3,done:false,note:'Spring only'},
@@ -578,120 +577,116 @@ const DS=[
   ]},
   {id:'y2f',label:'Year 2 — Fall',courses:[
     {id:'c23',code:'ECE 411H',name:'Circuit Theory',cat:'ECE',credits:4,done:false,note:'Pre-req: ECE 402H, PHY 303K, PHY 105M; Co-req: M 427J, PHY 303E'},
-    {id:'c24',code:'ECE 313H',name:'Linear Systems & Signals',cat:'ECE',credits:3,done:false,note:'Fall only; Pre-req: ECE 402H, M 408C, M 340L'},
+    {id:'c24',code:'ECE 313H',name:'Linear Systems & Signals',cat:'ECE',credits:3,done:false,note:'Fall only'},
     {id:'c25',code:'M 340L',name:'Matrices & Matrix Calculations',cat:'MATH',credits:3,done:false,note:'Pre-req: M 408D'},
-    {id:'c28',code:'STA 235H',name:'Data Science for Bus Applications Honors',cat:'BUSINESS',credits:2,done:false,note:'Fall only; Pre-req: M 408D, STA 301H'},
-    {id:'c31',code:'ACC 311H',name:'Financial Accounting Honors',cat:'BUSINESS',credits:3,done:false,note:'Fall only; Pre-req: 24 hrs, ECO 304K, MIS 301H, BA 324H'},
-    {id:'c26',code:'BA 324H',name:'Business Communication',cat:'BUSINESS',credits:3,done:false,note:'Core 010; Fall only; Pre-req: RHE 306, BA 110G'},
+    {id:'c28',code:'STA 235H',name:'Data Science for Bus Applications Honors',cat:'BUSINESS',credits:2,done:false,note:'Fall only; Pre-req: STA 301H'},
+    {id:'c31',code:'ACC 311H',name:'Financial Accounting Honors',cat:'BUSINESS',credits:3,done:false,note:'Fall only; Pre-req: ECO 304K, MIS 301H, BA 324H'},
     {id:'c27',code:'BAH 151H',name:'Honors Lyceum',cat:'BUSINESS',credits:1,done:false,note:'Fall only; Pre-req: BA 111G'},
   ]},
   {id:'y2s',label:'Year 2 — Spring',courses:[
     {id:'c29',code:'ECE 351H',name:'Probability / Random Processes',cat:'ECE',credits:3,done:false,note:'Pre-req: M 427J'},
-    {id:'c32',code:'O M 235H',name:'Operations Management Honors',cat:'BUSINESS',credits:2,done:false,note:'Spring only; Pre-req: ECO 304K, BA 324H, STA 301H'},
-    {id:'c33',code:'DS 235H',name:'Intro to Decision Science Honors',cat:'BUSINESS',credits:2,done:false,note:'Spring only; Pre-req: M 408D, STA 301H'},
+    {id:'c36',code:'ATC-1',name:'Advanced Tech Component',cat:'ADVANCED',credits:3,done:false,note:'Tech core (1 of 7)'},
+    {id:'c37',code:'ACC 312H',name:'Managerial Accounting Honors',cat:'BUSINESS',credits:3,done:false,note:'Spring only; Pre-req: ACC 311H'},
+    {id:'c32',code:'O M 235H',name:'Operations Management Honors',cat:'BUSINESS',credits:2,done:false,note:'Spring only'},
+    {id:'c33',code:'DS 235H',name:'Intro to Decision Science Honors',cat:'BUSINESS',credits:2,done:false,note:'Spring only'},
+    {id:'c16',code:'UGS 302/3',name:'First-Year Signature Course',cat:'CORE',credits:3,done:false,note:''},
   ]},
   {id:'y3f',label:'Year 3 — Fall',courses:[
     {id:'c35',code:'ATC-M',name:'Advanced Tech Component (Math)',cat:'ADVANCED',credits:3,done:false,note:'M 427L or M 325K'},
-    {id:'c36',code:'ATC-1',name:'Advanced Tech Component',cat:'ADVANCED',credits:3,done:false,note:'Tech core'},
-    {id:'c38',code:'MAN 327H',name:'Entrepreneurship & Innovation Honors',cat:'BUSINESS',credits:3,done:false,note:'Fall only; Pre-req: M 408D'},
-    {id:'c34',code:'P/S/A',name:'Psychology/Sociology/Anthropology Elective',cat:'CORE',credits:3,done:false,note:'McCombs core; statistics not accepted'},
-  ]},
-  {id:'y3s',label:'Year 3 — Spring',courses:[
-    {id:'c37',code:'ACC 312H',name:'Managerial Accounting Honors',cat:'BUSINESS',credits:3,done:false,note:'Spring only; Pre-req: ACC 311H, BAH 151H'},
     {id:'c40',code:'ATC-2',name:'Advanced Tech Component',cat:'ADVANCED',credits:3,done:false,note:'Tech core'},
-    {id:'c41',code:'ATC-Lab',name:'Advanced Tech Component Lab',cat:'ADVANCED',credits:1,done:false,note:'Tech core'},
-    {id:'c42',code:'FIN 357H',name:'Business Finance Honors',cat:'BUSINESS',credits:3,done:false,note:'Pre-req: BA 324H, ACC 312H, STA 235H/DS 235H, ECO 304K'},
-    {id:'c43',code:'MAN 336H',name:'Organizational Behavior Honors',cat:'BUSINESS',credits:3,done:false,note:'Pre-req: BA 324H, P/S/A elective'},
-    {id:'c44',code:'MKT 337H',name:'Principles of Marketing Honors',cat:'BUSINESS',credits:3,done:false,note:'Pre-req: BA 324H, ACC 312H, ECO 304K & L, STA 235H, DS 235H'},
-    {id:'c45',code:'ECE 364D',name:'Intro to Engineering Design',cat:'ECE',credits:3,done:false,note:'Core 010; Wr flag; after FIN/MAN/MKT'},
+    {id:'c38',code:'MAN 327H',name:'Entrepreneurship & Innovation Honors',cat:'BUSINESS',credits:3,done:false,note:'Fall only'},
+    {id:'c34',code:'P/S/A',name:'Psychology/Sociology/Anthropology Elective',cat:'CORE',credits:3,done:false,note:'McCombs core'},
     {id:'c55',code:'BA 120G',name:'Global Learning',cat:'BUSINESS',credits:0,done:false,note:'Pre-req: BA 324H'},
   ]},
-  {id:'y4f',label:'Year 4 — Fall',courses:[
+  {id:'y3s',label:'Year 3 — Spring',courses:[
+    {id:'c41',code:'ATC-Lab',name:'Advanced Tech Component Lab',cat:'ADVANCED',credits:1,done:false,note:'Tech core'},
+    {id:'c42',code:'FIN 357H',name:'Business Finance Honors',cat:'BUSINESS',credits:3,done:false,note:'Pre-req: ACC 312H, STA 235H/DS 235H'},
+    {id:'c44',code:'MKT 337H',name:'Principles of Marketing Honors',cat:'BUSINESS',credits:3,done:false,note:'Pre-req: ACC 312H, ECO 304K & L'},
+    {id:'c43',code:'MAN 336H',name:'Organizational Behavior Honors',cat:'BUSINESS',credits:3,done:false,note:'Pre-req: BA 324H, P/S/A'},
+    {id:'c45',code:'ECE 364D',name:'Intro to Engineering Design',cat:'ECE',credits:3,done:false,note:'Core 010; after FIN/MAN/MKT'},
     {id:'c46',code:'ATC-3',name:'Advanced Tech Component',cat:'ADVANCED',credits:3,done:false,note:'Tech core'},
+  ]},
+  {id:'y4f',label:'Year 4 — Fall',courses:[
     {id:'c47',code:'ATC-4',name:'Advanced Tech Component',cat:'ADVANCED',credits:3,done:false,note:'Tech core'},
-    {id:'c48',code:'LEB 323H',name:'Business Law & Ethics Honors',cat:'BUSINESS',credits:3,done:false,note:'4th year; Pre-req: ACC 312H, BA 324H'},
-    {id:'c49',code:'GOV 312L/P',name:'American Government',cat:'CORE',credits:3,done:false,note:'Core govt part 2 — after GOV 310L'},
-    {id:'c56',code:'BA 130G',name:'Internship Credit',cat:'BUSINESS',credits:3,done:false,note:'Completed summer prior; Pre-req: BA 324H'},
+    {id:'c48',code:'LEB 323H',name:'Business Law & Ethics Honors',cat:'BUSINESS',credits:3,done:false,note:'4th year; Pre-req: ACC 312H'},
+    {id:'c49',code:'GOV 312L/P',name:'American Government',cat:'CORE',credits:3,done:false,note:'Core govt part 2'},
+    {id:'c56',code:'BA 130G',name:'Internship Credit',cat:'BUSINESS',credits:3,done:false,note:'Summer prior; Pre-req: BA 324H'},
   ]},
   {id:'y4s',label:'Year 4 — Spring',courses:[
-    {id:'c50',code:'ECE 464H',name:'Honors Senior Design Project',cat:'ECE',credits:4,done:false,note:'Pre-req: ECE 364D & Adv Tech Component Lab'},
-    {id:'c51',code:'ATC-5',name:'Advanced Tech Component',cat:'ADVANCED',credits:3,done:false,note:'Tech core (7th component)'},
-    {id:'c52',code:'ATE',name:'Advanced Technical Elective',cat:'ADVANCED',credits:3,done:false,note:'ECE upper division (3 hrs) or ECE 316'},
+    {id:'c50',code:'ECE 464H',name:'Honors Senior Design Project',cat:'ECE',credits:4,done:false,note:'Pre-req: ECE 364D & ATC-Lab'},
+    {id:'c51',code:'ATC-5',name:'Advanced Tech Component',cat:'ADVANCED',credits:3,done:false,note:'Tech core (7 of 7)'},
+    {id:'c52',code:'ATE',name:'Advanced Technical Elective',cat:'ADVANCED',credits:3,done:false,note:'UD ECE (3 hrs) or ECE 316'},
     {id:'c53',code:'MAN 374H',name:'Gen Mgmt & Strategy Honors',cat:'BUSINESS',credits:3,done:false,note:'4th year; Pre-req: FIN 357H, MAN 336H, MKT 337H'},
     {id:'c54',code:'BA 140G',name:'Senior Seminar',cat:'BUSINESS',credits:1,done:false,note:'Pre-req: BA 130G'},
   ]},
 ];
 
-// AP/IB slots shared by ECE Honors & General (flowchart * = eligible pre-college credit).
-const ECE_STANDALONE_AP=[
-  {id:'ea1',code:'M 408C',name:'Differential & Integral Calculus',cat:'MATH',credits:4,done:false,note:'AP / IB — or take Y1 Fall if no credit'},
-  {id:'ea2',code:'RHE 306',name:'Rhetoric & Writing',cat:'CORE',credits:3,done:false,note:'AP / IB — or take Y1 Fall if no credit'},
-  {id:'ea3',code:'PHY 303K',name:'Engineering Physics 1',cat:'PHY',credits:3,done:false,note:'AP / IB — or take Y1 Spring if no credit'},
-  {id:'ea4',code:'PHY 105M',name:'Lab for PHY 303K',cat:'PHY',credits:1,done:false,note:'AP / IB — or take Y1 Spring if no credit'},
-  {id:'ea5',code:'VAPA',name:'Visual & Performing Arts',cat:'CORE',credits:3,done:false,note:'AP / IB credit accepted'},
-  {id:'ea6',code:'GOV 310L',name:'American Government',cat:'CORE',credits:3,done:false,note:'AP / IB — core govt part 1'},
-  {id:'ea7',code:'SBS',name:'Social & Behavioral Sciences',cat:'CORE',credits:3,done:false,note:'AP / IB — any approved SBS (not ECO 304K/304L)'},
-  {id:'ea8',code:'HIS',name:'US History',cat:'CORE',credits:3,done:false,note:'AP / IB credit'},
-  {id:'ea9',code:'E 316',name:'Humanities Credit (L, M, N or P)',cat:'CORE',credits:3,done:false,note:'AP / IB credit'},
-];
-
 // ─── Electrical Engineering Honors · 2026-2028 catalog ─────────────────────────
-// Source: "26-28 Honors" — course order matches flowchart columns top-to-bottom.
+// Source: "26-28 Honors" — AP* courses in-semester with note; no separate ap row.
 const ECE_HONORS_DS=[
-  {id:'ap',label:'AP / IB / Pre-College Credits',courses:ECE_STANDALONE_AP},
   {id:'y1f',label:'Year 1 — Fall',courses:[
+    {id:'eh1',code:'M 408C',name:'Differential & Integral Calculus',cat:'MATH',credits:4,done:false,note:'AP Credit or Y1 Fall'},
+    {id:'eh2',code:'RHE 306',name:'Rhetoric & Writing',cat:'CORE',credits:3,done:false,note:'AP Credit or Y1 Fall'},
     {id:'eh10',code:'ECE 402H',name:'Intro to Electrical Engineering Honors',cat:'ECE',credits:4,done:false,note:'Fall only; Co-req: M 408D'},
     {id:'eh11',code:'ECE 406H',name:'Introduction to Computing Honors',cat:'ECE',credits:4,done:false,note:'Pre-req: M 408C'},
     {id:'eh13',code:'UGS 302/3',name:'First-Year Signature Course',cat:'CORE',credits:3,done:false,note:''},
-    {id:'eh14',code:'UGS 016',name:'FIG Seminar — ECE Honors',cat:'CORE',credits:0,done:false,note:'Complete before first semester'},
+    {id:'eh14',code:'UGS 016',name:'FIG Seminar — ECE Honors',cat:'CORE',credits:0,done:false,note:'Before first semester'},
   ]},
   {id:'y1s',label:'Year 1 — Spring',courses:[
     {id:'eh12',code:'M 408D',name:'Seq, Series & Multivariable Calculus',cat:'MATH',credits:4,done:false,note:'Pre-req: M 408C'},
-    {id:'eh15',code:'ECE 419H',name:'Intro to Embedded Systems',cat:'ECE',credits:4,done:false,note:'Pre-req: ECE 406H; Co-req: ECE 412H'},
-    {id:'eh16',code:'ECE 412H',name:'Software Design & Implementation I',cat:'ECE',credits:4,done:false,note:'Spring only; Pre-req: ECE 406H'},
+    {id:'eh15',code:'ECE 419H',name:'Intro to Embedded Systems',cat:'ECE',credits:4,done:false,note:'Spring only; Co-req: ECE 412H'},
+    {id:'eh16',code:'ECE 412H',name:'Software Design & Implementation I',cat:'ECE',credits:4,done:false,note:'Spring only'},
     {id:'eh17',code:'M 427J',name:'Differential Equations',cat:'MATH',credits:4,done:false,note:'Pre-req: M 408D'},
     {id:'eh18',code:'ECE 107H',name:'Engineering Leadership: Honors',cat:'ECE',credits:1,done:false,note:'Spring only'},
+    {id:'eh7',code:'PHY 303K',name:'Engineering Physics 1',cat:'PHY',credits:3,done:false,note:'AP Credit or Y1 Spring'},
+    {id:'eh8',code:'PHY 105M',name:'Lab for PHY 303K',cat:'PHY',credits:1,done:false,note:'AP Credit or Y1 Spring'},
+    {id:'eh3',code:'VAPA',name:'Visual & Performing Arts',cat:'CORE',credits:3,done:false,note:'AP Credit'},
   ]},
   {id:'y2f',label:'Year 2 — Fall',courses:[
-    {id:'eh9',code:'PHY 303E',name:'Physics II for ECE Majors',cat:'PHY',credits:3,done:false,note:'Pre-req: M 408D, PHY 303K, PHY 105M'},
-    {id:'eh20',code:'ECE 411H',name:'Circuit Theory',cat:'ECE',credits:4,done:false,note:'Pre-req: ECE 402H, PHY 303K, PHY 105M; Co-req: M 427J, PHY 303E'},
-    {id:'eh21',code:'ECE 313H',name:'Linear Systems & Signals',cat:'ECE',credits:3,done:false,note:'Fall only; Pre-req: ECE 402H, M 408C, M 340L'},
+    {id:'eh9',code:'PHY 303E',name:'Physics II for ECE Majors',cat:'PHY',credits:3,done:false,note:'Pre-req: PHY 303K, PHY 105M'},
+    {id:'eh20',code:'ECE 411H',name:'Circuit Theory',cat:'ECE',credits:4,done:false,note:'Co-req: M 427J, PHY 303E'},
+    {id:'eh21',code:'ECE 313H',name:'Linear Systems & Signals',cat:'ECE',credits:3,done:false,note:'Fall only'},
     {id:'eh22',code:'M 340L',name:'Matrices & Matrix Calculations',cat:'MATH',credits:3,done:false,note:'Pre-req: M 408D'},
     {id:'eh23',code:'ECE 333T',name:'Engineering Communications',cat:'ECE',credits:3,done:false,note:'Core 010; Pre-req: RHE 306, ECE 419H'},
+    {id:'eh4',code:'GOV 310L',name:'American Government',cat:'CORE',credits:3,done:false,note:'AP Credit — core govt part 1'},
+    {id:'eh19',code:'SBS',name:'Social & Behavioral Sciences',cat:'CORE',credits:3,done:false,note:'AP Credit'},
   ]},
   {id:'y2s',label:'Year 2 — Spring',courses:[
     {id:'eh24',code:'ECE 351H',name:'Probability / Random Processes',cat:'ECE',credits:3,done:false,note:'Pre-req: M 427J'},
     {id:'eh25',code:'ATC-M',name:'Advanced Tech Component (Math)',cat:'ADVANCED',credits:3,done:false,note:'M 427L or M 325K'},
     {id:'eh26',code:'ATC-1',name:'Advanced Tech Component',cat:'ADVANCED',credits:3,done:false,note:'Tech core'},
+    {id:'eh5',code:'E 316',name:'Humanities Credit (L, M, N or P)',cat:'CORE',credits:3,done:false,note:'AP Credit'},
   ]},
   {id:'y3f',label:'Year 3 — Fall',courses:[
     {id:'eh28',code:'ATC-2',name:'Advanced Tech Component',cat:'ADVANCED',credits:3,done:false,note:'Tech core'},
     {id:'eh29',code:'ATC-3',name:'Advanced Tech Component',cat:'ADVANCED',credits:3,done:false,note:'Tech core'},
-    {id:'eh31',code:'FREE-MS',name:'Free Elective: Advanced Math or Basic Science',cat:'OTHER',credits:3,done:false,note:'One free elective must be on the math/science list'},
+    {id:'eh31',code:'FREE-MS',name:'Free Elective: Advanced Math or Basic Science',cat:'OTHER',credits:3,done:false,note:'Math/science list'},
   ]},
   {id:'y3s',label:'Year 3 — Spring',courses:[
     {id:'eh30',code:'ATC-Lab',name:'Advanced Tech Component Lab',cat:'ADVANCED',credits:1,done:false,note:'Tech core'},
     {id:'eh32',code:'ECE 364D',name:'Intro to Engineering Design',cat:'ECE',credits:3,done:false,note:'Core 010; Wr flag'},
     {id:'eh33',code:'ATC-4',name:'Advanced Tech Component',cat:'ADVANCED',credits:3,done:false,note:'Tech core'},
     {id:'eh34',code:'ATC-5',name:'Advanced Tech Component',cat:'ADVANCED',credits:3,done:false,note:'Tech core'},
-    {id:'eh35',code:'ATE',name:'Advanced Technical Elective',cat:'ADVANCED',credits:3,done:false,note:'Separate req: 3 hr UD ECE or ECE 316'},
+    {id:'eh35',code:'ATE',name:'Advanced Technical Elective',cat:'ADVANCED',credits:3,done:false,note:'3 hr UD ECE or ECE 316'},
     {id:'eh38',code:'FREE-1',name:'Free Elective',cat:'OTHER',credits:3,done:false,note:''},
   ]},
   {id:'y4f',label:'Year 4 — Fall',courses:[
-    {id:'eh37',code:'GOV 312L/P',name:'American Government',cat:'CORE',credits:3,done:false,note:'Core govt part 2 — after GOV 310L'},
+    {id:'eh27',code:'HIS',name:'US History',cat:'CORE',credits:3,done:false,note:'AP Credit'},
+    {id:'eh37',code:'GOV 312L/P',name:'American Government',cat:'CORE',credits:3,done:false,note:'Core govt part 2'},
     {id:'eh39',code:'FREE-2',name:'Free Elective',cat:'OTHER',credits:3,done:false,note:''},
   ]},
   {id:'y4s',label:'Year 4 — Spring',courses:[
-    {id:'eh40',code:'ECE 464H',name:'Honors Senior Design Project',cat:'ECE',credits:4,done:false,note:'Pre-req: ECE 364D & Adv Tech Component Lab'},
+    {id:'eh40',code:'ECE 464H',name:'Honors Senior Design Project',cat:'ECE',credits:4,done:false,note:'Pre-req: ECE 364D & ATC-Lab'},
     {id:'eh41',code:'FREE-3',name:'Free Elective',cat:'OTHER',credits:3,done:false,note:''},
   ]},
 ];
 
 // ─── Electrical & Computer Engineering — General · 2026-2028 catalog ─────────
-// Source: "2628 Flowchart" — course order matches flowchart columns top-to-bottom.
+// Source: "2628 Flowchart" — AP* courses in-semester with note; no separate ap row.
 const ECE_GENERAL_DS=[
-  {id:'ap',label:'AP / IB / Pre-College Credits',courses:ECE_STANDALONE_AP},
   {id:'y1f',label:'Year 1 — Fall',courses:[
+    {id:'eg1',code:'M 408C',name:'Differential & Integral Calculus',cat:'MATH',credits:4,done:false,note:'AP Credit or Y1 Fall'},
+    {id:'eg2',code:'RHE 306',name:'Rhetoric & Writing',cat:'CORE',credits:3,done:false,note:'AP Credit or Y1 Fall'},
     {id:'eg10',code:'ECE 402',name:'Intro to Electrical Engineering',cat:'ECE',credits:4,done:false,note:'Co-req: M 408D'},
     {id:'eg11',code:'ECE 406',name:'Introduction to Computing',cat:'ECE',credits:4,done:false,note:'Pre-req: M 408C'},
     {id:'eg13',code:'UGS 302/3',name:'First-Year Signature Course',cat:'CORE',credits:3,done:false,note:''},
@@ -699,41 +694,48 @@ const ECE_GENERAL_DS=[
   ]},
   {id:'y1s',label:'Year 1 — Spring',courses:[
     {id:'eg12',code:'M 408D',name:'Seq, Series & Multivariable Calculus',cat:'MATH',credits:4,done:false,note:'Pre-req: M 408C'},
-    {id:'eg15',code:'ECE 419K',name:'Intro to Embedded Systems',cat:'ECE',credits:4,done:false,note:'Pre-req: ECE 406; Co-req: ECE 412'},
+    {id:'eg15',code:'ECE 419K',name:'Intro to Embedded Systems',cat:'ECE',credits:4,done:false,note:'Co-req: ECE 412'},
     {id:'eg16',code:'ECE 412',name:'Software Design & Implementation I',cat:'ECE',credits:4,done:false,note:'Pre-req: ECE 406'},
     {id:'eg17',code:'M 427J',name:'Differential Equations',cat:'MATH',credits:4,done:false,note:'Pre-req: M 408D'},
+    {id:'eg7',code:'PHY 303K',name:'Engineering Physics 1',cat:'PHY',credits:3,done:false,note:'AP Credit or Y1 Spring'},
+    {id:'eg8',code:'PHY 105M',name:'Lab for PHY 303K',cat:'PHY',credits:1,done:false,note:'AP Credit or Y1 Spring'},
+    {id:'eg3',code:'VAPA',name:'Visual & Performing Arts',cat:'CORE',credits:3,done:false,note:'AP Credit'},
   ]},
   {id:'y2f',label:'Year 2 — Fall',courses:[
-    {id:'eg9',code:'PHY 303E',name:'Electromagnetic, Quantum, Semiconductor Physics',cat:'PHY',credits:3,done:false,note:'Pre-req: M 408D, PHY 303K, PHY 105M'},
-    {id:'eg19',code:'ECE 411',name:'Circuit Theory',cat:'ECE',credits:4,done:false,note:'Pre-req: ECE 402, PHY 303K, PHY 105M; Co-req: M 427J, PHY 303E'},
-    {id:'eg20',code:'ECE 313',name:'Linear Systems & Signals',cat:'ECE',credits:3,done:false,note:'Pre-req: ECE 402, M 408C, M 340L'},
+    {id:'eg9',code:'PHY 303E',name:'Electromagnetic, Quantum, Semiconductor Physics',cat:'PHY',credits:3,done:false,note:'Pre-req: PHY 303K, PHY 105M'},
+    {id:'eg19',code:'ECE 411',name:'Circuit Theory',cat:'ECE',credits:4,done:false,note:'Co-req: M 427J, PHY 303E'},
+    {id:'eg20',code:'ECE 313',name:'Linear Systems & Signals',cat:'ECE',credits:3,done:false,note:'Fall only'},
     {id:'eg21',code:'M 340L',name:'Matrices & Matrix Calculations',cat:'MATH',credits:3,done:false,note:'Pre-req: M 408D'},
     {id:'eg22',code:'ECE 333T',name:'Engineering Communications',cat:'ECE',credits:3,done:false,note:'Core 010; Pre-req: RHE 306, ECE 419K'},
+    {id:'eg4',code:'GOV 310L',name:'American Government',cat:'CORE',credits:3,done:false,note:'AP Credit — core govt part 1'},
+    {id:'eg18',code:'SBS',name:'Social & Behavioral Sciences',cat:'CORE',credits:3,done:false,note:'AP Credit'},
   ]},
   {id:'y2s',label:'Year 2 — Spring',courses:[
     {id:'eg23',code:'ECE 351K',name:'Probability / Random Processes',cat:'ECE',credits:3,done:false,note:'Pre-req: M 427J'},
     {id:'eg24',code:'ATC-M',name:'Advanced Tech Component (Math)',cat:'ADVANCED',credits:3,done:false,note:'M 427L or M 325K'},
     {id:'eg25',code:'ATC-1',name:'Advanced Tech Component',cat:'ADVANCED',credits:3,done:false,note:'Tech core'},
+    {id:'eg5',code:'E 316',name:'Humanities Credit (L, M, N or P)',cat:'CORE',credits:3,done:false,note:'AP Credit'},
   ]},
   {id:'y3f',label:'Year 3 — Fall',courses:[
     {id:'eg27',code:'ATC-2',name:'Advanced Tech Component',cat:'ADVANCED',credits:3,done:false,note:'Tech core'},
     {id:'eg28',code:'ATC-3',name:'Advanced Tech Component',cat:'ADVANCED',credits:3,done:false,note:'Tech core'},
-    {id:'eg30',code:'FREE-MS',name:'Free Elective: Advanced Math or Basic Science',cat:'OTHER',credits:3,done:false,note:'One free elective must be on the math/science list'},
+    {id:'eg30',code:'FREE-MS',name:'Free Elective: Advanced Math or Basic Science',cat:'OTHER',credits:3,done:false,note:'Math/science list'},
   ]},
   {id:'y3s',label:'Year 3 — Spring',courses:[
     {id:'eg29',code:'ATC-Lab',name:'Advanced Tech Component Lab',cat:'ADVANCED',credits:1,done:false,note:'Tech core'},
     {id:'eg31',code:'ECE 364D',name:'Intro to Engineering Design',cat:'ECE',credits:3,done:false,note:'Core 010; Wr flag'},
     {id:'eg32',code:'ATC-4',name:'Advanced Tech Component',cat:'ADVANCED',credits:3,done:false,note:'Tech core'},
     {id:'eg33',code:'ATC-5',name:'Advanced Tech Component',cat:'ADVANCED',credits:3,done:false,note:'Tech core'},
-    {id:'eg34',code:'ATE',name:'Advanced Technical Elective',cat:'ADVANCED',credits:3,done:false,note:'Separate req: 3 hr UD ECE or ECE 316'},
+    {id:'eg34',code:'ATE',name:'Advanced Technical Elective',cat:'ADVANCED',credits:3,done:false,note:'3 hr UD ECE or ECE 316'},
     {id:'eg37',code:'FREE-1',name:'Free Elective',cat:'OTHER',credits:3,done:false,note:''},
   ]},
   {id:'y4f',label:'Year 4 — Fall',courses:[
-    {id:'eg36',code:'GOV 312L/P',name:'American Government',cat:'CORE',credits:3,done:false,note:'Core govt part 2 — after GOV 310L'},
+    {id:'eg26',code:'HIS',name:'US History',cat:'CORE',credits:3,done:false,note:'AP Credit'},
+    {id:'eg36',code:'GOV 312L/P',name:'American Government',cat:'CORE',credits:3,done:false,note:'Core govt part 2'},
     {id:'eg38',code:'FREE-2',name:'Free Elective',cat:'OTHER',credits:3,done:false,note:''},
   ]},
   {id:'y4s',label:'Year 4 — Spring',courses:[
-    {id:'eg39',code:'ECE 464K',name:'Senior Design Project',cat:'ECE',credits:4,done:false,note:'Pre-req: ECE 364D & Adv Tech Component Lab'},
+    {id:'eg39',code:'ECE 464K',name:'Senior Design Project',cat:'ECE',credits:4,done:false,note:'Pre-req: ECE 364D & ATC-Lab'},
     {id:'eg40',code:'FREE-3',name:'Free Elective',cat:'OTHER',credits:3,done:false,note:''},
   ]},
 ];
@@ -1593,15 +1595,27 @@ function migrateFlowchartLayout(sems,kind){
     moveCourse('y1f','y1s','M 408D',null);
     moveCourse('y3f','y3s','ATC-Lab',null);
     moveCourse('y4f','y3s','ECE 364D','ATC-Lab');
+    moveCourse('y2s','y1s','PHY 303K',null);
+    moveCourse('y2s','y1s','PHY 105M',null);
+    moveCourse('y2s','y1s','VAPA',null);
+    moveCourse('y4f','y2f','GOV 310L',null);
+    moveCourse('y4f','y2f','SBS',null);
+    moveCourse('y2s','y4f','HIS',null);
+    moveCourse('y4f','y2s','E 316',null);
   }
   if(kind==='ecb'){
     moveCourse('y1s','y1f','M 408D','ECE 402H');
+    moveCourse('y2f','y1f','BA 324H','ECE 406H');
+    moveCourse('y1f','y2s','UGS 302/3','DS 235H');
+    moveCourse('y3s','y2s','ACC 312H','ATC-1');
+    moveCourse('y3f','y2s','ATC-1','ECE 351H');
+    moveCourse('y3s','y3f','BA 120G','P/S/A');
     moveCourse('y4f','y3s','ECE 364D','MKT 337H');
+    moveCourse('y4f','y3s','ATC-3','ECE 364D');
   }
-  return plan;
+  return plan.filter(s=>s.id!=='ap'||kind==='ecb');
 }
 const ECB_AP_SLOTS=['M 408C','RHE 306','HIS','GOV 310L','E 316','VAPA','ECO 304K','ECO 304L'];
-const ECE_AP_SLOTS=['M 408C','RHE 306','PHY 303K','PHY 105M','VAPA','GOV 310L','SBS','HIS','E 316'];
 function apSlotKey(code){
   const c=normTrackCode(code);
   if(c.startsWith('M 408C'))return 'M 408C';
@@ -1617,17 +1631,12 @@ function apSlotKey(code){
   if(c==='SBS'||c.startsWith('SBS'))return 'SBS';
   return c;
 }
-function isApSlot(code,kind){
-  const slots=kind==='ecb'?ECB_AP_SLOTS:ECE_AP_SLOTS;
-  return slots.includes(apSlotKey(code));
+function isApSlot(code){
+  return ECB_AP_SLOTS.includes(apSlotKey(code));
 }
-function resolveApTemplate(sch,kind){
-  if(kind==='ecb')return CURRICULUM_TEMPLATES.ecb.build().find(s=>s.id==='ap');
-  return resolveTemplateSems({kind:'general',sems:sch?.sems||[]}).find(s=>s.id==='ap');
-}
-// Keep AP/IB credits in the dedicated row; strip duplicates from semester columns.
-function syncApSection(sems,kind){
-  const tmplAp=resolveApTemplate({sems},kind);
+// ECB only: keep AP/IB credits in the dedicated row; strip duplicates from semester columns.
+function syncApSection(sems){
+  const tmplAp=CURRICULUM_TEMPLATES.ecb.build().find(s=>s.id==='ap');
   if(!tmplAp)return sems;
   let plan=dc(sems||[]);
   if(!plan.some(s=>s.id==='ap'))plan=[dc(tmplAp),...plan];
@@ -1637,7 +1646,7 @@ function syncApSection(sems,kind){
   plan=plan.map(s=>{
     if(s.id==='ap'||s.id==='phy')return s;
     return{...s,courses:(s.courses||[]).filter(c=>{
-      if(!isApSlot(c.code,kind))return true;
+      if(!isApSlot(c.code))return true;
       const k=apSlotKey(c.code);
       pulled.push({...c,note:c.note||'AP / IB credit'});
       return false;
@@ -1651,23 +1660,10 @@ function syncApSection(sems,kind){
     apCourses.push(c);
   }
   plan[apIdx]={...plan[apIdx],courses:apCourses};
-  if(kind==='general'){
-    const phySem=plan.find(s=>s.id==='phy');
-    if(phySem?.courses?.length){
-      const fromPhy=(phySem.courses||[]).filter(c=>{
-        const k=apSlotKey(c.code);
-        return k==='PHY 303K'||k==='PHY 105M';
-      });
-      fromPhy.forEach(c=>{
-        const k=apSlotKey(c.code);
-        if(apCourses.some(x=>apSlotKey(x.code)===k))return;
-        apCourses.push({...c,note:c.note||'AP / IB credit'});
-      });
-      plan=plan.filter(s=>s.id!=='phy');
-      plan[apIdx]={...plan[apIdx],courses:apCourses};
-    }
-  }
   return plan;
+}
+function stripStandaloneApRow(sems){
+  return (sems||[]).filter(s=>s.id!=='ap');
 }
 function normalizeSchedule(sch){
   const looksBusiness=(sch.sems||[]).some(s=>['lower','upper','major','canfield','electives','human'].includes(s.id))||(sch.bizTracks||[]).length>0;
@@ -1675,7 +1671,8 @@ function normalizeSchedule(sch){
   if(looksBusiness||sch.kind==='business')return syncBusinessTracks({...synced,kind:'business'},businessTrackKeys(synced));
   const kind=inferEceKind(synced)==='general'?'general':'ecb';
   synced={kind,...synced};
-  synced={...synced,sems:syncApSection(synced.sems,kind)};
+  if(kind==='ecb')synced={...synced,sems:syncApSection(synced.sems)};
+  else synced={...synced,sems:stripStandaloneApRow(synced.sems)};
   synced={...synced,sems:migrateFlowchartLayout(synced.sems,kind)};
   return syncTrackSchedule(synced);
 }
