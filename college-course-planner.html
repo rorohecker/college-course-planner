@@ -477,7 +477,7 @@ body{font-family:-apple-system,'Segoe UI',system-ui,sans-serif;background:var(--
 </script>
 <script>
 // ─── Static data ──────────────────────────────────────────────────────────────
-const APP_VERSION='2026.06.10.7';
+const APP_VERSION='2026.06.10.8';
 // Raw URL is used only for parsing APP_VERSION on the live copy — never as a user link
 // (raw.githubusercontent.com serves text/plain, so the browser shows source instead of rendering).
 const UPDATE_URL='https://raw.githubusercontent.com/rorohecker/college-course-planner/main/college-course-planner.html';
@@ -553,6 +553,8 @@ const DS=[
     {id:'c4',code:'GOV 310L',name:'American Government',cat:'CORE',credits:3,done:false,note:'AP / IB credit — core govt part 1'},
     {id:'c5',code:'E 316',name:'Humanities Credit (L, M, N or P)',cat:'CORE',credits:3,done:false,note:'AP / IB credit'},
     {id:'c6',code:'VAPA',name:'Visual & Performing Arts',cat:'CORE',credits:3,done:false,note:'AP / IB credit accepted'},
+    {id:'c57',code:'ECO 304K',name:'Intro to Microeconomics (SBS)',cat:'BUSINESS',credits:3,done:false,note:'AP / IB — flowchart lists as beforehand; required before MIS 301H & ACC 311H'},
+    {id:'c58',code:'ECO 304L',name:'Intro to Macroeconomics',cat:'BUSINESS',credits:3,done:false,note:'AP / IB or summer before Y2 Fall'},
   ]},
   {id:'phy',label:'Physics — Summer (between Y1 & Y2)',courses:[
     {id:'c7',code:'PHY 303K',name:'Engineering Physics 1',cat:'PHY',credits:3,done:false,note:'AP Credit or summer after Y1'},
@@ -571,7 +573,6 @@ const DS=[
     {id:'c17',code:'ECE 419H',name:'Intro to Embedded Systems',cat:'ECE',credits:4,done:false,note:'Pre-req: ECE 406H; Co-req: ECE 412H'},
     {id:'c18',code:'ECE 412H',name:'Software Design & Implementation I',cat:'ECE',credits:4,done:false,note:'Spring only; Pre-req: ECE 406H'},
     {id:'c19',code:'M 427J',name:'Differential Equations',cat:'MATH',credits:4,done:false,note:'Pre-req: M 408D'},
-    {id:'c20',code:'ECO 304K',name:'Intro to Microeconomics (SBS)',cat:'BUSINESS',credits:3,done:false,note:'AP Credit or Y1 Spring'},
     {id:'c21',code:'MIS 301H',name:'Intro to Info Tech Mgmt Honors',cat:'BUSINESS',credits:3,done:false,note:'Spring only'},
     {id:'c22',code:'STA 301H',name:'Intro to Data Science Honors',cat:'BUSINESS',credits:3,done:false,note:'Spring only'},
   ]},
@@ -586,7 +587,6 @@ const DS=[
   ]},
   {id:'y2s',label:'Year 2 — Spring',courses:[
     {id:'c29',code:'ECE 351H',name:'Probability / Random Processes',cat:'ECE',credits:3,done:false,note:'Pre-req: M 427J'},
-    {id:'c30',code:'ECO 304L',name:'Intro to Macroeconomics',cat:'BUSINESS',credits:3,done:false,note:'AP / IB or summer before Y2 Fall'},
     {id:'c32',code:'O M 235H',name:'Operations Management Honors',cat:'BUSINESS',credits:2,done:false,note:'Spring only; Pre-req: ECO 304K, BA 324H, STA 301H'},
     {id:'c33',code:'DS 235H',name:'Intro to Decision Science Honors',cat:'BUSINESS',credits:2,done:false,note:'Spring only; Pre-req: M 408D, STA 301H'},
   ]},
@@ -1599,7 +1599,7 @@ function migrateFlowchartLayout(sems,kind){
   }
   return plan;
 }
-const ECB_AP_SLOTS=['M 408C','RHE 306','HIS','GOV 310L','E 316','VAPA'];
+const ECB_AP_SLOTS=['M 408C','RHE 306','HIS','GOV 310L','E 316','VAPA','ECO 304K','ECO 304L'];
 const ECE_AP_SLOTS=['M 408C','RHE 306','PHY 303K','PHY 105M','VAPA','GOV 310L','SBS','HIS','E 316'];
 function apSlotKey(code){
   const c=normTrackCode(code);
@@ -1611,6 +1611,8 @@ function apSlotKey(code){
   if(c.includes('E 316'))return 'E 316';
   if(c.includes('VAPA'))return 'VAPA';
   if(c.includes('HIS'))return 'HIS';
+  if(c.includes('ECO 304K'))return 'ECO 304K';
+  if(c.includes('ECO 304L'))return 'ECO 304L';
   if(c==='SBS'||c.startsWith('SBS'))return 'SBS';
   return c;
 }
