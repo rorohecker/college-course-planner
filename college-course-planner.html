@@ -470,7 +470,7 @@ body{font-family:-apple-system,'Segoe UI',system-ui,sans-serif;background:var(--
 </script>
 <script>
 // ─── Static data ──────────────────────────────────────────────────────────────
-const APP_VERSION='2026.06.09.3';
+const APP_VERSION='2026.06.09.4';
 // Raw URL is used only for parsing APP_VERSION on the live copy — never as a user link
 // (raw.githubusercontent.com serves text/plain, so the browser shows source instead of rendering).
 const UPDATE_URL='https://raw.githubusercontent.com/rorohecker/college-course-planner/main/college-course-planner.html';
@@ -1337,12 +1337,20 @@ function inferEceKind(sch){
   if(courses.some(c=>/^(eh|eg)\d+$/.test(String(c.id))))return 'general';
   return sch?.kind||'ecb';
 }
+function stripAdvTechPlaceholders(sems){
+  return(sems||[]).map(s=>({...s,courses:(s.courses||[]).filter(c=>!isAdvTechPlaceholder(c.code))}));
+}
+function syncTrackPlaceholders(sch){
+  if(!sch?.track||sch.kind==='business')return sch;
+  return{...sch,sems:stripAdvTechPlaceholders(sch.sems)};
+}
 function normalizeSchedule(sch){
   const looksBusiness=(sch.sems||[]).some(s=>['lower','upper','major','canfield','electives','human'].includes(s.id))||(sch.bizTracks||[]).length>0;
-  const synced={...sch,sems:syncSemCredits(sch.sems)};
+  let synced={...sch,sems:syncSemCredits(sch.sems)};
   if(looksBusiness||sch.kind==='business')return syncBusinessTracks({...synced,kind:'business'},businessTrackKeys(synced));
   const kind=inferEceKind(synced)==='general'?'general':'ecb';
-  return{kind,...synced};
+  synced={kind,...synced};
+  return syncTrackPlaceholders(synced);
 }
 function makeSchedule(name,color,templateKey='ecb'){
   const t=CURRICULUM_TEMPLATES[templateKey]||CURRICULUM_TEMPLATES.ecb;
@@ -2559,7 +2567,11 @@ window.updateTarget=()=>{
   else el.innerHTML=`Need a <b>${needed.toFixed(3)}</b> GPA across the remaining ${remainCr} credits to reach <b>${target.toFixed(2)}</b>.`;
 };
 window.setTrack=key=>mutate(()=>{
-  S.schedules=S.schedules.map(s=>s.id!==S.activeId?s:{...s,track:key||null});
+  S.schedules=S.schedules.map(s=>{
+    if(s.id!==S.activeId)return s;
+    const next={...s,track:key||null};
+    return key?syncTrackPlaceholders(next):next;
+  });
 });
 window.toggleBusinessTrackKey=key=>mutate(()=>{
   S.schedules=S.schedules.map(s=>s.id!==S.activeId?s:toggleBusinessTrack(s,key));
@@ -2659,6 +2671,14 @@ function findAdvTechSlot(sems,order){
   }
   return null;
 }
+function defaultSemForTrackCourse(sems,isElective){
+  const order=isElective?['y3s','y4f','y4s','y3f']:['y3f','y3s','y2s','y4f','y4s'];
+  for(const id of order){
+    const s=sems.find(x=>x.id===id&&!x.isOff);
+    if(s)return s.id;
+  }
+  return sems.find(s=>!s.isOff)?.id;
+}
 function categoryForCode(code){
   const c=String(code||'').trim().toUpperCase();
   if(c.startsWith('M '))return'MATH';
@@ -2688,10 +2708,10 @@ window.addTrackCourse=(code,name,slot)=>{
     if(target){
       setAS(getAS().map(s=>s.id!==target.semId?s:{...s,courses:s.courses.map(c=>c.id!==target.cid?c:{...c,code,name,cat,credits,note:'Added from track picker'})}));
     }else{
-      // No placeholder left, just append to Year 3 Fall (or the first non-off semester).
-      const sem=getAS().find(s=>s.id==='y3f'&&!s.isOff)||getAS().find(s=>!s.isOff);
-      if(!sem)return;
-      setAS(getAS().map(s=>s.id!==sem.id?s:{...s,courses:[...s.courses,{id:uid(),code,name,cat,credits,done:false,note:'Added from track picker',grade:''}]}));
+      const semsNow=getAS();
+      const semId=defaultSemForTrackCourse(semsNow,isElective);
+      if(!semId)return;
+      setAS(semsNow.map(s=>s.id!==semId?s:{...s,courses:[...s.courses,{id:uid(),code,name,cat,credits,done:false,note:'Added from track picker',grade:''}]}));
     }
   });
 };
