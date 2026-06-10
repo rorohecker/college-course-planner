@@ -477,7 +477,7 @@ body{font-family:-apple-system,'Segoe UI',system-ui,sans-serif;background:var(--
 </script>
 <script>
 // ─── Static data ──────────────────────────────────────────────────────────────
-const APP_VERSION='2026.06.09.9';
+const APP_VERSION='2026.06.10.4';
 // Raw URL is used only for parsing APP_VERSION on the live copy — never as a user link
 // (raw.githubusercontent.com serves text/plain, so the browser shows source instead of rendering).
 const UPDATE_URL='https://raw.githubusercontent.com/rorohecker/college-course-planner/main/college-course-planner.html';
@@ -489,6 +489,7 @@ const START_SEEN_KEY='cp-start-seen';
 const LAST_EXPORT_KEY='cp-last-export';
 const EXPORT_SNOOZE_KEY='cp-export-snooze';
 const UPDATE_DISMISS_KEY='cp-update-dismissed';
+const UPDATE_VERIFY_KEY='cp-update-verify';
 const EXPORT_REMINDER_DAYS=14;
 const EXPORT_SNOOZE_DAYS=7;
 
@@ -541,55 +542,54 @@ const knownFor=sch=>{
 };
 
 // ─── ECE + Canfield Business Honors (ECB Dual Degree) · 2026-2028 catalog ──────
-// Source: "26-28 ECB Flowchart". ECB students take 7 advanced technical
-// components (+ math + lab) plus an advanced technical elective.
+// Source: "26-28 ECB Flowchart" — course order matches flowchart columns top-to-bottom.
 const DS=[
   {id:'phy',label:'Physics — Summer (between Y1 & Y2)',courses:[
     {id:'c7',code:'PHY 303K',name:'Engineering Physics 1',cat:'PHY',credits:3,done:false,note:'AP Credit or summer after Y1'},
     {id:'c8',code:'PHY 105M',name:'Lab for PHY 303K',cat:'PHY',credits:1,done:false,note:'AP Credit or summer after Y1'},
-    {id:'c9',code:'PHY 303E',name:'Physics II for ECE Majors',cat:'PHY',credits:3,done:false,note:'Pre-req: M 408D, PHY 303K, PHY 105M'},
+    {id:'c9',code:'PHY 303E',name:'Physics II for ECE Majors',cat:'PHY',credits:3,done:false,note:'Summer before Y2 Fall if not in phy block'},
   ]},
   {id:'y1f',label:'Year 1 — Fall',courses:[
     {id:'c1',code:'M 408C',name:'Differential & Integral Calculus',cat:'MATH',credits:4,done:false,note:'AP Credit'},
     {id:'c2',code:'RHE 306',name:'Rhetoric & Writing',cat:'CORE',credits:3,done:false,note:'AP Credit'},
-    {id:'c11',code:'ECE 402H',name:'Intro to Electrical Engineering Honors',cat:'ECE',credits:4,done:false,note:'Co-req: M 408D'},
+    {id:'c11',code:'ECE 402H',name:'Intro to Electrical Engineering Honors',cat:'ECE',credits:4,done:false,note:'Fall only; Co-req: M 408D'},
     {id:'c12',code:'ECE 406H',name:'Introduction to Computing Honors',cat:'ECE',credits:4,done:false,note:'Pre-req: M 408C'},
     {id:'c13',code:'M 408D',name:'Seq, Series & Multivariable Calculus',cat:'MATH',credits:4,done:false,note:'Pre-req: M 408C'},
-    {id:'c14',code:'BA 110G',name:'Professional Dev & Career Planning Honors',cat:'BUSINESS',credits:1,done:false,note:''},
-    {id:'c15',code:'BA 111G',name:'Leadership & Innovation Honors',cat:'BUSINESS',credits:1,done:false,note:''},
     {id:'c16',code:'UGS 302/3',name:'First-Year Signature Course',cat:'CORE',credits:3,done:false,note:''},
+    {id:'c14',code:'BA 110G',name:'Professional Dev & Career Planning Honors',cat:'BUSINESS',credits:1,done:false,note:'Fall only'},
+    {id:'c15',code:'BA 111G',name:'Leadership & Innovation Honors',cat:'BUSINESS',credits:1,done:false,note:''},
   ]},
   {id:'y1s',label:'Year 1 — Spring',courses:[
     {id:'c17',code:'ECE 419H',name:'Intro to Embedded Systems',cat:'ECE',credits:4,done:false,note:'Pre-req: ECE 406H; Co-req: ECE 412H'},
-    {id:'c18',code:'ECE 412H',name:'Software Design & Implementation I',cat:'ECE',credits:4,done:false,note:'Pre-req: ECE 406H'},
+    {id:'c18',code:'ECE 412H',name:'Software Design & Implementation I',cat:'ECE',credits:4,done:false,note:'Spring only; Pre-req: ECE 406H'},
     {id:'c19',code:'M 427J',name:'Differential Equations',cat:'MATH',credits:4,done:false,note:'Pre-req: M 408D'},
     {id:'c20',code:'ECO 304K',name:'Intro to Microeconomics (SBS)',cat:'BUSINESS',credits:3,done:false,note:'AP Credit or Y1 Spring'},
-    {id:'c21',code:'MIS 301H',name:'Intro to Info Tech Mgmt Honors',cat:'BUSINESS',credits:3,done:false,note:''},
-    {id:'c22',code:'STA 301H',name:'Intro to Data Science Honors',cat:'BUSINESS',credits:3,done:false,note:''},
+    {id:'c21',code:'MIS 301H',name:'Intro to Info Tech Mgmt Honors',cat:'BUSINESS',credits:3,done:false,note:'Spring only'},
+    {id:'c22',code:'STA 301H',name:'Intro to Data Science Honors',cat:'BUSINESS',credits:3,done:false,note:'Spring only'},
   ]},
   {id:'y2f',label:'Year 2 — Fall',courses:[
     {id:'c23',code:'ECE 411H',name:'Circuit Theory',cat:'ECE',credits:4,done:false,note:'Pre-req: ECE 402H, PHY 303K, PHY 105M; Co-req: M 427J, PHY 303E'},
-    {id:'c24',code:'ECE 313H',name:'Linear Systems & Signals',cat:'ECE',credits:3,done:false,note:'Pre-req: ECE 402H, M 408C, M 340L'},
+    {id:'c24',code:'ECE 313H',name:'Linear Systems & Signals',cat:'ECE',credits:3,done:false,note:'Fall only; Pre-req: ECE 402H, M 408C, M 340L'},
     {id:'c25',code:'M 340L',name:'Matrices & Matrix Calculations',cat:'MATH',credits:3,done:false,note:'Pre-req: M 408D'},
+    {id:'c28',code:'STA 235H',name:'Data Science for Bus Applications Honors',cat:'BUSINESS',credits:2,done:false,note:'Fall only; Pre-req: M 408D, STA 301H'},
+    {id:'c31',code:'ACC 311H',name:'Financial Accounting Honors',cat:'BUSINESS',credits:3,done:false,note:'Fall only; Pre-req: 24 hrs, ECO 304K, MIS 301H, BA 324H'},
+    {id:'c26',code:'BA 324H',name:'Business Communication',cat:'BUSINESS',credits:3,done:false,note:'Core 010; Fall only; Pre-req: RHE 306, BA 110G'},
+    {id:'c27',code:'BAH 151H',name:'Honors Lyceum',cat:'BUSINESS',credits:1,done:false,note:'Fall only; Pre-req: BA 111G'},
     {id:'c4',code:'GOV 310L',name:'American Government',cat:'CORE',credits:3,done:false,note:'AP Credit — core govt part 1'},
     {id:'c5',code:'E 316',name:'Humanities Credit (L, M, N or P)',cat:'CORE',credits:3,done:false,note:'AP Credit'},
-    {id:'c26',code:'BA 324H',name:'Business Communication',cat:'BUSINESS',credits:3,done:false,note:'Core 010; Pre-req: RHE 306, BA 110G'},
-    {id:'c27',code:'BAH 151H',name:'Honors Lyceum',cat:'BUSINESS',credits:1,done:false,note:'Pre-req: BA 111G'},
-    {id:'c28',code:'STA 235H',name:'Data Science for Bus Applications Honors',cat:'BUSINESS',credits:2,done:false,note:'Pre-req: M 408D, STA 301H'},
-    {id:'c31',code:'ACC 311H',name:'Financial Accounting Honors',cat:'BUSINESS',credits:3,done:false,note:'Fall only; Pre-req: 24 hrs, ECO 304K, MIS 301H, BA 324H'},
   ]},
   {id:'y2s',label:'Year 2 — Spring',courses:[
     {id:'c29',code:'ECE 351H',name:'Probability / Random Processes',cat:'ECE',credits:3,done:false,note:'Pre-req: M 427J'},
     {id:'c3',code:'HIS',name:'US History',cat:'CORE',credits:3,done:false,note:'AP Credit — take in-semester if no AP'},
+    {id:'c30',code:'ECO 304L',name:'Intro to Macroeconomics',cat:'BUSINESS',credits:3,done:false,note:'AP or summer before Y2 Fall'},
     {id:'c6',code:'VAPA',name:'Visual & Performing Arts',cat:'CORE',credits:3,done:false,note:'AP Credit accepted'},
-    {id:'c30',code:'ECO 304L',name:'Intro to Macroeconomics',cat:'BUSINESS',credits:3,done:false,note:'May be AP credit or summer before Y2 Fall'},
-    {id:'c32',code:'O M 235H',name:'Operations Management Honors',cat:'BUSINESS',credits:2,done:false,note:'Pre-req: ECO 304K, BA 324H, STA 301H'},
-    {id:'c33',code:'DS 235H',name:'Intro to Decision Science Honors',cat:'BUSINESS',credits:2,done:false,note:'Pre-req: M 408D, STA 301H'},
+    {id:'c32',code:'O M 235H',name:'Operations Management Honors',cat:'BUSINESS',credits:2,done:false,note:'Spring only; Pre-req: ECO 304K, BA 324H, STA 301H'},
+    {id:'c33',code:'DS 235H',name:'Intro to Decision Science Honors',cat:'BUSINESS',credits:2,done:false,note:'Spring only; Pre-req: M 408D, STA 301H'},
   ]},
   {id:'y3f',label:'Year 3 — Fall',courses:[
     {id:'c35',code:'ATC-M',name:'Advanced Tech Component (Math)',cat:'ADVANCED',credits:3,done:false,note:'M 427L or M 325K'},
     {id:'c36',code:'ATC-1',name:'Advanced Tech Component',cat:'ADVANCED',credits:3,done:false,note:'Tech core'},
-    {id:'c38',code:'MAN 327H',name:'Entrepreneurship & Innovation Honors',cat:'BUSINESS',credits:3,done:false,note:'Pre-req: M 408D'},
+    {id:'c38',code:'MAN 327H',name:'Entrepreneurship & Innovation Honors',cat:'BUSINESS',credits:3,done:false,note:'Fall only; Pre-req: M 408D'},
     {id:'c34',code:'P/S/A',name:'Psychology/Sociology/Anthropology Elective',cat:'CORE',credits:3,done:false,note:'McCombs core; statistics not accepted'},
   ]},
   {id:'y3s',label:'Year 3 — Spring',courses:[
@@ -599,10 +599,10 @@ const DS=[
     {id:'c42',code:'FIN 357H',name:'Business Finance Honors',cat:'BUSINESS',credits:3,done:false,note:'Pre-req: BA 324H, ACC 312H, STA 235H/DS 235H, ECO 304K'},
     {id:'c43',code:'MAN 336H',name:'Organizational Behavior Honors',cat:'BUSINESS',credits:3,done:false,note:'Pre-req: BA 324H, P/S/A elective'},
     {id:'c44',code:'MKT 337H',name:'Principles of Marketing Honors',cat:'BUSINESS',credits:3,done:false,note:'Pre-req: BA 324H, ACC 312H, ECO 304K & L, STA 235H, DS 235H'},
+    {id:'c45',code:'ECE 364D',name:'Intro to Engineering Design',cat:'ECE',credits:3,done:false,note:'Core 010; Wr flag; after FIN/MAN/MKT'},
     {id:'c55',code:'BA 120G',name:'Global Learning',cat:'BUSINESS',credits:0,done:false,note:'Pre-req: BA 324H'},
   ]},
   {id:'y4f',label:'Year 4 — Fall',courses:[
-    {id:'c45',code:'ECE 364D',name:'Intro to Engineering Design',cat:'ECE',credits:3,done:false,note:'Writing flag (Wr); Core 010'},
     {id:'c46',code:'ATC-3',name:'Advanced Tech Component',cat:'ADVANCED',credits:3,done:false,note:'Tech core'},
     {id:'c47',code:'ATC-4',name:'Advanced Tech Component',cat:'ADVANCED',credits:3,done:false,note:'Tech core'},
     {id:'c48',code:'LEB 323H',name:'Business Law & Ethics Honors',cat:'BUSINESS',credits:3,done:false,note:'4th year; Pre-req: ACC 312H, BA 324H'},
@@ -618,16 +618,13 @@ const DS=[
   ]},
 ];
 
-// ─── Electrical Engineering Honors (no BHP) · 2026-2028 catalog ────────────────
-// Source: "26-28 Honors". All "H" ECE courses required. No ECO 304K/304L.
-// 8 advanced tech placeholders on the flowchart (ATC-M, ATC-Lab, ATC-1…5, ATE) + 11 hrs free electives.
-// The catalog’s “8 courses” in the tech core are filled via track courses into those slots; ATE is the
-// separate “Advanced Technical Elective” (3 hr UD ECE or ECE 316).
+// ─── Electrical Engineering Honors · 2026-2028 catalog ─────────────────────────
+// Source: "26-28 Honors" — course order matches flowchart columns top-to-bottom.
 const ECE_HONORS_DS=[
   {id:'y1f',label:'Year 1 — Fall',courses:[
     {id:'eh1',code:'M 408C',name:'Differential & Integral Calculus',cat:'MATH',credits:4,done:false,note:'AP Credit'},
     {id:'eh2',code:'RHE 306',name:'Rhetoric & Writing',cat:'CORE',credits:3,done:false,note:'AP Credit'},
-    {id:'eh10',code:'ECE 402H',name:'Intro to Electrical Engineering Honors',cat:'ECE',credits:4,done:false,note:'Co-req: M 408D'},
+    {id:'eh10',code:'ECE 402H',name:'Intro to Electrical Engineering Honors',cat:'ECE',credits:4,done:false,note:'Fall only; Co-req: M 408D'},
     {id:'eh11',code:'ECE 406H',name:'Introduction to Computing Honors',cat:'ECE',credits:4,done:false,note:'Pre-req: M 408C'},
     {id:'eh12',code:'M 408D',name:'Seq, Series & Multivariable Calculus',cat:'MATH',credits:4,done:false,note:'Pre-req: M 408C'},
     {id:'eh13',code:'UGS 302/3',name:'First-Year Signature Course',cat:'CORE',credits:3,done:false,note:''},
@@ -635,7 +632,7 @@ const ECE_HONORS_DS=[
   ]},
   {id:'y1s',label:'Year 1 — Spring',courses:[
     {id:'eh15',code:'ECE 419H',name:'Intro to Embedded Systems',cat:'ECE',credits:4,done:false,note:'Pre-req: ECE 406H; Co-req: ECE 412H'},
-    {id:'eh16',code:'ECE 412H',name:'Software Design & Implementation I',cat:'ECE',credits:4,done:false,note:'Pre-req: ECE 406H'},
+    {id:'eh16',code:'ECE 412H',name:'Software Design & Implementation I',cat:'ECE',credits:4,done:false,note:'Spring only; Pre-req: ECE 406H'},
     {id:'eh17',code:'M 427J',name:'Differential Equations',cat:'MATH',credits:4,done:false,note:'Pre-req: M 408D'},
     {id:'eh7',code:'PHY 303K',name:'Engineering Physics 1',cat:'PHY',credits:3,done:false,note:'AP Credit or in-semester'},
     {id:'eh8',code:'PHY 105M',name:'Lab for PHY 303K',cat:'PHY',credits:1,done:false,note:'AP Credit or in-semester'},
@@ -645,7 +642,7 @@ const ECE_HONORS_DS=[
   {id:'y2f',label:'Year 2 — Fall',courses:[
     {id:'eh9',code:'PHY 303E',name:'Physics II for ECE Majors',cat:'PHY',credits:3,done:false,note:'Pre-req: M 408D, PHY 303K, PHY 105M'},
     {id:'eh20',code:'ECE 411H',name:'Circuit Theory',cat:'ECE',credits:4,done:false,note:'Pre-req: ECE 402H, PHY 303K, PHY 105M; Co-req: M 427J, PHY 303E'},
-    {id:'eh21',code:'ECE 313H',name:'Linear Systems & Signals',cat:'ECE',credits:3,done:false,note:'Pre-req: ECE 402H, M 408C, M 340L'},
+    {id:'eh21',code:'ECE 313H',name:'Linear Systems & Signals',cat:'ECE',credits:3,done:false,note:'Fall only; Pre-req: ECE 402H, M 408C, M 340L'},
     {id:'eh22',code:'M 340L',name:'Matrices & Matrix Calculations',cat:'MATH',credits:3,done:false,note:'Pre-req: M 408D'},
     {id:'eh23',code:'ECE 333T',name:'Engineering Communications',cat:'ECE',credits:3,done:false,note:'Core 010; Pre-req: RHE 306, ECE 419H'},
     {id:'eh4',code:'GOV 310L',name:'American Government',cat:'CORE',credits:3,done:false,note:'AP Credit — core govt part 1'},
@@ -661,13 +658,13 @@ const ECE_HONORS_DS=[
   {id:'y3f',label:'Year 3 — Fall',courses:[
     {id:'eh28',code:'ATC-2',name:'Advanced Tech Component',cat:'ADVANCED',credits:3,done:false,note:'Tech core'},
     {id:'eh29',code:'ATC-3',name:'Advanced Tech Component',cat:'ADVANCED',credits:3,done:false,note:'Tech core'},
-    {id:'eh30',code:'ATC-Lab',name:'Advanced Tech Component Lab',cat:'ADVANCED',credits:1,done:false,note:'Tech core'},
     {id:'eh31',code:'FREE-MS',name:'Free Elective: Advanced Math or Basic Science',cat:'OTHER',credits:3,done:false,note:'One free elective must be on the math/science list'},
   ]},
   {id:'y3s',label:'Year 3 — Spring',courses:[
-    {id:'eh32',code:'ECE 364D',name:'Intro to Engineering Design',cat:'ECE',credits:3,done:false,note:'Writing flag (Wr); Core 010'},
+    {id:'eh30',code:'ATC-Lab',name:'Advanced Tech Component Lab',cat:'ADVANCED',credits:1,done:false,note:'Tech core'},
+    {id:'eh32',code:'ECE 364D',name:'Intro to Engineering Design',cat:'ECE',credits:3,done:false,note:'Core 010; Wr flag'},
     {id:'eh33',code:'ATC-4',name:'Advanced Tech Component',cat:'ADVANCED',credits:3,done:false,note:'Tech core'},
-    {id:'eh34',code:'ATC-5',name:'Advanced Tech Component',cat:'ADVANCED',credits:3,done:false,note:'Tech core (6th component)'},
+    {id:'eh34',code:'ATC-5',name:'Advanced Tech Component',cat:'ADVANCED',credits:3,done:false,note:'Tech core'},
     {id:'eh35',code:'ATE',name:'Advanced Technical Elective',cat:'ADVANCED',credits:3,done:false,note:'Separate req: 3 hr UD ECE or ECE 316'},
     {id:'eh38',code:'FREE-1',name:'Free Elective',cat:'OTHER',credits:3,done:false,note:''},
   ]},
@@ -681,9 +678,8 @@ const ECE_HONORS_DS=[
   ]},
 ];
 
-// ─── Electrical & Computer Engineering — General Curriculum · 2026-2028 ─────────
-// Source: "2628 Flowchart" (non-honors). No ECO 304K/304L. Same structure as
-// honors with the general course numbers and ECE 464K senior design.
+// ─── Electrical & Computer Engineering — General · 2026-2028 catalog ─────────
+// Source: "2628 Flowchart" — course order matches flowchart columns top-to-bottom.
 const ECE_GENERAL_DS=[
   {id:'y1f',label:'Year 1 — Fall',courses:[
     {id:'eg1',code:'M 408C',name:'Differential & Integral Calculus',cat:'MATH',credits:4,done:false,note:'AP Credit'},
@@ -721,13 +717,13 @@ const ECE_GENERAL_DS=[
   {id:'y3f',label:'Year 3 — Fall',courses:[
     {id:'eg27',code:'ATC-2',name:'Advanced Tech Component',cat:'ADVANCED',credits:3,done:false,note:'Tech core'},
     {id:'eg28',code:'ATC-3',name:'Advanced Tech Component',cat:'ADVANCED',credits:3,done:false,note:'Tech core'},
-    {id:'eg29',code:'ATC-Lab',name:'Advanced Tech Component Lab',cat:'ADVANCED',credits:1,done:false,note:'Tech core'},
     {id:'eg30',code:'FREE-MS',name:'Free Elective: Advanced Math or Basic Science',cat:'OTHER',credits:3,done:false,note:'One free elective must be on the math/science list'},
   ]},
   {id:'y3s',label:'Year 3 — Spring',courses:[
-    {id:'eg31',code:'ECE 364D',name:'Intro to Engineering Design',cat:'ECE',credits:3,done:false,note:'Writing flag (Wr); Core 010'},
+    {id:'eg29',code:'ATC-Lab',name:'Advanced Tech Component Lab',cat:'ADVANCED',credits:1,done:false,note:'Tech core'},
+    {id:'eg31',code:'ECE 364D',name:'Intro to Engineering Design',cat:'ECE',credits:3,done:false,note:'Core 010; Wr flag'},
     {id:'eg32',code:'ATC-4',name:'Advanced Tech Component',cat:'ADVANCED',credits:3,done:false,note:'Tech core'},
-    {id:'eg33',code:'ATC-5',name:'Advanced Tech Component',cat:'ADVANCED',credits:3,done:false,note:'Tech core (6th component)'},
+    {id:'eg33',code:'ATC-5',name:'Advanced Tech Component',cat:'ADVANCED',credits:3,done:false,note:'Tech core'},
     {id:'eg34',code:'ATE',name:'Advanced Technical Elective',cat:'ADVANCED',credits:3,done:false,note:'Separate req: 3 hr UD ECE or ECE 316'},
     {id:'eg37',code:'FREE-1',name:'Free Elective',cat:'OTHER',credits:3,done:false,note:''},
   ]},
@@ -1147,7 +1143,9 @@ function versionCmp(a,b){
 }
 function updateLine(){
   const u=S.update||{state:'idle'};
-  if(u.state==='checking')return'Checking GitHub for the latest planner...';
+  if(u.state==='checking'||u.state==='verifying')return u.state==='verifying'?'Verifying your update after reload…':'Checking GitHub for the latest planner...';
+  if(u.state==='verified')return`Update confirmed — you're running v${esc(APP_VERSION)}.`;
+  if(u.state==='verify-failed')return`Update not applied — still on v${esc(APP_VERSION)} (expected v${esc(u.expected||'?')}).`;
   if(u.state==='available')return`Update available: version ${esc(u.latest)} is newer than ${esc(APP_VERSION)}.`;
   if(u.state==='current'){
     const remote=u.latest&&u.latest!==APP_VERSION?` GitHub has v${esc(u.latest)}.`:'';
@@ -1176,7 +1174,27 @@ function currentFileName(){
 function canUseFilePicker(){
   return!!(window.isSecureContext&&typeof window.showOpenFilePicker==='function');
 }
+function readUpdateVerify(){
+  try{
+    const raw=localStorage.getItem(UPDATE_VERIFY_KEY);
+    if(!raw)return null;
+    const o=JSON.parse(raw);
+    if(!o?.expected)return null;
+    if(o.at&&Date.now()-o.at>7*86400000){clearUpdateVerify();return null;}
+    return o;
+  }catch(e){return null;}
+}
+function clearUpdateVerify(){try{localStorage.removeItem(UPDATE_VERIFY_KEY);}catch(e){}}
 function reloadPlanner(){
+  const u=S.update||{};
+  const expected=u.state==='verify-failed'?(u.expected||u.latest):u.latest;
+  if(expected&&(u.state==='applied'||u.state==='downloaded'||u.state==='verify-failed')){
+    try{
+      localStorage.setItem(UPDATE_VERIFY_KEY,JSON.stringify({
+        expected,runFile:currentFileName(),at:Date.now(),
+      }));
+    }catch(e){}
+  }
   const base=location.href.split(/[?#]/)[0];
   location.replace(base+'?_='+Date.now());
 }
@@ -1235,18 +1253,37 @@ async function applyUpdate(){
 }
 
 async function checkForUpdates(showModal=false){
-  if(showModal){S.modal='update';S.update={state:'checking',latest:null,checkedAt:null,error:null};render();}
+  const pending=readUpdateVerify();
+  if(pending)showModal=true;
+  if(showModal){S.modal='update';}
   if(typeof fetch!=='function'){
     S.update={state:'offline',latest:null,checkedAt:Date.now(),error:'fetch unavailable'};render();return;
   }
   try{
-    S.update={state:'checking',latest:null,checkedAt:null,error:null};
+    S.update={state:pending?'verifying':'checking',latest:null,checkedAt:null,error:null,expected:pending?.expected||null};
     if(showModal)render();
     const res=await fetch(UPDATE_URL+'?v='+Date.now(),{cache:'no-store'});
     if(!res.ok)throw new Error('HTTP '+res.status);
     const text=await res.text();
     const latest=(text.match(/const APP_VERSION=['"]([^'"]+)['"]/)||[])[1];
     if(!latest)throw new Error('Missing version');
+    if(pending){
+      if(versionCmp(APP_VERSION,pending.expected)>=0){
+        S.update={state:'verified',latest,expected:pending.expected,checkedAt:Date.now(),error:null};
+        clearUpdateVerify();
+      }else{
+        const runFile=currentFileName();
+        S.update={
+          state:'verify-failed',latest,expected:pending.expected,checkedAt:Date.now(),
+          pendingRunFile:pending.runFile||'',
+          fileMismatch:!!(pending.runFile&&runFile&&pending.runFile.toLowerCase()!==runFile.toLowerCase()),
+          error:`Still running v${APP_VERSION} — expected at least v${pending.expected} after reload.`,
+        };
+      }
+      if(typeof document!=='undefined')document.title='College Course Planner';
+      render();
+      return;
+    }
     const available=versionCmp(latest,APP_VERSION)>0;
     S.update={state:available?'available':'current',latest,checkedAt:Date.now(),error:null};
     if(available){
@@ -1254,7 +1291,7 @@ async function checkForUpdates(showModal=false){
     }
     if(showModal&&typeof document!=='undefined')document.title=available?'(update) College Course Planner':'College Course Planner';
   }catch(err){
-    S.update={state:'offline',latest:null,checkedAt:Date.now(),error:err?.message||String(err)};
+    S.update={state:'offline',latest:null,checkedAt:Date.now(),error:err?.message||String(err),expected:pending?.expected||null};
   }
   render();
 }
@@ -1509,11 +1546,63 @@ function mergeMissingTemplateCourses(sems,templateSems){
   });
   return plan;
 }
+function flowchartRank(semId,code,templateSems){
+  const tSem=(templateSems||[]).find(s=>s.id===semId);
+  if(!tSem)return 9999;
+  const k=normTrackCode(code);
+  const idx=(tSem.courses||[]).findIndex(c=>{
+    const tk=normTrackCode(c.code);
+    return tk===k||tk.startsWith(k)||k.startsWith(tk);
+  });
+  return idx<0?9999:idx;
+}
+function reorderCoursesToTemplate(sems,templateSems){
+  return(sems||[]).map(s=>({
+    ...s,
+    courses:[...(s.courses||[])].sort((a,b)=>{
+      const ra=flowchartRank(s.id,a.code,templateSems);
+      const rb=flowchartRank(s.id,b.code,templateSems);
+      return ra!==rb?ra-rb:String(a.code||'').localeCompare(b.code||'');
+    }),
+  }));
+}
+// One-time layout fixes for saves created before flowchart-accurate templates.
+function migrateFlowchartLayout(sems,kind){
+  let plan=dc(sems||[]);
+  const moveCourse=(fromId,toId,code,insertAfterCode)=>{
+    const fi=plan.findIndex(s=>s.id===fromId);
+    const ti=plan.findIndex(s=>s.id===toId);
+    if(fi<0||ti<0)return;
+    const nc=normTrackCode(code);
+    const c=(plan[fi].courses||[]).find(x=>normTrackCode(x.code)===nc);
+    if(!c)return;
+    if((plan[ti].courses||[]).some(x=>normTrackCode(x.code)===nc))return;
+    plan[fi]={...plan[fi],courses:plan[fi].courses.filter(x=>x!==c)};
+    const dest=[...plan[ti].courses];
+    let at=0;
+    if(insertAfterCode==='__END__')at=dest.length;
+    else if(insertAfterCode){
+      const ai=dest.findIndex(x=>normTrackCode(x.code)===normTrackCode(insertAfterCode));
+      at=ai>=0?ai+1:dest.length;
+    }
+    dest.splice(at,0,c);
+    plan[ti]={...plan[ti],courses:dest};
+  };
+  if(kind==='general'){
+    moveCourse('y3f','y3s','ATC-Lab',null);
+    moveCourse('y4f','y3s','ECE 364D','ATC-Lab');
+  }
+  if(kind==='ecb'){
+    moveCourse('y4f','y3s','ECE 364D','MKT 337H');
+  }
+  return plan;
+}
 function distributeApCredits(sems,kind){
   const apSem=(sems||[]).find(s=>s.id==='ap');
   if(!apSem?.courses?.length)return sems;
   const isEcb=kind==='ecb';
   const plan=(sems||[]).filter(s=>s.id!=='ap');
+  const tmpl=resolveTemplateSems({kind,sems:plan});
   const semForCode=code=>{
     const c=normTrackCode(code);
     if(c.startsWith('M 408C'))return 'y1f';
@@ -1526,12 +1615,22 @@ function distributeApCredits(sems,kind){
     if(c.includes('HIS'))return 'y2s';
     return 'y1f';
   };
+  const pending={};
   apSem.courses.forEach(c=>{
     const semId=semForCode(c.code);
     if(scheduleHasCode(plan,c.code))return;
+    (pending[semId]=pending[semId]||[]).push({...c,note:c.note||'AP Credit'});
+  });
+  Object.entries(pending).forEach(([semId,batch])=>{
     const i=plan.findIndex(s=>s.id===semId);
     if(i<0)return;
-    plan[i]={...plan[i],courses:[{...c,note:c.note||'AP Credit'},...(plan[i].courses||[])]};
+    const order=(tmpl.find(s=>s.id===semId)?.courses||[]).map(c=>normTrackCode(c.code));
+    batch.sort((a,b)=>{
+      const ia=order.indexOf(normTrackCode(a.code));
+      const ib=order.indexOf(normTrackCode(b.code));
+      return (ia<0?9999:ia)-(ib<0?9999:ib);
+    });
+    plan[i]={...plan[i],courses:[...batch,...(plan[i].courses||[])]};
   });
   return plan;
 }
@@ -1540,16 +1639,23 @@ function distributeStandalonePhysics(sems){
   if(!phySem?.courses?.length)return sems;
   const byCode=Object.fromEntries(phySem.courses.map(c=>[normTrackCode(c.code),c]));
   const plan=(sems||[]).filter(s=>s.id!=='phy');
-  const place=(code,semId)=>{
+  const insert=(semId,code,afterCode)=>{
     const c=byCode[normTrackCode(code)];
     if(!c||scheduleHasCode(plan,code))return;
     const i=plan.findIndex(s=>s.id===semId);
     if(i<0)return;
-    plan[i]={...plan[i],courses:[...plan[i].courses,c]};
+    const list=[...(plan[i].courses||[])];
+    let at=0;
+    if(afterCode){
+      const ai=list.findIndex(x=>normTrackCode(x.code)===normTrackCode(afterCode));
+      at=ai>=0?ai+1:0;
+    }
+    list.splice(at,0,c);
+    plan[i]={...plan[i],courses:list};
   };
-  place('PHY 303K','y1s');
-  place('PHY 105M','y1s');
-  place('PHY 303E','y2f');
+  insert('y1s','PHY 303K','M 427J');
+  insert('y1s','PHY 105M','PHY 303K');
+  insert('y2f','PHY 303E',null);
   return plan;
 }
 function normalizeSchedule(sch){
@@ -1560,7 +1666,7 @@ function normalizeSchedule(sch){
   synced={kind,...synced};
   synced={...synced,sems:distributeApCredits(synced.sems,kind)};
   if(kind==='general')synced={...synced,sems:distributeStandalonePhysics(synced.sems)};
-  synced={...synced,sems:mergeMissingTemplateCourses(synced.sems,resolveTemplateSems(synced))};
+  synced={...synced,sems:migrateFlowchartLayout(synced.sems,kind)};
   return syncTrackSchedule(synced);
 }
 function makeSchedule(name,color,templateKey='ecb'){
@@ -2095,8 +2201,17 @@ function rModal(){
       body=`<p style="font-size:13px;color:var(--green);line-height:1.45;margin-bottom:8px">📥 Downloaded <code>${esc(dlAs)}</code> — check your browser's download bar or Downloads folder.</p>
         <p style="font-size:12px;color:var(--text2);line-height:1.45;margin-bottom:8px"><b>Move/replace</b> that file over your existing planner (same folder and name), then click <b>Reload now</b>. Your autosaved plan stays in this browser.</p>
         ${pathHint}`;
-    }else if(st==='applying'){
-      body=`<p style="font-size:13px;color:var(--text2);line-height:1.45">⏳ Fetching the latest version…</p>`;
+    }else if(st==='applying'||st==='verifying'){
+      body=`<p style="font-size:13px;color:var(--text2);line-height:1.45">${st==='verifying'?'⏳ Verifying your update after reload…':'⏳ Fetching the latest version…'}</p>`;
+    }else if(st==='verified'){
+      body=`<p style="font-size:13px;color:var(--green);line-height:1.45;margin-bottom:8px">✓ ${updateLine()}</p>
+        <p style="font-size:12px;color:var(--text2);line-height:1.45">GitHub latest: <b>v${esc(S.update.latest||'?')}</b>. Your plan data is unchanged.</p>`;
+    }else if(st==='verify-failed'){
+      const fileWarn=S.update.fileMismatch?`<p style="font-size:12px;color:#854F0B;background:var(--core-bg);padding:7px 10px;border-radius:6px;line-height:1.45;margin-bottom:8px">This tab is running <code>${esc(runFile)}</code> but you were updating <code>${esc(S.update.pendingRunFile)}</code> — open the replaced file directly.</p>`:'';
+      body=`${errLine}<p style="font-size:13px;color:#C00;line-height:1.45;margin-bottom:8px">⚠ ${updateLine()}</p>
+        ${fileWarn}
+        <p style="font-size:12px;color:var(--text2);line-height:1.45;margin-bottom:8px">Replace <code>${esc(runFile||'college-course-planner.html')}</code> with the downloaded file (same folder and name), then click <b>Reload now</b> to verify again.</p>
+        ${pathHint}`;
     }else{
       const localWarn=isLocalFile&&!fsaSupported?`<p style="font-size:12px;color:#854F0B;background:var(--core-bg);padding:7px 10px;border-radius:6px;line-height:1.45;margin-bottom:8px">Local files can't be overwritten in-place from the browser. <b>Download update</b> saves a fresh copy — replace your existing file with it, then reload.</p>`:'';
       const hostedWarn=isHosted?`<p style="font-size:12px;color:#854F0B;background:var(--core-bg);padding:7px 10px;border-radius:6px;line-height:1.45;margin-bottom:8px">⚠ This tab is loaded from <code>${esc(location.protocol)}//…</code>, not a local file. You can't overwrite a hosted file from the browser — download the update and run it locally.</p>`:'';
@@ -2108,11 +2223,11 @@ function rModal(){
         ${pathHint}
         <p style="font-size:10px;color:var(--text3);margin-top:8px">Or <a href="${esc(DOWNLOAD_URL)}" target="_blank" rel="noopener">download from GitHub Releases</a> if the button doesn't work.</p>`;
     }
-    const applyBtn=(st!=='applied'&&st!=='applying'&&st!=='downloaded')
+    const applyBtn=(st!=='applied'&&st!=='applying'&&st!=='downloaded'&&st!=='verified'&&st!=='verifying')
       ?`<button class="linkbtn p" data-a="apply-update">${fsaSupported?'Apply update':'Download update'}</button>`:'';
-    const reloadBtn=(st==='applied'&&!S.update.nameMismatch)||st==='downloaded'
+    const reloadBtn=(st==='applied'&&!S.update.nameMismatch)||st==='downloaded'||st==='verify-failed'
       ?`<button class="linkbtn p" onclick="reloadPlanner()">Reload now</button>`:'';
-    const checkBtn=(st!=='applied'&&st!=='applying')
+    const checkBtn=(st!=='applied'&&st!=='applying'&&st!=='verifying')
       ?`<button class="linkbtn" data-a="manual-update">Check again</button>`:'';
     return`<div class="mbk" id="mbk">
       <div class="modal" style="max-width:520px">
@@ -3429,7 +3544,7 @@ function prewarmModals(){
   S.exportSnoozedUntil=readExportSnooze();
   recomputeExportReminder();
   render();
-  checkForUpdates(false);
+  await checkForUpdates(false);
   setInterval(()=>{
     const stamp=document.getElementById('saved-stamp');
     if(stamp&&S.lastSaved)stamp.textContent='saved '+relTime(S.lastSaved);
