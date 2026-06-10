@@ -477,7 +477,7 @@ body{font-family:-apple-system,'Segoe UI',system-ui,sans-serif;background:var(--
 </script>
 <script>
 // ─── Static data ──────────────────────────────────────────────────────────────
-const APP_VERSION='2026.06.10.8';
+const APP_VERSION='2026.06.10.9';
 // Raw URL is used only for parsing APP_VERSION on the live copy — never as a user link
 // (raw.githubusercontent.com serves text/plain, so the browser shows source instead of rendering).
 const UPDATE_URL='https://raw.githubusercontent.com/rorohecker/college-course-planner/main/college-course-planner.html';
@@ -563,13 +563,13 @@ const DS=[
   ]},
   {id:'y1f',label:'Year 1 — Fall',courses:[
     {id:'c11',code:'ECE 402H',name:'Intro to Electrical Engineering Honors',cat:'ECE',credits:4,done:false,note:'Fall only; Co-req: M 408D'},
+    {id:'c13',code:'M 408D',name:'Seq, Series & Multivariable Calculus',cat:'MATH',credits:4,done:false,note:'Pre-req: M 408C; Co-req: ECE 402H'},
     {id:'c12',code:'ECE 406H',name:'Introduction to Computing Honors',cat:'ECE',credits:4,done:false,note:'Pre-req: M 408C'},
     {id:'c16',code:'UGS 302/3',name:'First-Year Signature Course',cat:'CORE',credits:3,done:false,note:''},
     {id:'c14',code:'BA 110G',name:'Professional Dev & Career Planning Honors',cat:'BUSINESS',credits:1,done:false,note:'Fall only'},
     {id:'c15',code:'BA 111G',name:'Leadership & Innovation Honors',cat:'BUSINESS',credits:1,done:false,note:''},
   ]},
   {id:'y1s',label:'Year 1 — Spring',courses:[
-    {id:'c13',code:'M 408D',name:'Seq, Series & Multivariable Calculus',cat:'MATH',credits:4,done:false,note:'Pre-req: M 408C'},
     {id:'c17',code:'ECE 419H',name:'Intro to Embedded Systems',cat:'ECE',credits:4,done:false,note:'Pre-req: ECE 406H; Co-req: ECE 412H'},
     {id:'c18',code:'ECE 412H',name:'Software Design & Implementation I',cat:'ECE',credits:4,done:false,note:'Spring only; Pre-req: ECE 406H'},
     {id:'c19',code:'M 427J',name:'Differential Equations',cat:'MATH',credits:4,done:false,note:'Pre-req: M 408D'},
@@ -1589,12 +1589,13 @@ function migrateFlowchartLayout(sems,kind){
     dest.splice(at,0,c);
     plan[ti]={...plan[ti],courses:dest};
   };
-  moveCourse('y1f','y1s','M 408D',null);
   if(kind==='general'){
+    moveCourse('y1f','y1s','M 408D',null);
     moveCourse('y3f','y3s','ATC-Lab',null);
     moveCourse('y4f','y3s','ECE 364D','ATC-Lab');
   }
   if(kind==='ecb'){
+    moveCourse('y1s','y1f','M 408D','ECE 402H');
     moveCourse('y4f','y3s','ECE 364D','MKT 337H');
   }
   return plan;
