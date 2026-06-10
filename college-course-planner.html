@@ -477,7 +477,7 @@ body{font-family:-apple-system,'Segoe UI',system-ui,sans-serif;background:var(--
 </script>
 <script>
 // ─── Static data ──────────────────────────────────────────────────────────────
-const APP_VERSION='2026.06.10.6';
+const APP_VERSION='2026.06.10.7';
 // Raw URL is used only for parsing APP_VERSION on the live copy — never as a user link
 // (raw.githubusercontent.com serves text/plain, so the browser shows source instead of rendering).
 const UPDATE_URL='https://raw.githubusercontent.com/rorohecker/college-course-planner/main/college-course-planner.html';
@@ -512,8 +512,9 @@ const LAYOUT=[
   {type:'pair',label:'Year 4',ids:['y4f','y4s']},
 ];
 const KNOWN=new Set(LAYOUT.flatMap(l=>l.ids));
-// ECE Honors & General: physics in Y1 Spring + Y2 Fall (no summer physics row).
+// ECE Honors & General: AP/IB row + in-semester physics II in Y2 Fall (no summer physics row).
 const ECE_STANDALONE_LAYOUT=[
+  {type:'full',ids:['ap']},
   {type:'pair',label:'Year 1',ids:['y1f','y1s']},
   {type:'pair',label:'Year 2',ids:['y2f','y2s']},
   {type:'pair',label:'Year 3',ids:['y3f','y3s']},
@@ -621,12 +622,24 @@ const DS=[
   ]},
 ];
 
+// AP/IB slots shared by ECE Honors & General (flowchart * = eligible pre-college credit).
+const ECE_STANDALONE_AP=[
+  {id:'ea1',code:'M 408C',name:'Differential & Integral Calculus',cat:'MATH',credits:4,done:false,note:'AP / IB — or take Y1 Fall if no credit'},
+  {id:'ea2',code:'RHE 306',name:'Rhetoric & Writing',cat:'CORE',credits:3,done:false,note:'AP / IB — or take Y1 Fall if no credit'},
+  {id:'ea3',code:'PHY 303K',name:'Engineering Physics 1',cat:'PHY',credits:3,done:false,note:'AP / IB — or take Y1 Spring if no credit'},
+  {id:'ea4',code:'PHY 105M',name:'Lab for PHY 303K',cat:'PHY',credits:1,done:false,note:'AP / IB — or take Y1 Spring if no credit'},
+  {id:'ea5',code:'VAPA',name:'Visual & Performing Arts',cat:'CORE',credits:3,done:false,note:'AP / IB credit accepted'},
+  {id:'ea6',code:'GOV 310L',name:'American Government',cat:'CORE',credits:3,done:false,note:'AP / IB — core govt part 1'},
+  {id:'ea7',code:'SBS',name:'Social & Behavioral Sciences',cat:'CORE',credits:3,done:false,note:'AP / IB — any approved SBS (not ECO 304K/304L)'},
+  {id:'ea8',code:'HIS',name:'US History',cat:'CORE',credits:3,done:false,note:'AP / IB credit'},
+  {id:'ea9',code:'E 316',name:'Humanities Credit (L, M, N or P)',cat:'CORE',credits:3,done:false,note:'AP / IB credit'},
+];
+
 // ─── Electrical Engineering Honors · 2026-2028 catalog ─────────────────────────
 // Source: "26-28 Honors" — course order matches flowchart columns top-to-bottom.
 const ECE_HONORS_DS=[
+  {id:'ap',label:'AP / IB / Pre-College Credits',courses:ECE_STANDALONE_AP},
   {id:'y1f',label:'Year 1 — Fall',courses:[
-    {id:'eh1',code:'M 408C',name:'Differential & Integral Calculus',cat:'MATH',credits:4,done:false,note:'AP Credit or Y1 Fall'},
-    {id:'eh2',code:'RHE 306',name:'Rhetoric & Writing',cat:'CORE',credits:3,done:false,note:'AP Credit or Y1 Fall'},
     {id:'eh10',code:'ECE 402H',name:'Intro to Electrical Engineering Honors',cat:'ECE',credits:4,done:false,note:'Fall only; Co-req: M 408D'},
     {id:'eh11',code:'ECE 406H',name:'Introduction to Computing Honors',cat:'ECE',credits:4,done:false,note:'Pre-req: M 408C'},
     {id:'eh13',code:'UGS 302/3',name:'First-Year Signature Course',cat:'CORE',credits:3,done:false,note:''},
@@ -637,9 +650,6 @@ const ECE_HONORS_DS=[
     {id:'eh15',code:'ECE 419H',name:'Intro to Embedded Systems',cat:'ECE',credits:4,done:false,note:'Pre-req: ECE 406H; Co-req: ECE 412H'},
     {id:'eh16',code:'ECE 412H',name:'Software Design & Implementation I',cat:'ECE',credits:4,done:false,note:'Spring only; Pre-req: ECE 406H'},
     {id:'eh17',code:'M 427J',name:'Differential Equations',cat:'MATH',credits:4,done:false,note:'Pre-req: M 408D'},
-    {id:'eh7',code:'PHY 303K',name:'Engineering Physics 1',cat:'PHY',credits:3,done:false,note:'AP Credit or in-semester'},
-    {id:'eh8',code:'PHY 105M',name:'Lab for PHY 303K',cat:'PHY',credits:1,done:false,note:'AP Credit or in-semester'},
-    {id:'eh3',code:'VAPA',name:'Visual & Performing Arts',cat:'CORE',credits:3,done:false,note:'AP Credit accepted'},
     {id:'eh18',code:'ECE 107H',name:'Engineering Leadership: Honors',cat:'ECE',credits:1,done:false,note:'Spring only'},
   ]},
   {id:'y2f',label:'Year 2 — Fall',courses:[
@@ -648,15 +658,11 @@ const ECE_HONORS_DS=[
     {id:'eh21',code:'ECE 313H',name:'Linear Systems & Signals',cat:'ECE',credits:3,done:false,note:'Fall only; Pre-req: ECE 402H, M 408C, M 340L'},
     {id:'eh22',code:'M 340L',name:'Matrices & Matrix Calculations',cat:'MATH',credits:3,done:false,note:'Pre-req: M 408D'},
     {id:'eh23',code:'ECE 333T',name:'Engineering Communications',cat:'ECE',credits:3,done:false,note:'Core 010; Pre-req: RHE 306, ECE 419H'},
-    {id:'eh4',code:'GOV 310L',name:'American Government',cat:'CORE',credits:3,done:false,note:'AP Credit — core govt part 1'},
-    {id:'eh19',code:'SBS',name:'Social & Behavioral Sciences',cat:'CORE',credits:3,done:false,note:'Any approved SBS core course — not ECO 304K/304L'},
   ]},
   {id:'y2s',label:'Year 2 — Spring',courses:[
     {id:'eh24',code:'ECE 351H',name:'Probability / Random Processes',cat:'ECE',credits:3,done:false,note:'Pre-req: M 427J'},
     {id:'eh25',code:'ATC-M',name:'Advanced Tech Component (Math)',cat:'ADVANCED',credits:3,done:false,note:'M 427L or M 325K'},
     {id:'eh26',code:'ATC-1',name:'Advanced Tech Component',cat:'ADVANCED',credits:3,done:false,note:'Tech core'},
-    {id:'eh27',code:'HIS',name:'US History',cat:'CORE',credits:3,done:false,note:'AP Credit'},
-    {id:'eh5',code:'E 316',name:'Humanities Credit (L, M, N or P)',cat:'CORE',credits:3,done:false,note:'AP Credit'},
   ]},
   {id:'y3f',label:'Year 3 — Fall',courses:[
     {id:'eh28',code:'ATC-2',name:'Advanced Tech Component',cat:'ADVANCED',credits:3,done:false,note:'Tech core'},
@@ -684,9 +690,8 @@ const ECE_HONORS_DS=[
 // ─── Electrical & Computer Engineering — General · 2026-2028 catalog ─────────
 // Source: "2628 Flowchart" — course order matches flowchart columns top-to-bottom.
 const ECE_GENERAL_DS=[
+  {id:'ap',label:'AP / IB / Pre-College Credits',courses:ECE_STANDALONE_AP},
   {id:'y1f',label:'Year 1 — Fall',courses:[
-    {id:'eg1',code:'M 408C',name:'Differential & Integral Calculus',cat:'MATH',credits:4,done:false,note:'AP Credit or Y1 Fall'},
-    {id:'eg2',code:'RHE 306',name:'Rhetoric & Writing',cat:'CORE',credits:3,done:false,note:'AP Credit or Y1 Fall'},
     {id:'eg10',code:'ECE 402',name:'Intro to Electrical Engineering',cat:'ECE',credits:4,done:false,note:'Co-req: M 408D'},
     {id:'eg11',code:'ECE 406',name:'Introduction to Computing',cat:'ECE',credits:4,done:false,note:'Pre-req: M 408C'},
     {id:'eg13',code:'UGS 302/3',name:'First-Year Signature Course',cat:'CORE',credits:3,done:false,note:''},
@@ -697,9 +702,6 @@ const ECE_GENERAL_DS=[
     {id:'eg15',code:'ECE 419K',name:'Intro to Embedded Systems',cat:'ECE',credits:4,done:false,note:'Pre-req: ECE 406; Co-req: ECE 412'},
     {id:'eg16',code:'ECE 412',name:'Software Design & Implementation I',cat:'ECE',credits:4,done:false,note:'Pre-req: ECE 406'},
     {id:'eg17',code:'M 427J',name:'Differential Equations',cat:'MATH',credits:4,done:false,note:'Pre-req: M 408D'},
-    {id:'eg7',code:'PHY 303K',name:'Engineering Physics 1',cat:'PHY',credits:3,done:false,note:'AP Credit or in-semester'},
-    {id:'eg8',code:'PHY 105M',name:'Lab for PHY 303K',cat:'PHY',credits:1,done:false,note:'AP Credit or in-semester'},
-    {id:'eg3',code:'VAPA',name:'Visual & Performing Arts',cat:'CORE',credits:3,done:false,note:'AP Credit accepted'},
   ]},
   {id:'y2f',label:'Year 2 — Fall',courses:[
     {id:'eg9',code:'PHY 303E',name:'Electromagnetic, Quantum, Semiconductor Physics',cat:'PHY',credits:3,done:false,note:'Pre-req: M 408D, PHY 303K, PHY 105M'},
@@ -707,15 +709,11 @@ const ECE_GENERAL_DS=[
     {id:'eg20',code:'ECE 313',name:'Linear Systems & Signals',cat:'ECE',credits:3,done:false,note:'Pre-req: ECE 402, M 408C, M 340L'},
     {id:'eg21',code:'M 340L',name:'Matrices & Matrix Calculations',cat:'MATH',credits:3,done:false,note:'Pre-req: M 408D'},
     {id:'eg22',code:'ECE 333T',name:'Engineering Communications',cat:'ECE',credits:3,done:false,note:'Core 010; Pre-req: RHE 306, ECE 419K'},
-    {id:'eg4',code:'GOV 310L',name:'American Government',cat:'CORE',credits:3,done:false,note:'AP Credit — core govt part 1'},
-    {id:'eg18',code:'SBS',name:'Social & Behavioral Sciences',cat:'CORE',credits:3,done:false,note:'Any approved SBS core course — not ECO 304K/304L'},
   ]},
   {id:'y2s',label:'Year 2 — Spring',courses:[
     {id:'eg23',code:'ECE 351K',name:'Probability / Random Processes',cat:'ECE',credits:3,done:false,note:'Pre-req: M 427J'},
     {id:'eg24',code:'ATC-M',name:'Advanced Tech Component (Math)',cat:'ADVANCED',credits:3,done:false,note:'M 427L or M 325K'},
     {id:'eg25',code:'ATC-1',name:'Advanced Tech Component',cat:'ADVANCED',credits:3,done:false,note:'Tech core'},
-    {id:'eg26',code:'HIS',name:'US History',cat:'CORE',credits:3,done:false,note:'AP Credit'},
-    {id:'eg5',code:'E 316',name:'Humanities Credit (L, M, N or P)',cat:'CORE',credits:3,done:false,note:'AP Credit'},
   ]},
   {id:'y3f',label:'Year 3 — Fall',courses:[
     {id:'eg27',code:'ATC-2',name:'Advanced Tech Component',cat:'ADVANCED',credits:3,done:false,note:'Tech core'},
@@ -1059,7 +1057,7 @@ function isRequired(c){
   // Template ECE courses: c* (ECB), eh* (honors), eg* (general), p* (ECB prev).
   const m=/^c(\d+)$/.exec(id);
   if(m)return parseInt(m[1],10)<=100;
-  if(/^(eh|eg|p)\d+$/.test(id))return true;
+  if(/^(eh|eg|ea|p)\d+$/.test(id))return true;
   return false;
 }
 const sid=()=>'s'+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
@@ -1601,24 +1599,32 @@ function migrateFlowchartLayout(sems,kind){
   }
   return plan;
 }
-const ECB_AP_TEMPLATE=()=>CURRICULUM_TEMPLATES.ecb.build().find(s=>s.id==='ap');
+const ECB_AP_SLOTS=['M 408C','RHE 306','HIS','GOV 310L','E 316','VAPA'];
+const ECE_AP_SLOTS=['M 408C','RHE 306','PHY 303K','PHY 105M','VAPA','GOV 310L','SBS','HIS','E 316'];
 function apSlotKey(code){
   const c=normTrackCode(code);
   if(c.startsWith('M 408C'))return 'M 408C';
   if(c.includes('RHE 306'))return 'RHE 306';
+  if(c.includes('PHY 303K'))return 'PHY 303K';
+  if(c.includes('PHY 105M'))return 'PHY 105M';
   if(c.includes('GOV 310'))return 'GOV 310L';
   if(c.includes('E 316'))return 'E 316';
   if(c.includes('VAPA'))return 'VAPA';
   if(c.includes('HIS'))return 'HIS';
+  if(c==='SBS'||c.startsWith('SBS'))return 'SBS';
   return c;
 }
-function isEcbApSlot(code){
-  const k=apSlotKey(code);
-  return['M 408C','RHE 306','HIS','GOV 310L','E 316','VAPA'].includes(k);
+function isApSlot(code,kind){
+  const slots=kind==='ecb'?ECB_AP_SLOTS:ECE_AP_SLOTS;
+  return slots.includes(apSlotKey(code));
 }
-// ECB keeps a dedicated AP/IB/pre-college row; pull migrated duplicates out of semester rows.
-function syncEcbApSection(sems){
-  const tmplAp=ECB_AP_TEMPLATE();
+function resolveApTemplate(sch,kind){
+  if(kind==='ecb')return CURRICULUM_TEMPLATES.ecb.build().find(s=>s.id==='ap');
+  return resolveTemplateSems({kind:'general',sems:sch?.sems||[]}).find(s=>s.id==='ap');
+}
+// Keep AP/IB credits in the dedicated row; strip duplicates from semester columns.
+function syncApSection(sems,kind){
+  const tmplAp=resolveApTemplate({sems},kind);
   if(!tmplAp)return sems;
   let plan=dc(sems||[]);
   if(!plan.some(s=>s.id==='ap'))plan=[dc(tmplAp),...plan];
@@ -1626,88 +1632,38 @@ function syncEcbApSection(sems){
   const order=(tmplAp.courses||[]).map(c=>apSlotKey(c.code));
   const pulled=[];
   plan=plan.map(s=>{
-    if(s.id==='ap')return s;
+    if(s.id==='ap'||s.id==='phy')return s;
     return{...s,courses:(s.courses||[]).filter(c=>{
-      if(!isEcbApSlot(c.code))return true;
+      if(!isApSlot(c.code,kind))return true;
       const k=apSlotKey(c.code);
-      const inAp=(plan[apIdx].courses||[]).some(x=>apSlotKey(x.code)===k);
-      if(inAp)return false;
       pulled.push({...c,note:c.note||'AP / IB credit'});
       return false;
     })};
   });
-  if(pulled.length){
-    const apCourses=[...(plan[apIdx].courses||[])];
-    pulled.sort((a,b)=>order.indexOf(apSlotKey(a.code))-order.indexOf(apSlotKey(b.code)));
-    for(const c of pulled){
-      const k=apSlotKey(c.code);
-      if(apCourses.some(x=>apSlotKey(x.code)===k))continue;
-      apCourses.push(c);
-    }
-    plan[apIdx]={...plan[apIdx],courses:apCourses};
+  const apCourses=[...(plan[apIdx].courses||[])];
+  pulled.sort((a,b)=>order.indexOf(apSlotKey(a.code))-order.indexOf(apSlotKey(b.code)));
+  for(const c of pulled){
+    const k=apSlotKey(c.code);
+    if(apCourses.some(x=>apSlotKey(x.code)===k))continue;
+    apCourses.push(c);
   }
-  return plan;
-}
-function distributeApCredits(sems,kind){
-  if(kind==='ecb')return sems;
-  const apSem=(sems||[]).find(s=>s.id==='ap');
-  if(!apSem?.courses?.length)return sems;
-  const isEcb=kind==='ecb';
-  const plan=(sems||[]).filter(s=>s.id!=='ap');
-  const tmpl=resolveTemplateSems({kind,sems:plan});
-  const semForCode=code=>{
-    const c=normTrackCode(code);
-    if(c.startsWith('M 408C'))return 'y1f';
-    if(c.includes('RHE 306'))return 'y1f';
-    if(c.includes('PHY 303K')||c.includes('PHY 105M'))return isEcb?'phy':'y1s';
-    if(c.includes('VAPA'))return isEcb?'y2s':'y1s';
-    if(c.includes('GOV 310'))return 'y2f';
-    if(c.includes('E 316'))return isEcb?'y2f':'y2s';
-    if(c.includes('ECO 304K'))return 'y1s';
-    if(c.includes('HIS'))return 'y2s';
-    return 'y1f';
-  };
-  const pending={};
-  apSem.courses.forEach(c=>{
-    const semId=semForCode(c.code);
-    if(scheduleHasCode(plan,c.code))return;
-    (pending[semId]=pending[semId]||[]).push({...c,note:c.note||'AP Credit'});
-  });
-  Object.entries(pending).forEach(([semId,batch])=>{
-    const i=plan.findIndex(s=>s.id===semId);
-    if(i<0)return;
-    const order=(tmpl.find(s=>s.id===semId)?.courses||[]).map(c=>normTrackCode(c.code));
-    batch.sort((a,b)=>{
-      const ia=order.indexOf(normTrackCode(a.code));
-      const ib=order.indexOf(normTrackCode(b.code));
-      return (ia<0?9999:ia)-(ib<0?9999:ib);
-    });
-    plan[i]={...plan[i],courses:[...batch,...(plan[i].courses||[])]};
-  });
-  return plan;
-}
-function distributeStandalonePhysics(sems){
-  const phySem=(sems||[]).find(s=>s.id==='phy');
-  if(!phySem?.courses?.length)return sems;
-  const byCode=Object.fromEntries(phySem.courses.map(c=>[normTrackCode(c.code),c]));
-  const plan=(sems||[]).filter(s=>s.id!=='phy');
-  const insert=(semId,code,afterCode)=>{
-    const c=byCode[normTrackCode(code)];
-    if(!c||scheduleHasCode(plan,code))return;
-    const i=plan.findIndex(s=>s.id===semId);
-    if(i<0)return;
-    const list=[...(plan[i].courses||[])];
-    let at=0;
-    if(afterCode){
-      const ai=list.findIndex(x=>normTrackCode(x.code)===normTrackCode(afterCode));
-      at=ai>=0?ai+1:0;
+  plan[apIdx]={...plan[apIdx],courses:apCourses};
+  if(kind==='general'){
+    const phySem=plan.find(s=>s.id==='phy');
+    if(phySem?.courses?.length){
+      const fromPhy=(phySem.courses||[]).filter(c=>{
+        const k=apSlotKey(c.code);
+        return k==='PHY 303K'||k==='PHY 105M';
+      });
+      fromPhy.forEach(c=>{
+        const k=apSlotKey(c.code);
+        if(apCourses.some(x=>apSlotKey(x.code)===k))return;
+        apCourses.push({...c,note:c.note||'AP / IB credit'});
+      });
+      plan=plan.filter(s=>s.id!=='phy');
+      plan[apIdx]={...plan[apIdx],courses:apCourses};
     }
-    list.splice(at,0,c);
-    plan[i]={...plan[i],courses:list};
-  };
-  insert('y1s','PHY 303K','M 427J');
-  insert('y1s','PHY 105M','PHY 303K');
-  insert('y2f','PHY 303E',null);
+  }
   return plan;
 }
 function normalizeSchedule(sch){
@@ -1716,9 +1672,7 @@ function normalizeSchedule(sch){
   if(looksBusiness||sch.kind==='business')return syncBusinessTracks({...synced,kind:'business'},businessTrackKeys(synced));
   const kind=inferEceKind(synced)==='general'?'general':'ecb';
   synced={kind,...synced};
-  if(kind==='ecb')synced={...synced,sems:syncEcbApSection(synced.sems)};
-  else synced={...synced,sems:distributeApCredits(synced.sems,kind)};
-  if(kind==='general')synced={...synced,sems:distributeStandalonePhysics(synced.sems)};
+  synced={...synced,sems:syncApSection(synced.sems,kind)};
   synced={...synced,sems:migrateFlowchartLayout(synced.sems,kind)};
   return syncTrackSchedule(synced);
 }
