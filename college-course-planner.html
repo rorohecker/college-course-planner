@@ -477,7 +477,7 @@ body{font-family:-apple-system,'Segoe UI',system-ui,sans-serif;background:var(--
 </script>
 <script>
 // ─── Static data ──────────────────────────────────────────────────────────────
-const APP_VERSION='2026.06.09.6';
+const APP_VERSION='2026.06.09.7';
 // Raw URL is used only for parsing APP_VERSION on the live copy — never as a user link
 // (raw.githubusercontent.com serves text/plain, so the browser shows source instead of rendering).
 const UPDATE_URL='https://raw.githubusercontent.com/rorohecker/college-course-planner/main/college-course-planner.html';
@@ -1142,8 +1142,11 @@ function updateLine(){
   const u=S.update||{state:'idle'};
   if(u.state==='checking')return'Checking GitHub for the latest planner...';
   if(u.state==='available')return`Update available: version ${esc(u.latest)} is newer than ${esc(APP_VERSION)}.`;
-  if(u.state==='current')return`You are up to date on version ${esc(APP_VERSION)}.`;
-  if(u.state==='offline')return'Could not check GitHub right now. Try again when you are online.';
+  if(u.state==='current'){
+    const remote=u.latest&&u.latest!==APP_VERSION?` GitHub has v${esc(u.latest)}.`:'';
+    return`You are on version ${esc(APP_VERSION)}.${remote} You can still re-download to refresh the file.`;
+  }
+  if(u.state==='offline')return'Could not check GitHub right now. You can still try downloading the latest file below.';
   return`Current version: ${esc(APP_VERSION)}.`;
 }
 // In-place update flow:
@@ -1162,24 +1165,39 @@ function currentFileName(){
     return m?m[0]:'';
   }catch(e){return'';}
 }
+// File System Access API only works in secure contexts (https/localhost) — not file://.
+function canUseFilePicker(){
+  return!!(window.isSecureContext&&typeof window.showOpenFilePicker==='function');
+}
+function reloadPlanner(){
+  const base=location.href.split(/[?#]/)[0];
+  location.replace(base+'?_='+Date.now());
+}
+function downloadPlannerHtml(html,filename){
+  const blob=new Blob([html],{type:'text/html'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.download=filename||'college-course-planner.html';
+  document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
 async function applyUpdate(){
   if(typeof fetch!=='function'){alert('Your browser cannot fetch updates here.');return;}
-  S.update={...S.update,state:'applying',error:null,savedAs:null,nameMismatch:false};render();
+  const prevState=S.update?.state||'idle';
+  S.update={...S.update,state:'applying',_prevState:prevState,error:null,savedAs:null,nameMismatch:false};render();
   try{
     const res=await fetch(UPDATE_URL+'?v='+Date.now(),{cache:'no-store'});
     if(!res.ok)throw new Error('HTTP '+res.status);
     const html=await res.text();
     const latestMatch=html.match(/const APP_VERSION=['"]([^'"]+)['"]/);
     const latest=latestMatch?latestMatch[1]:S.update.latest;
-    // Prefer showOpenFilePicker (Chrome/Edge): user picks the existing file,
-    // we get a handle, request readwrite permission, and overwrite it.
-    if('showOpenFilePicker' in window){
+    // In-place overwrite only works on https/localhost — not when opened as a local file.
+    if(canUseFilePicker()){
       try{
         const [handle]=await window.showOpenFilePicker({
           types:[{description:'College Course Planner',accept:{'text/html':['.html','.htm']}}],
           multiple:false,
         });
-        // Permission prompt — required for writes even on user-picked files.
         const perm=await handle.requestPermission({mode:'readwrite'});
         if(perm!=='granted')throw new Error('Permission denied for write access.');
         const writable=await handle.createWritable();
@@ -1191,22 +1209,19 @@ async function applyUpdate(){
         S.update={...S.update,state:'applied',latest,savedAs,nameMismatch};render();
         return;
       }catch(err){
-        if(err&&(err.name==='AbortError'||err.name==='NotAllowedError')){
-          S.update={...S.update,state:'available'};render();return;
+        if(err&&err.name==='AbortError'){
+          const restore=S.update._prevState||'current';
+          S.update={...S.update,state:restore,error:'File selection cancelled.'};render();return;
         }
-        // other FSA errors → fall through to download
+        // NotAllowedError and other FSA errors → fall through to download
       }
     }
-    // Fallback: trigger a regular browser download.
-    const blob=new Blob([html],{type:'text/html'});
-    const url=URL.createObjectURL(blob);
-    const a=document.createElement('a');
-    a.href=url;a.download='college-course-planner.html';
-    document.body.appendChild(a);a.click();a.remove();
-    setTimeout(()=>URL.revokeObjectURL(url),1000);
-    S.update={...S.update,state:'downloaded',latest};render();
+    const dlName=currentFileName()||'college-course-planner.html';
+    downloadPlannerHtml(html,dlName);
+    S.update={...S.update,state:'downloaded',latest,downloadedAs:dlName};render();
   }catch(err){
-    S.update={...S.update,state:'available',error:err?.message||String(err)};
+    const restore=S.update._prevState||'offline';
+    S.update={...S.update,state:restore,error:err?.message||String(err)};
     alert('Could not download the update: '+(err?.message||err));
     render();
   }
@@ -1959,7 +1974,7 @@ function rBanners(){
   if(S.update?.state==='available'&&!S.updateDismissed){
     html+=`<div class="top-banner update">
       <span class="grow">⬆ Update available — v${esc(S.update.latest||'?')} is out (you're on v${esc(APP_VERSION)}).</span>
-      <button data-a="open-update-modal">${'showOpenFilePicker' in window?'Apply update':'Download update'}</button>
+      <button data-a="open-update-modal">${canUseFilePicker()?'Apply update':'Download update'}</button>
       <a href="${esc(RELEASES_URL)}" target="_blank" rel="noopener" class="ghost">What's new</a>
       <button data-a="dismiss-update" class="ghost" title="Dismiss until next version">×</button>
     </div>`;
@@ -1976,7 +1991,7 @@ function rBanners(){
 
 function rStartNote(){
   const updateAction=S.update?.state==='available'
-    ?`<button class="linkbtn p" data-a="open-update-modal">${'showOpenFilePicker' in window?'Apply update':'Download update'}</button>`
+    ?`<button class="linkbtn p" data-a="open-update-modal">${canUseFilePicker()?'Apply update':'Download update'}</button>`
     :`<button class="linkbtn" data-a="manual-update">Check updates</button>`;
   return `<div class="mbk">
     <div class="modal" style="max-width:470px">
@@ -2000,10 +2015,12 @@ function rModal(){
 
   if(S.modal==='update'){
     const st=S.update?.state;
-    const fsaSupported='showOpenFilePicker' in window;
+    const fsaSupported=canUseFilePicker();
+    const isLocalFile=location.protocol==='file:';
     const isHosted=location.protocol==='http:'||location.protocol==='https:';
     const runFile=currentFileName();
-    const pathHint=runFile?`<div style="font-size:10px;color:var(--text3);margin-top:8px;padding:6px 9px;background:var(--surface2);border-radius:5px;line-height:1.4">Currently running: <code style="word-break:break-all">${esc(runFile)}</code><br><span style="opacity:.7">To update in place, save over <b>this exact file</b>.</span></div>`:'';
+    const pathHint=runFile?`<div style="font-size:10px;color:var(--text3);margin-top:8px;padding:6px 9px;background:var(--surface2);border-radius:5px;line-height:1.4">Currently running: <code style="word-break:break-all">${esc(runFile)}</code><br><span style="opacity:.7">Save the download over <b>this exact file</b> in its folder (not Downloads).</span></div>`:'';
+    const errLine=S.update?.error?`<p style="font-size:12px;color:#C00;line-height:1.45;margin-bottom:8px">${esc(S.update.error)}</p>`:'';
     let body='';
     if(st==='applied'){
       const savedAs=S.update.savedAs||'(unknown)';
@@ -2012,24 +2029,27 @@ function rModal(){
         ${mismatch?`<p style="font-size:12px;color:#C00;background:#FEE;padding:7px 10px;border-radius:6px;line-height:1.45;margin-bottom:8px">⚠ The file you picked (<code>${esc(savedAs)}</code>) doesn't match the file this tab is running (<code>${esc(runFile)}</code>). Reloading won't help — open <code>${esc(savedAs)}</code> directly instead, or run Apply again and pick the right file.</p>`:`<p style="font-size:12px;color:var(--text2);line-height:1.45;margin-bottom:8px">Click <b>Reload now</b> to run the new version. Your autosaved plan stays in this browser.</p>`}
         <p style="font-size:11px;color:var(--text3);line-height:1.45">After reload, this modal will show <b>"You are up to date on v${esc(S.update.latest||'?')}"</b> — that's how you'll know it worked.</p>`;
     }else if(st==='downloaded'){
-      body=`<p style="font-size:13px;color:var(--text2);line-height:1.45;margin-bottom:8px">📥 Downloaded <code>college-course-planner.html</code> to your Downloads folder.</p>
-        <p style="font-size:12px;color:var(--text2);line-height:1.45;margin-bottom:8px"><b>Replace your existing planner file</b> with the new one — keep the same folder and filename so your autosaved plan stays linked. Then reload this tab.</p>
+      const dlAs=S.update.downloadedAs||'college-course-planner.html';
+      body=`<p style="font-size:13px;color:var(--green);line-height:1.45;margin-bottom:8px">📥 Downloaded <code>${esc(dlAs)}</code> — check your browser's download bar or Downloads folder.</p>
+        <p style="font-size:12px;color:var(--text2);line-height:1.45;margin-bottom:8px"><b>Move/replace</b> that file over your existing planner (same folder and name), then click <b>Reload now</b>. Your autosaved plan stays in this browser.</p>
         ${pathHint}`;
     }else if(st==='applying'){
       body=`<p style="font-size:13px;color:var(--text2);line-height:1.45">⏳ Fetching the latest version…</p>`;
     }else{
+      const localWarn=isLocalFile&&!fsaSupported?`<p style="font-size:12px;color:#854F0B;background:var(--core-bg);padding:7px 10px;border-radius:6px;line-height:1.45;margin-bottom:8px">Local files can't be overwritten in-place from the browser. <b>Download update</b> saves a fresh copy — replace your existing file with it, then reload.</p>`:'';
       const hostedWarn=isHosted?`<p style="font-size:12px;color:#854F0B;background:var(--core-bg);padding:7px 10px;border-radius:6px;line-height:1.45;margin-bottom:8px">⚠ This tab is loaded from <code>${esc(location.protocol)}//…</code>, not a local file. You can't overwrite a hosted file from the browser — download the update and run it locally.</p>`:'';
-      body=`<p style="font-size:13px;color:var(--text2);line-height:1.45;margin-bottom:10px">${updateLine()}</p>
-        ${hostedWarn}
+      body=`${errLine}<p style="font-size:13px;color:var(--text2);line-height:1.45;margin-bottom:10px">${updateLine()}</p>
+        ${localWarn}${hostedWarn}
         <p style="font-size:11px;color:var(--text3);line-height:1.45">${fsaSupported
           ?'Click <b>Apply update</b> — your browser will ask you to <b>pick your existing planner file</b> so the new version writes directly over it.'
-          :'Click <b>Download update</b> to grab the new file, then manually replace your existing copy in the same folder.'}</p>
-        ${pathHint}`;
+          :'Click <b>Download update</b> to grab the new file, then replace your existing copy in the same folder.'}</p>
+        ${pathHint}
+        <p style="font-size:10px;color:var(--text3);margin-top:8px">Or <a href="${esc(DOWNLOAD_URL)}" target="_blank" rel="noopener">download from GitHub Releases</a> if the button doesn't work.</p>`;
     }
-    const applyBtn=(st==='available'||st==='current')
+    const applyBtn=(st!=='applied'&&st!=='applying'&&st!=='downloaded')
       ?`<button class="linkbtn p" data-a="apply-update">${fsaSupported?'Apply update':'Download update'}</button>`:'';
     const reloadBtn=(st==='applied'&&!S.update.nameMismatch)||st==='downloaded'
-      ?`<button class="linkbtn p" onclick="location.reload()">Reload now</button>`:'';
+      ?`<button class="linkbtn p" onclick="reloadPlanner()">Reload now</button>`:'';
     const checkBtn=(st!=='applied'&&st!=='applying')
       ?`<button class="linkbtn" data-a="manual-update">Check again</button>`:'';
     return`<div class="mbk" id="mbk">
