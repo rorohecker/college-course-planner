@@ -259,6 +259,13 @@ body{font-family:-apple-system,'Segoe UI',system-ui,sans-serif;background:var(--
 .tk-list{font-size:11px;color:var(--text2);line-height:1.7}
 .tk-list .ok{color:var(--green);font-weight:600}
 .tk-list .miss{color:var(--text3)}
+.tk-list .pick{cursor:pointer}
+.tk-list .pick:hover{color:var(--text)}
+.tk-list .dim{opacity:.45;cursor:not-allowed}
+.tk-limit{font-size:11px;margin:-2px 0 8px;padding:6px 10px;border-radius:6px;line-height:1.4}
+.tk-limit.ok{color:var(--text2);background:var(--surface2)}
+.tk-limit.full{color:var(--accent);background:rgba(191,58,31,.08);border:1px solid rgba(191,58,31,.25)}
+.tk-flash{font-size:11px;color:var(--accent);margin:0 0 8px;min-height:16px}
 .tk-h{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;color:var(--text2);margin:10px 0 5px}
 .kb-row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);font-size:12px}
 .kb-row:last-child{border-bottom:none}
@@ -470,7 +477,7 @@ body{font-family:-apple-system,'Segoe UI',system-ui,sans-serif;background:var(--
 </script>
 <script>
 // ─── Static data ──────────────────────────────────────────────────────────────
-const APP_VERSION='2026.06.09.4';
+const APP_VERSION='2026.06.09.5';
 // Raw URL is used only for parsing APP_VERSION on the live copy — never as a user link
 // (raw.githubusercontent.com serves text/plain, so the browser shows source instead of rendering).
 const UPDATE_URL='https://raw.githubusercontent.com/rorohecker/college-course-planner/main/college-course-planner.html';
@@ -856,8 +863,9 @@ const BUSINESS_DS=[
 
 // ECE Technical Component tracks (Chandra Dept Tech Core Packet, Dec 2025).
 // Each track: required cores + approved electives. ECB students take fewer electives;
-// general and honors ECE students pick 3 from their track’s approved list.
+// general and honors ECE students pick 3; ECB students pick 2.
 const GENERAL_TRACK_PICK=3;
+const ECB_TRACK_PICK=2;
 const TRACKS={
   CSPNS:{name:'Communication, Signal Processing, Networks and Systems',short:'Comm/SigProc',grad:'DICE',
     cores:[{code:'M 427L',name:'Adv Calculus for Applications II'},{code:'ECE 351M',name:'Digital Signal Processing',alt:'or ECE 325'},{code:'ECE 362K',name:'Intro to Automatic Control',alt:'or ECE 371Q / 360K / 372N'},{code:'ECE 445S',name:'Real-Time DSP Lab',alt:'or ECE 471C'}],
@@ -1026,6 +1034,7 @@ const uid=()=>'u'+(++_c);
 function isRequired(c){
   if(c?.req===false)return false;
   if(c?.req===true)return true;
+  if(c?.note==='Track core'||c?.note==='Track elective')return true;
   const id=String(c?.id||'');
   if(id.startsWith('biz_'))return true;
   if(/^b\d+$/.test(id))return true;
@@ -1095,6 +1104,7 @@ const S={
   lastExportAt:null,
   exportSnoozedUntil:0,
   exportReminder:false,
+  trackMsg:'',
 };
 
 const HISTORY={past:[],future:[],MAX:50};
@@ -1327,9 +1337,107 @@ function toggleBusinessTrack(sch,key){
   else next=[...active.filter(k=>BUSINESS_TRACKS[k].kind==='honors'),key];
   return syncBusinessTracks(sch,next);
 }
+function normTrackCode(code){return String(code||'').trim().toUpperCase().replace(/H$/,'');}
 function trackElectiveNeed(sch,trackKey){
   if(!trackKey||!TRACKS[trackKey])return 0;
-  return(sch?.kind||'ecb')==='general'?GENERAL_TRACK_PICK:TRACKS[trackKey].pickECB;
+  return eceTrackKind(sch)==='general'?GENERAL_TRACK_PICK:ECB_TRACK_PICK;
+}
+function categoryForCode(code){
+  const c=String(code||'').trim().toUpperCase();
+  if(c.startsWith('M '))return'MATH';
+  if(c.startsWith('PHY'))return'PHY';
+  if(c.startsWith('ECE'))return'ECE';
+  return'ADVANCED';
+}
+function defaultSemForTrackCourse(sems,isElective){
+  const order=isElective?['y3s','y4f','y4s','y3f']:['y2s','y3f','y3s','y4f','y4s'];
+  for(const id of order){
+    const s=sems.find(x=>x.id===id&&!x.isOff);
+    if(s)return s.id;
+  }
+  return sems.find(s=>!s.isOff)?.id;
+}
+function scheduleHasCode(sems,code){
+  const nc=normTrackCode(code);
+  return(sems||[]).some(s=>(s.courses||[]).some(c=>normTrackCode(c.code)===nc));
+}
+function removeTrackManagedCourses(sems){
+  return(sems||[]).map(s=>({...s,courses:(s.courses||[]).filter(c=>c.note!=='Track core'&&c.note!=='Track elective')}));
+}
+function isTrackElectiveOnPlan(sems,code,trackKey){
+  const nc=normTrackCode(code);
+  const tk=trackKey||getAct()?.track;
+  if(!tk||!isApprovedTrackElective(tk,code))return false;
+  return(sems||[]).some(s=>(s.courses||[]).some(c=>normTrackCode(c.code)===nc&&c.note==='Track elective'));
+}
+function countTrackElectives(sems,trackKey){
+  return(sems||[]).flatMap(s=>s.courses||[]).filter(c=>c.note==='Track elective').length;
+}
+function trimTrackElectivesToMax(sems,max,trackKey){
+  const tk=trackKey||getAct()?.track;
+  if(!tk||!TRACKS[tk]||max<0)return sems;
+  const picks=[];
+  (sems||[]).forEach(s=>(s.courses||[]).forEach(c=>{if(c.note==='Track elective')picks.push({semId:s.id,cid:c.id});}));
+  if(picks.length<=max)return sems;
+  const drop=new Set(picks.slice(max).map(p=>p.cid));
+  return sems.map(s=>({...s,courses:s.courses.filter(c=>!drop.has(c.id))}));
+}
+function buildTrackCourse(code,name,kind){
+  return{id:uid(),code,name,cat:categoryForCode(code),credits:parseCreditsFromCode(code),done:false,note:kind==='elective'?'Track elective':'Track core',grade:''};
+}
+function applyTrackToSems(sems,trackKey,{reset=false}={}){
+  const t=TRACKS[trackKey];
+  if(!t)return sems;
+  let sems2=stripAdvTechPlaceholders(reset?removeTrackManagedCourses(sems):sems);
+  const slots=['y2s','y3f','y3s','y4f','y4s'].filter(id=>sems2.find(s=>s.id===id&&!s.isOff));
+  let si=0;
+  for(const core of t.cores){
+    const nc=normTrackCode(core.code);
+    let found=false;
+    sems2=sems2.map(s=>({...s,courses:s.courses.map(c=>{
+      if(normTrackCode(c.code)!==nc)return c;
+      if(c.note==='Track elective')return c;
+      found=true;
+      return{...c,code:core.code,name:core.name,cat:categoryForCode(core.code),credits:parseCreditsFromCode(core.code),note:'Track core'};
+    })}));
+    if(found)continue;
+    const semId=slots[si%slots.length]||defaultSemForTrackCourse(sems2,false);
+    si++;
+    const course=buildTrackCourse(core.code,core.name,'core');
+    sems2=sems2.map(s=>s.id!==semId?s:{...s,courses:[...s.courses,course]});
+  }
+  return sems2;
+}
+function syncTrackSchedule(sch){
+  if(!sch?.track||sch.kind==='business')return sch;
+  const kind=eceTrackKind(sch);
+  let sems=stripAdvTechPlaceholders(sch.sems);
+  sems=trimTrackElectivesToMax(sems,trackElectiveNeed({...sch,kind},sch.track),sch.track);
+  const t=TRACKS[sch.track];
+  const coresOnPlan=t?t.cores.filter(c=>scheduleHasCode(sems,c.code)).length:0;
+  if(!t||coresOnPlan<t.cores.length)sems=applyTrackToSems(sems,sch.track);
+  return{...sch,kind,sems};
+}
+function isApprovedTrackElective(trackKey,code){
+  const t=TRACKS[trackKey];
+  if(!t)return false;
+  const nc=normTrackCode(code);
+  return t.electives.some(e=>normTrackCode(e)===nc);
+}
+function removeTrackElectiveFromPlan(sems,code){
+  const nc=normTrackCode(code);
+  return(sems||[]).map(s=>({...s,courses:s.courses.filter(c=>!(normTrackCode(c.code)===nc&&c.note==='Track elective'))}));
+}
+function clearTrackElectivesFromPlan(sems){
+  return(sems||[]).map(s=>({...s,courses:s.courses.filter(c=>c.note!=='Track elective')}));
+}
+function eceTrackKind(sch){
+  return inferEceKind(sch)==='general'?'general':'ecb';
+}
+function trackElectiveName(code){
+  const nc=normTrackCode(code);
+  const hit=CATALOG.find(e=>normTrackCode(e.code)===nc);
+  return hit?.name||code;
 }
 function inferEceKind(sch){
   if(sch?.kind==='general'||sch?.kind==='business')return sch.kind;
@@ -1340,17 +1448,13 @@ function inferEceKind(sch){
 function stripAdvTechPlaceholders(sems){
   return(sems||[]).map(s=>({...s,courses:(s.courses||[]).filter(c=>!isAdvTechPlaceholder(c.code))}));
 }
-function syncTrackPlaceholders(sch){
-  if(!sch?.track||sch.kind==='business')return sch;
-  return{...sch,sems:stripAdvTechPlaceholders(sch.sems)};
-}
 function normalizeSchedule(sch){
   const looksBusiness=(sch.sems||[]).some(s=>['lower','upper','major','canfield','electives','human'].includes(s.id))||(sch.bizTracks||[]).length>0;
   let synced={...sch,sems:syncSemCredits(sch.sems)};
   if(looksBusiness||sch.kind==='business')return syncBusinessTracks({...synced,kind:'business'},businessTrackKeys(synced));
   const kind=inferEceKind(synced)==='general'?'general':'ecb';
   synced={kind,...synced};
-  return syncTrackPlaceholders(synced);
+  return syncTrackSchedule(synced);
 }
 function makeSchedule(name,color,templateKey='ecb'){
   const t=CURRICULUM_TEMPLATES[templateKey]||CURRICULUM_TEMPLATES.ecb;
@@ -1564,7 +1668,8 @@ function trackProgress(){
     const act=getAct();
     const need=trackElectiveNeed(act,tk);
     const coreHit=t.cores.filter(c=>codes.has(c.code.toUpperCase().replace(/H$/,''))).length;
-    const electHit=t.electives.filter(e=>codes.has(e.toUpperCase().replace(/H$/,''))).length;
+    const sems=getAS();
+    const electHit=countTrackElectives(sems,tk);
     val={track:t,key:tk,need,coreHit,coreTotal:t.cores.length,electHit};
   }
   _trackCache={rev:_saveRev,actId:S.activeId,val};
@@ -2240,29 +2345,39 @@ GOV 310L   AMERICAN GOVERNMENT   CR   16210   Credit by exam   3.0   0.00</pre>
       </div>`;
     }
     const cur=getAct();const sel=cur?.track||'';
+    const kind=eceTrackKind(cur);
     const prog=trackProgress();
-    const kind=cur?.kind||'ecb';
     const cards=Object.entries(TRACKS).map(([k,t])=>`
       <div class="tk-card${sel===k?' sel':''}" onclick="setTrack('${k}')">
         <div class="tk-name">${esc(t.name)}</div>
-        <div class="tk-grad">Grad track: ${esc(t.grad)} · ECB ${t.pickECB} electives · General/Honors ${GENERAL_TRACK_PICK}</div>
+        <div class="tk-grad">Grad track: ${esc(t.grad)} · ECB ${ECB_TRACK_PICK} electives · General/Honors ${GENERAL_TRACK_PICK}</div>
       </div>`).join('');
-    const codes=new Set(getAS().flatMap(s=>s.courses).map(x=>x.code.trim().toUpperCase().replace(/H$/,'')));
+    const planSems=getAS();
+    const codes=new Set(planSems.flatMap(s=>s.courses).map(x=>x.code.trim().toUpperCase().replace(/H$/,'')));
+    const electAtMax=prog?prog.electHit>=prog.need:false;
+    const electRemain=prog?Math.max(0,prog.need-prog.electHit):0;
+    const electLimitLabel=kind==='general'?`General/Honors: max ${GENERAL_TRACK_PICK}`:`ECB: max ${ECB_TRACK_PICK}`;
     const progBox=prog?`
       <div class="tk-prog">
-        <div style="display:flex;justify-content:space-between;align-items:center"><b style="font-size:12px">${esc(prog.track.short)}</b><span style="font-size:11px;color:var(--text2)">${prog.coreHit}/${prog.coreTotal} cores · ${prog.electHit}/${prog.need} electives</span></div>
+        <div style="display:flex;justify-content:space-between;align-items:center"><b style="font-size:12px">${esc(prog.track.short)}</b><span style="font-size:11px;color:${electAtMax?'var(--accent)':'var(--text2)'}">${prog.coreHit}/${prog.coreTotal} cores · ${prog.electHit}/${prog.need} electives</span></div>
         <div class="tp-bar"><div class="tp-fill" style="width:${Math.min(100,(prog.coreHit+Math.min(prog.electHit,prog.need))/(prog.coreTotal+prog.need)*100)}%"></div></div>
-        <div class="tk-h">Required cores <span style="font-weight:400;color:var(--text3);text-transform:none;letter-spacing:0">— click to add to your plan</span></div>
+        <div class="tk-h">Required cores <span style="font-weight:400;color:var(--text3);text-transform:none;letter-spacing:0">— added automatically when you pick a track</span></div>
         <div class="tk-list">${prog.track.cores.map(c=>{
           const hit=codes.has(c.code.toUpperCase().replace(/H$/,''));
-          const click=hit?'':`style="cursor:pointer" title="Click to add to your plan" onclick="addTrackCourse('${esc(c.code)}','${esc(c.name)}')"`;
-          return`<div class="${hit?'ok':'miss'}" ${click}>${hit?'✓':'＋'} ${esc(c.code)} — ${esc(c.name)}${c.alt?` <span style=\"color:var(--text3)\">(${esc(c.alt)})</span>`:''}</div>`;
+          return`<div class="${hit?'ok':'miss'}">${hit?'✓':'○'} ${esc(c.code)} — ${esc(c.name)}${c.alt?` <span style=\"color:var(--text3)\">(${esc(c.alt)})</span>`:''}</div>`;
         }).join('')}</div>
-        <div class="tk-h">Approved electives (pick ${prog.need}) <span style="font-weight:400;color:var(--text3);text-transform:none;letter-spacing:0">— click to add</span></div>
+        <div class="tk-h" style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+          <span>Approved electives <span style="font-weight:400;color:var(--text3);text-transform:none;letter-spacing:0">— ${electLimitLabel}</span></span>
+          ${prog.electHit?`<button type="button" onclick="event.stopPropagation();clearTrackElectives()" style="padding:2px 8px;font-size:10px;background:transparent;border:1px solid var(--border2);border-radius:5px;color:var(--text2);cursor:pointer;flex-shrink:0">Clear electives</button>`:''}
+        </div>
+        <div class="tk-limit ${electAtMax?'full':'ok'}">${electAtMax?`Elective limit reached (${prog.need} max). Deselect one to choose another.`:`${electRemain} elective slot${electRemain===1?'':'s'} remaining — click to toggle.`}</div>
+        ${S.trackMsg?`<div class="tk-flash">${esc(S.trackMsg)}</div>`:''}
         <div class="tk-list" style="columns:2;column-gap:18px">${prog.track.electives.map(e=>{
-          const hit=codes.has(e.toUpperCase().replace(/H$/,''));
-          const click=hit?'':`style="cursor:pointer" title="Click to add" onclick="addTrackCourse('${esc(e)}','${esc(e)} (track elective)','elective')"`;
-          return`<div class="${hit?'ok':'miss'}" ${click}>${hit?'✓':'＋'} ${esc(e)}</div>`;
+          const on=isTrackElectiveOnPlan(planSems,e,sel);
+          const dim=!on&&electAtMax;
+          const cls=on?'ok pick':dim?'miss dim':'miss pick';
+          const click=dim&&!on?'':`onclick="event.stopPropagation();toggleTrackElective('${esc(e)}')" title="${on?'Click to remove':dim?'Limit reached — deselect one first':'Click to add'}"`;
+          return`<div class="${cls}" ${click}>${on?'✓':'＋'} ${esc(e)}</div>`;
         }).join('')}</div>
       </div>`:'';
     return`<div class="mbk" id="mbk">
@@ -2566,12 +2681,52 @@ window.updateTarget=()=>{
   else if(needed>4)el.textContent=`Not reachable. Would need a ${needed.toFixed(2)} GPA across the remaining ${remainCr} credits.`;
   else el.innerHTML=`Need a <b>${needed.toFixed(3)}</b> GPA across the remaining ${remainCr} credits to reach <b>${target.toFixed(2)}</b>.`;
 };
+let _trackMsgTimer=null;
+function flashTrackMsg(msg){
+  S.trackMsg=msg;
+  if(_trackMsgTimer)clearTimeout(_trackMsgTimer);
+  _trackMsgTimer=setTimeout(()=>{S.trackMsg='';render();},2800);
+}
 window.setTrack=key=>mutate(()=>{
   S.schedules=S.schedules.map(s=>{
     if(s.id!==S.activeId)return s;
-    const next={...s,track:key||null};
-    return key?syncTrackPlaceholders(next):next;
+    const kind=eceTrackKind(s);
+    if(!key)return{...s,track:null,kind,sems:removeTrackManagedCourses(s.sems)};
+    return{...s,track:key,kind,sems:applyTrackToSems(s.sems,key,{reset:true})};
   });
+});
+window.toggleTrackElective=code=>{
+  const sch=getAct();
+  const tk=sch?.track;
+  if(!tk||!TRACKS[tk]||!isApprovedTrackElective(tk,code))return;
+  let sems=getAS();
+  const need=trackElectiveNeed(sch,tk);
+  if(isTrackElectiveOnPlan(sems,code,tk)){
+    mutate(()=>{setAS(removeTrackElectiveFromPlan(getAS(),code));S.trackMsg='';});
+    return;
+  }
+  if(scheduleHasCode(sems,code)){
+    flashTrackMsg(`${code} is already on your plan as a core or other course.`);
+    render();
+    return;
+  }
+  if(countTrackElectives(sems,tk)>=need){
+    flashTrackMsg(`Maximum ${need} electives for ${eceTrackKind(sch)==='general'?'General/Honors':'ECB'}. Deselect one first.`);
+    render();
+    return;
+  }
+  mutate(()=>{
+    const semsNow=getAS();
+    const semId=defaultSemForTrackCourse(semsNow,true);
+    if(!semId)return;
+    const course=buildTrackCourse(code,trackElectiveName(code),'elective');
+    setAS(semsNow.map(s=>s.id!==semId?s:{...s,courses:[...s.courses,course]}));
+    S.trackMsg='';
+  });
+};
+window.clearTrackElectives=()=>mutate(()=>{
+  S.schedules=S.schedules.map(s=>s.id!==S.activeId?s:{...s,sems:clearTrackElectivesFromPlan(s.sems)});
+  S.trackMsg='';
 });
 window.toggleBusinessTrackKey=key=>mutate(()=>{
   S.schedules=S.schedules.map(s=>s.id!==S.activeId?s:toggleBusinessTrack(s,key));
@@ -2580,7 +2735,12 @@ window.clearBusinessTracks=()=>mutate(()=>{
   S.schedules=S.schedules.map(s=>s.id!==S.activeId?s:syncBusinessTracks(s,[]));
 });
 window.setKind=k=>mutate(()=>{
-  S.schedules=S.schedules.map(s=>s.id!==S.activeId?s:{...s,kind:k});
+  S.schedules=S.schedules.map(s=>{
+    if(s.id!==S.activeId)return s;
+    const next={...s,kind:k==='general'?'general':'ecb'};
+    if(next.track)next.sems=trimTrackElectivesToMax(next.sems,trackElectiveNeed(next,next.track),next.track);
+    return next;
+  });
 });
 
 // ─── Search ───────────────────────────────────────────────────────────────────
@@ -2654,67 +2814,6 @@ document.addEventListener('dragover',e=>{
   if(dragScrollDir&&!dragScrollRAF)dragScrollRAF=requestAnimationFrame(dragScrollTick);
 });
 ['dragend','drop','mouseup'].forEach(ev=>document.addEventListener(ev,()=>{dragScrollDir=0;}));
-
-// ─── Add a course from the track picker into the schedule ────────────────────
-function normTrackCode(code){return String(code||'').trim().toUpperCase().replace(/H$/,'');}
-function findAdvTechSlot(sems,order){
-  for(const kind of order){
-    for(const s of sems){
-      if(s.isOff)continue;
-      for(const c of s.courses){
-        const cd=String(c.code).trim().toUpperCase();
-        if(kind==='ate'&&cd==='ATE')return{semId:s.id,cid:c.id};
-        if(kind==='atc-m'&&cd==='ATC-M')return{semId:s.id,cid:c.id};
-        if(kind==='atc'&&cd.startsWith('ATC-'))return{semId:s.id,cid:c.id};
-      }
-    }
-  }
-  return null;
-}
-function defaultSemForTrackCourse(sems,isElective){
-  const order=isElective?['y3s','y4f','y4s','y3f']:['y3f','y3s','y2s','y4f','y4s'];
-  for(const id of order){
-    const s=sems.find(x=>x.id===id&&!x.isOff);
-    if(s)return s.id;
-  }
-  return sems.find(s=>!s.isOff)?.id;
-}
-function categoryForCode(code){
-  const c=String(code||'').trim().toUpperCase();
-  if(c.startsWith('M '))return'MATH';
-  if(c.startsWith('PHY'))return'PHY';
-  if(c.startsWith('ECE'))return'ECE';
-  return'ADVANCED';
-}
-window.addTrackCourse=(code,name,slot)=>{
-  const sems=getAS();
-  const nc=normTrackCode(code);
-  const tk=getAct()?.track;
-  const t=tk?TRACKS[tk]:null;
-  const isElective=slot==='elective'||(t&&t.electives.some(e=>normTrackCode(e)===nc));
-  let target=null;
-  if(isElective){
-    // Track electives fill the Advanced Technical Elective (ATE) slot first.
-    target=findAdvTechSlot(sems,['ate','atc']);
-  }else if(nc==='M 427L'||nc==='M 325K'){
-    target=findAdvTechSlot(sems,['atc-m','atc','ate']);
-  }else{
-    // Required cores fill ATC placeholders; ATE only as fallback.
-    target=findAdvTechSlot(sems,['atc','ate']);
-  }
-  const cat=categoryForCode(code);
-  const credits=parseCreditsFromCode(code);
-  mutate(()=>{
-    if(target){
-      setAS(getAS().map(s=>s.id!==target.semId?s:{...s,courses:s.courses.map(c=>c.id!==target.cid?c:{...c,code,name,cat,credits,note:'Added from track picker'})}));
-    }else{
-      const semsNow=getAS();
-      const semId=defaultSemForTrackCourse(semsNow,isElective);
-      if(!semId)return;
-      setAS(semsNow.map(s=>s.id!==semId?s:{...s,courses:[...s.courses,{id:uid(),code,name,cat,credits,done:false,note:'Added from track picker',grade:''}]}));
-    }
-  });
-};
 
 // ─── Undo/redo, snapshots exposed ────────────────────────────────────────────
 window.undo=undo;window.redo=redo;
