@@ -477,7 +477,7 @@ body{font-family:-apple-system,'Segoe UI',system-ui,sans-serif;background:var(--
 </script>
 <script>
 // ─── Static data ──────────────────────────────────────────────────────────────
-const APP_VERSION='2026.06.11.16';
+const APP_VERSION='2026.06.11.18';
 // Raw URL is used only for parsing APP_VERSION on the live copy — never as a user link
 // (raw.githubusercontent.com serves text/plain, so the browser shows source instead of rendering).
 const UPDATE_URL='https://raw.githubusercontent.com/rorohecker/college-course-planner/main/college-course-planner.html';
@@ -520,6 +520,17 @@ const ECE_STANDALONE_LAYOUT=[
   {type:'pair',label:'Year 4',ids:['y4f','y4s']},
 ];
 const ECE_STANDALONE_KNOWN=new Set(ECE_STANDALONE_LAYOUT.flatMap(l=>l.ids));
+const ECE_HONORS_LAYOUT=[
+  {type:'full',ids:['ap']},
+  ...ECE_STANDALONE_LAYOUT,
+];
+const ECE_HONORS_KNOWN=new Set(ECE_HONORS_LAYOUT.flatMap(l=>l.ids));
+function isEceHonorsSch(sch){
+  const courses=(sch?.sems||[]).flatMap(s=>s.courses||[]);
+  if(courses.some(c=>/^eg\d+$/.test(String(c.id))))return false;
+  if(courses.some(c=>/^eh\d+$/.test(String(c.id))))return true;
+  return courses.some(c=>/\bECE \d+H\b/.test(String(c.code||'')));
+}
 const BUSINESS_LAYOUT=[
   {type:'pair',label:'Year 1',ids:['y1f','y1s']},
   {type:'pair',label:'Year 2',ids:['y2f','y2s']},
@@ -533,12 +544,18 @@ const BUSINESS_LAYOUT=[
 const BUSINESS_KNOWN=new Set(BUSINESS_LAYOUT.flatMap(l=>l.ids));
 const layoutFor=sch=>{
   if(sch?.kind==='business')return BUSINESS_LAYOUT;
-  if(sch?.kind==='general')return ECE_STANDALONE_LAYOUT;
+  if(sch?.kind==='general'){
+    if(isEceHonorsSch(sch))return ECE_HONORS_LAYOUT;
+    return ECE_STANDALONE_LAYOUT;
+  }
   return LAYOUT;
 };
 const knownFor=sch=>{
   if(sch?.kind==='business')return BUSINESS_KNOWN;
-  if(sch?.kind==='general')return ECE_STANDALONE_KNOWN;
+  if(sch?.kind==='general'){
+    if(isEceHonorsSch(sch))return ECE_HONORS_KNOWN;
+    return ECE_STANDALONE_KNOWN;
+  }
   return KNOWN;
 };
 
@@ -622,18 +639,19 @@ const DS=[
 ];
 
 // ─── Electrical Engineering Honors · 2026-2028 catalog ─────────────────────────
-// Source: "26-28 Honors" — AP* courses in-semester with note; no separate ap row.
+// Source: "26-28 Honors" — M 408C in ap row only; other AP* in-semester with note.
 const ECE_HONORS_DS=[
+  {id:'ap',label:'AP / IB / Pre-College Credits',courses:[
+    {id:'eh0',code:'M 408C',name:'Differential & Integral Calculus',cat:'MATH',credits:4,done:false,note:'AP / IB'},
+  ]},
   {id:'y1f',label:'Year 1 Fall',courses:[
-    {id:'eh1',code:'M 408C',name:'Differential & Integral Calculus',cat:'MATH',credits:4,done:false,note:'AP Credit or Y1 Fall'},
-    {id:'eh2',code:'RHE 306',name:'Rhetoric & Writing',cat:'CORE',credits:3,done:false,note:'AP Credit or Y1 Fall'},
+    {id:'eh12',code:'M 408D',name:'Seq, Series & Multivariable Calculus',cat:'MATH',credits:4,done:false,note:'Pre-req: M 408C'},
     {id:'eh11',code:'ECE 406H',name:'Introduction to Computing Honors',cat:'ECE',credits:4,done:false,note:'Pre-req: M 408C'},
+    {id:'eh10',code:'ECE 402H',name:'Intro to Electrical Engineering Honors',cat:'ECE',credits:4,done:false,note:'Fall only; Co-req: M 408D'},
     {id:'eh13',code:'UGS 302/3',name:'First-Year Signature Course',cat:'CORE',credits:3,done:false,note:''},
     {id:'eh14',code:'UGS 016',name:'FIG Seminar — ECE Honors',cat:'CORE',credits:0,done:false,note:'Before first semester'},
   ]},
   {id:'y1s',label:'Year 1 Spring',courses:[
-    {id:'eh12',code:'M 408D',name:'Seq, Series & Multivariable Calculus',cat:'MATH',credits:4,done:false,note:'Pre-req: M 408C'},
-    {id:'eh10',code:'ECE 402H',name:'Intro to Electrical Engineering Honors',cat:'ECE',credits:4,done:false,note:'Co-req: M 408D'},
     {id:'eh15',code:'ECE 419H',name:'Intro to Embedded Systems',cat:'ECE',credits:4,done:false,note:'Spring only; Pre-req: ECE 406H; Co-req: ECE 412H'},
     {id:'eh16',code:'ECE 412H',name:'Software Design & Implementation I',cat:'ECE',credits:4,done:false,note:'Spring only; Pre-req: ECE 406H; Co-req: ECE 419H'},
     {id:'eh18',code:'ECE 107H',name:'Engineering Leadership: Honors',cat:'ECE',credits:1,done:false,note:'Spring only'},
@@ -647,6 +665,7 @@ const ECE_HONORS_DS=[
     {id:'eh20',code:'ECE 411H',name:'Circuit Theory',cat:'ECE',credits:4,done:false,note:'Pre-req: ECE 402H, PHY 303K, PHY 105M; Co-req: M 427J, PHY 303E'},
     {id:'eh22',code:'M 340L',name:'Matrices & Matrix Calculations',cat:'MATH',credits:3,done:false,note:'Pre-req: M 408D'},
     {id:'eh21',code:'ECE 313H',name:'Linear Systems & Signals',cat:'ECE',credits:3,done:false,note:'Fall only; Pre-req: ECE 402H, M 427J, M 340L'},
+    {id:'eh2',code:'RHE 306',name:'Rhetoric & Writing',cat:'CORE',credits:3,done:false,note:'AP Credit or Y2 Fall'},
     {id:'eh4',code:'GOV 310L',name:'American Government',cat:'CORE',credits:3,done:false,note:'AP Credit — core govt part 1'},
     {id:'eh19',code:'SBS',name:'Social & Behavioral Sciences',cat:'CORE',credits:3,done:false,note:'AP Credit'},
   ]},
@@ -665,13 +684,13 @@ const ECE_HONORS_DS=[
   ]},
   {id:'y3s',label:'Year 3 Spring',courses:[
     {id:'eh30',code:'ATC-Lab',name:'Advanced Tech Component Lab',cat:'ADVANCED',credits:1,done:false,note:'Tech core'},
-    {id:'eh32',code:'ECE 364D',name:'Intro to Engineering Design',cat:'ECE',credits:3,done:false,note:'Core 010; Wr flag'},
     {id:'eh33',code:'ATC-4',name:'Advanced Tech Component',cat:'ADVANCED',credits:3,done:false,note:'Tech core'},
     {id:'eh34',code:'ATC-5',name:'Advanced Tech Component',cat:'ADVANCED',credits:3,done:false,note:'Tech core'},
     {id:'eh35',code:'ATE',name:'Advanced Technical Elective',cat:'ADVANCED',credits:3,done:false,note:'3 hr UD ECE or ECE 316'},
     {id:'eh38',code:'FREE-1',name:'Free Elective',cat:'OTHER',credits:3,done:false,note:''},
   ]},
   {id:'y4f',label:'Year 4 Fall',courses:[
+    {id:'eh32',code:'ECE 364D',name:'Intro to Engineering Design',cat:'ECE',credits:3,done:false,note:'Core 010; Wr flag'},
     {id:'eh27',code:'HIS',name:'US History',cat:'CORE',credits:3,done:false,note:'In-person if no AP'},
     {id:'eh37',code:'GOV 312L/P',name:'American Government',cat:'CORE',credits:3,done:false,note:'Core govt part 2'},
   ]},
@@ -1622,19 +1641,19 @@ function migrateFlowchartLayout(sems,kind){
     moveCourse('y3f','y2s','FREE-2',null);
     moveCourse('y3f','y3s','ATC-Lab',null);
     moveCourse('y3f','y3s','FREE-MS',null);
-    moveCourse('y3s','y4f','ECE 364D','FREE-1');
-    moveCourse('y4f','y3s','ECE 364D',null);
+    moveCourse('y3s','y4f','ECE 364D','ATC-3');
     moveCourse('y3s','y4f','FREE-1',null);
     moveCourse('y4f','y4s','GOV 312L/P','FREE-3');
     moveCourse('y4f','y4s','HIS',null);
     moveCourse('y4f','y2s','E 316',null);
   }
   if(kind==='honors'){
-    moveCourse('y1f','y1s','M 408D','ECE 419H');
-    moveCourse('y1f','y1s','ECE 402H','M 408D');
-    moveCourse('y1s','y2f','M 427J','PHY 303E');
+    moveCourse('y1s','y1f','M 408D','ECE 406H');
+    moveCourse('y1s','y1f','ECE 402H','M 408D');
+    moveCourse('y1f','y2f','RHE 306','PHY 303E');
     moveCourse('y2s','y2f','M 340L','ECE 411H');
     moveCourse('y2f','y2s','ECE 333T','ECE 351H');
+    moveCourse('y3s','y4f','ECE 364D','GOV 312L/P');
     moveCourse('y4f','y3f','FREE-2',null);
   }
   if(kind==='ecb'){
@@ -1648,7 +1667,7 @@ function migrateFlowchartLayout(sems,kind){
     moveCourse('y4s','y4f','ATE','ATC-4');
     moveCourse('y4f','y4s','GOV 312L/P','ATC-5');
   }
-  return plan.filter(s=>s.id!=='ap'||kind==='ecb');
+  return plan.filter(s=>s.id!=='ap'||kind==='ecb'||kind==='honors');
 }
 const ECB_AP_SLOTS=['M 408C','RHE 306','HIS','GOV 310L','E 316','VAPA','ECO 304K','ECO 304L'];
 function apSlotKey(code){
@@ -1697,6 +1716,33 @@ function syncApSection(sems){
   plan[apIdx]={...plan[apIdx],courses:apCourses};
   return plan;
 }
+function isHonorsApSlot(code){
+  return apSlotKey(code)==='M 408C';
+}
+// ECE Honors only: M 408C lives in the ap row; strip duplicates from semester columns.
+function syncHonorsApSection(sems){
+  const tmplAp=CURRICULUM_TEMPLATES.eceHonors.build().find(s=>s.id==='ap');
+  if(!tmplAp)return sems;
+  let plan=dc(sems||[]);
+  if(!plan.some(s=>s.id==='ap'))plan=[dc(tmplAp),...plan];
+  const apIdx=plan.findIndex(s=>s.id==='ap');
+  const pulled=[];
+  plan=plan.map(s=>{
+    if(s.id==='ap')return s;
+    return{...s,courses:(s.courses||[]).filter(c=>{
+      if(!isHonorsApSlot(c.code))return true;
+      pulled.push({...c,note:c.note||'AP / IB credit'});
+      return false;
+    })};
+  });
+  const apCourses=[...(plan[apIdx].courses||[])];
+  for(const c of pulled){
+    if(apCourses.some(x=>apSlotKey(x.code)==='M 408C'))continue;
+    apCourses.push(c);
+  }
+  plan[apIdx]={...plan[apIdx],courses:apCourses.length?apCourses:dc(tmplAp.courses)};
+  return plan;
+}
 function stripStandaloneApRow(sems){
   return (sems||[]).filter(s=>s.id!=='ap');
 }
@@ -1704,11 +1750,18 @@ function normalizeSchedule(sch){
   const looksBusiness=(sch.sems||[]).some(s=>['lower','upper','major','canfield','electives','human'].includes(s.id))||(sch.bizTracks||[]).length>0;
   let synced={...sch,sems:syncSemLabels(syncSemCredits(sch.sems))};
   if(looksBusiness||sch.kind==='business')return syncBusinessTracks({...synced,kind:'business'},businessTrackKeys(synced));
-  const kind=inferEceKind(synced)==='general'?'general':'ecb';
-  synced={kind,...synced};
-  if(kind==='ecb')synced={...synced,sems:syncApSection(synced.sems)};
-  else synced={...synced,sems:stripStandaloneApRow(synced.sems)};
-  synced={...synced,sems:migrateFlowchartLayout(synced.sems,kind)};
+  const eceKind=inferEceKind(synced);
+  synced={kind:eceKind,...synced};
+  if(eceKind==='ecb'){
+    synced={...synced,sems:syncApSection(synced.sems)};
+    synced={...synced,sems:migrateFlowchartLayout(synced.sems,'ecb')};
+  }else if(isEceHonorsSch(synced)){
+    synced={...synced,sems:syncHonorsApSection(synced.sems)};
+    synced={...synced,sems:migrateFlowchartLayout(synced.sems,'honors')};
+  }else{
+    synced={...synced,sems:stripStandaloneApRow(synced.sems)};
+    synced={...synced,sems:migrateFlowchartLayout(synced.sems,'general')};
+  }
   return syncTrackSchedule(synced);
 }
 function makeSchedule(name,color,templateKey='ecb'){
