@@ -478,7 +478,9 @@ body{font-family:-apple-system,'Segoe UI',system-ui,sans-serif;background:var(--
 </script>
 <script>
 // ─── Static data ──────────────────────────────────────────────────────────────
-const APP_VERSION='2026.06.11.20';
+const APP_VERSION='2026.06.11.21';
+// Bump when migrateFlowchartLayout rules change — migrations run once per schedule per version.
+const LAYOUT_MIGRATION_VERSION=21;
 // Raw URL is used only for parsing APP_VERSION on the live copy — never as a user link
 // (raw.githubusercontent.com serves text/plain, so the browser shows source instead of rendering).
 const UPDATE_URL='https://raw.githubusercontent.com/rorohecker/college-course-planner/main/college-course-planner.html';
@@ -530,7 +532,7 @@ function isEceHonorsSch(sch){
   const courses=(sch?.sems||[]).flatMap(s=>s.courses||[]);
   if(courses.some(c=>/^eg\d+$/.test(String(c.id))))return false;
   if(courses.some(c=>/^eh\d+$/.test(String(c.id))))return true;
-  return courses.some(c=>/\bECE \d+H\b/.test(String(c.code||'')));
+  return false;
 }
 const BUSINESS_LAYOUT=[
   {type:'pair',label:'Year 1',ids:['y1f','y1s']},
@@ -1762,22 +1764,31 @@ function syncHonorsApSection(sems){
 function stripStandaloneApRow(sems){
   return (sems||[]).filter(s=>s.id!=='ap');
 }
+function fixActiveId(schedules,activeId){
+  if(!schedules?.length)return null;
+  return schedules.some(s=>s.id===activeId)?activeId:schedules[0].id;
+}
+function normPlanCode(code){
+  return String(code||'').toUpperCase().replace(/\s+/g,'').replace(/H$/,'');
+}
 function normalizeSchedule(sch){
   const looksBusiness=(sch.sems||[]).some(s=>['lower','upper','major','canfield','electives','human'].includes(s.id))||(sch.bizTracks||[]).length>0;
   let synced={...sch,sems:syncSemLabels(syncSemCredits(ensureUniqueCourseIds(sch.sems)))};
-  if(looksBusiness||sch.kind==='business')return syncBusinessTracks({...synced,kind:'business'},businessTrackKeys(synced));
+  if(looksBusiness||sch.kind==='business')return syncBusinessTracks({...synced,kind:'business',layoutVersion:LAYOUT_MIGRATION_VERSION},businessTrackKeys(synced));
   const eceKind=inferEceKind(synced);
   synced={kind:eceKind,...synced};
+  const needsLayoutMigrate=(sch.layoutVersion||0)<LAYOUT_MIGRATION_VERSION;
   if(eceKind==='ecb'){
     synced={...synced,sems:syncApSection(synced.sems)};
-    synced={...synced,sems:migrateFlowchartLayout(synced.sems,'ecb')};
+    if(needsLayoutMigrate)synced={...synced,sems:migrateFlowchartLayout(synced.sems,'ecb')};
   }else if(isEceHonorsSch(synced)){
     synced={...synced,sems:syncHonorsApSection(synced.sems)};
-    synced={...synced,sems:migrateFlowchartLayout(synced.sems,'honors')};
+    if(needsLayoutMigrate)synced={...synced,sems:migrateFlowchartLayout(synced.sems,'honors')};
   }else{
     synced={...synced,sems:stripStandaloneApRow(synced.sems)};
-    synced={...synced,sems:migrateFlowchartLayout(synced.sems,'general')};
+    if(needsLayoutMigrate)synced={...synced,sems:migrateFlowchartLayout(synced.sems,'general')};
   }
+  synced={...synced,layoutVersion:LAYOUT_MIGRATION_VERSION};
   return syncTrackSchedule(synced);
 }
 function makeSchedule(name,color,templateKey='ecb'){
@@ -1827,7 +1838,7 @@ async function load(){
   try{
     let d=null;
     if(window.storage){const r=await window.storage.get(SK);d=r?.value;}else d=localStorage.getItem(SK);
-    if(d){const p=JSON.parse(d);if(p.schedules?.length){S.schedules=p.schedules.map(normalizeSchedule);S.activeId=p.activeId||p.schedules[0].id;return true;}}
+    if(d){const p=JSON.parse(d);if(p.schedules?.length){S.schedules=p.schedules.map(normalizeSchedule);S.activeId=fixActiveId(S.schedules,p.activeId)||S.schedules[0].id;return true;}}
   }catch(e){}
   return false;
 }
@@ -1839,7 +1850,7 @@ function initDefault(){
 function encodeShare(){return btoa(encodeURIComponent(JSON.stringify({schedules:S.schedules,activeId:S.activeId})));}
 function decodeShare(code){
   const p=JSON.parse(decodeURIComponent(atob(code.trim())));
-  if(p.schedules?.length)return {...p,schedules:p.schedules.map(normalizeSchedule)};
+  if(p.schedules?.length){const schedules=p.schedules.map(normalizeSchedule);return {...p,schedules,activeId:fixActiveId(schedules,p.activeId)||schedules[0]?.id};}
   if(Array.isArray(p)&&p.length){const id=sid();return{schedules:[normalizeSchedule({id,name:'Imported',color:COLORS[0],sems:p,createdAt:Date.now(),updatedAt:Date.now()})],activeId:id};}
   throw new Error('bad');
 }
@@ -1855,7 +1866,9 @@ function saveSnapshotNow(reason){
 function restoreSnapshot(ts){
   const snap=loadSnapshots().find(s=>s.ts===ts);if(!snap)return;
   pushHistory();
-  S.schedules=snap.data.schedules;S.activeId=snap.data.activeId||S.schedules[0]?.id;
+  const schedules=(snap.data.schedules||[]).map(normalizeSchedule);
+  S.schedules=schedules;
+  S.activeId=fixActiveId(schedules,snap.data.activeId)||schedules[0]?.id;
   S.modal=null;save();render();
 }
 function deleteSnapshot(ts){
@@ -2102,8 +2115,8 @@ function rSem(sem){
 }
 
 function rCmpSem(semId,sA,sB,schA,schB){
-  const codesA=new Set((sA?.courses||[]).map(c=>c.code.trim().toUpperCase()));
-  const codesB=new Set((sB?.courses||[]).map(c=>c.code.trim().toUpperCase()));
+  const codesA=new Set((sA?.courses||[]).map(c=>normPlanCode(c.code)));
+  const codesB=new Set((sB?.courses||[]).map(c=>normPlanCode(c.code)));
   const shared=[...codesA].filter(c=>codesB.has(c)).length;
   const onlyA=codesA.size-shared,onlyB=codesB.size-shared;
   const label=sA?.label||sB?.label||semId;
@@ -2111,7 +2124,8 @@ function rCmpSem(semId,sA,sB,schA,schB){
   const crB=(sB?.courses||[]).reduce((t,c)=>t+c.credits,0);
   const rCC=(c,side)=>{
     const cat=CATS[c.cat]||CATS.OTHER;
-    const isShared=(side==='a'?codesB:codesA).has(c.code.trim().toUpperCase());
+    const nc=normPlanCode(c.code);
+    const isShared=(side==='a'?codesB:codesA).has(nc);
     return `<div class="ccc${isShared?'':' o'+side}">
       ${!isShared?`<span class="ccc-lbl ${side}">${side.toUpperCase()}</span>`:''}
       <div style="width:6px;height:6px;border-radius:50%;background:${cat.txt};flex-shrink:0;margin-top:3px"></div>
@@ -2150,8 +2164,8 @@ function rCompareView(){
   const semsA=schA.sems,semsB=schB.sems;
   const allIds=[...new Set([...semsA.map(s=>s.id),...semsB.map(s=>s.id)])];
   const allA=semsA.flatMap(s=>s.courses),allB=semsB.flatMap(s=>s.courses);
-  const cA=new Set(allA.map(c=>c.code.trim().toUpperCase()));
-  const cB=new Set(allB.map(c=>c.code.trim().toUpperCase()));
+  const cA=new Set(allA.map(c=>normPlanCode(c.code)));
+  const cB=new Set(allB.map(c=>normPlanCode(c.code)));
   const shAll=[...cA].filter(c=>cB.has(c)).length;
   const crA=allA.reduce((t,c)=>t+c.credits,0),crB=allB.reduce((t,c)=>t+c.credits,0);
   let body='';
@@ -3107,9 +3121,9 @@ window.clearBusinessTracks=()=>mutate(()=>{
 window.setKind=k=>mutate(()=>{
   S.schedules=S.schedules.map(s=>{
     if(s.id!==S.activeId)return s;
-    const next={...s,kind:k==='general'?'general':'ecb'};
+    let next={...s,kind:k==='general'?'general':'ecb'};
     if(next.track)next.sems=trimTrackElectivesToMax(next.sems,trackElectiveNeed(next,next.track),next.track);
-    return next;
+    return normalizeSchedule(next);
   });
 });
 
@@ -3130,8 +3144,9 @@ window.copyText=(taId,badgeId)=>{
 };
 window.doImport=()=>{
   const raw=document.getElementById('import-code')?.value;if(!raw)return;
-  try{const p=decodeShare(raw);mutate(()=>{S.schedules=p.schedules;S.activeId=p.activeId||p.schedules[0].id;S.compareMode=false;S.compareId=null;S.modal=null;S.edit=null;S.form={};},{reason:'import'});}
-  catch(ex){const err=document.getElementById('import-err');if(err)err.style.display='block';}
+  const err=document.getElementById('import-err');if(err)err.style.display='none';
+  try{const p=decodeShare(raw);mutate(()=>{S.schedules=p.schedules;S.activeId=fixActiveId(p.schedules,p.activeId)||p.schedules[0]?.id;S.compareMode=false;S.compareId=null;S.modal=null;S.edit=null;S.form={};},{reason:'import'});}
+  catch(ex){if(err)err.style.display='block';}
 };
 window.doReset=()=>{saveSnapshotNow('pre-reset');mutate(()=>{initDefault();S.compareMode=false;S.compareId=null;S.modal=null;S.edit=null;S.form={};},{reason:'reset'});};
 
@@ -3195,6 +3210,7 @@ document.addEventListener('keydown',e=>{
   const t=e.target;const tag=t?.tagName;
   const inField=tag==='INPUT'||tag==='TEXTAREA'||tag==='SELECT'||t?.isContentEditable;
   if(e.key==='Escape'){
+    if(document.getElementById('cg-pop')){closeGradePop();return;}
     if(S.modal){S.modal=null;S.modalTab=null;S.renamingId=null;render();}
     else if(S.selection.size)clearSel();
     else if(S.edit){S.edit=null;S.form={};render();}
@@ -3211,6 +3227,7 @@ document.addEventListener('keydown',e=>{
   if((e.ctrlKey||e.metaKey)&&!e.shiftKey&&e.key.toLowerCase()==='z'){e.preventDefault();undo();return;}
   if((e.ctrlKey||e.metaKey)&&(e.key.toLowerCase()==='y'||(e.shiftKey&&e.key.toLowerCase()==='z'))){e.preventDefault();redo();return;}
   if(inField)return;
+  if(S.modal||S.edit)return;
   const k=e.key.toLowerCase();
   if((e.key===' '||e.code==='Space')&&S.selection.size===1&&S.selectionSem){
     applyToggleDone(S.selectionSem,[...S.selection][0]);
@@ -3222,7 +3239,7 @@ document.addEventListener('keydown',e=>{
     if(c){S.edit={semId,courseId:cid,isNew:false};S.form={...c,semId};render();window.scrollTo(0,0);}
     e.preventDefault();return;
   }
-  if(k==='n'){const sems=getAS().filter(s=>!s.isOff);const target=sems[0];if(target){S.edit={semId:target.id,isNew:true};S.form={id:uid(),code:'',name:'',cat:getAct()?.kind==='business'?'BUSINESS':'ECE',credits:3,done:false,note:'',grade:'',semId:target.id};render();window.scrollTo(0,0);}e.preventDefault();}
+  if(k==='n'){const sems=getAS().filter(s=>!s.isOff);const target=(S.selectionSem&&sems.some(s=>s.id===S.selectionSem))?sems.find(s=>s.id===S.selectionSem):sems[0];if(target){S.edit={semId:target.id,isNew:true};S.form={id:uid(),code:'',name:'',cat:getAct()?.kind==='business'?'BUSINESS':'ECE',credits:3,done:false,note:'',grade:'',semId:target.id};render();window.scrollTo(0,0);}e.preventDefault();}
   else if(k==='c'){S.cmpPickId=null;S.modal='compare-pick';render();e.preventDefault();}
   else if(k==='s'){S.modal='search';render();e.preventDefault();}
   else if(k==='g'){S.modal='gpa';render();e.preventDefault();}
@@ -3340,7 +3357,8 @@ document.getElementById('restore-file-input').addEventListener('change',async e=
     const p=JSON.parse(txt);
     if(!p.schedules||!Array.isArray(p.schedules))throw new Error('No schedules array in file');
     saveSnapshotNow('pre-restore');
-    mutate(()=>{S.schedules=p.schedules;S.activeId=p.activeId||p.schedules[0].id;S.compareMode=false;S.compareId=null;S.modal=null;S.edit=null;S.form={};},{reason:'file-restore'});
+    const schedules=p.schedules.map(normalizeSchedule);
+    mutate(()=>{S.schedules=schedules;S.activeId=fixActiveId(schedules,p.activeId)||schedules[0]?.id;S.compareMode=false;S.compareId=null;S.modal=null;S.edit=null;S.form={};},{reason:'file-restore'});
   }catch(err){alert('Could not read backup file: '+err.message);}
   e.target.value='';
 });
@@ -3573,7 +3591,11 @@ document.addEventListener('touchstart',e=>{
     if(navigator.vibrate)try{navigator.vibrate(15);}catch(_){}
     const sems=getAS();const c=sems.find(s=>s.id===semId)?.courses.find(x=>x.id===cid);
     if(c){
-      S.dragSrc={semId,courseId:cid,bulk:false};
+      if(S.selection.has(cid)&&S.selectionSem===semId&&S.selection.size>1){
+        S.dragSrc={semId,courseId:cid,bulk:true,ids:[...S.selection]};
+      }else{
+        S.dragSrc={semId,courseId:cid,bulk:false};
+      }
       const g=document.createElement('div');g.id='touch-ghost';g.className='touch-ghost';g.textContent=c.code;
       document.body.appendChild(g);
       const t=e.touches[0];g.style.left=t.clientX+'px';g.style.top=t.clientY+'px';
