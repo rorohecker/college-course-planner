@@ -112,14 +112,15 @@ body{font-family:-apple-system,'Segoe UI',system-ui,sans-serif;background:var(--
 .off-note{padding:14px;text-align:center;color:var(--text3);font-size:11px;font-style:italic}
 .dl-list{padding:5px 9px;background:var(--surface2);border-top:1px solid var(--border);font-size:10px;color:var(--text2)}
 .dl-list b{color:var(--text);font-weight:600}
-.cc{display:flex;align-items:flex-start;gap:6px;padding:5px 8px;border-radius:6px;cursor:grab;border:1px solid transparent;transition:transform .1s,box-shadow .1s;user-select:none;position:relative}
-.cc:active{cursor:grabbing}
+.cc{display:flex;align-items:flex-start;gap:6px;padding:5px 8px;border-radius:6px;border:1px solid transparent;transition:transform .1s,box-shadow .1s;user-select:none;position:relative}
 .cc:hover{transform:translateX(2px);box-shadow:0 2px 6px rgba(0,0,0,.1)}
 .cc.done{opacity:.5}
 .cc.sel{outline:2px solid var(--accent);outline-offset:1px}
-.chk{width:15px;height:15px;border-radius:3px;border:1.5px solid;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;transition:all .15s;margin-top:1px}
-.dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-top:3px}
-.ci{flex:1;min-width:0}
+.chk{width:18px;height:18px;border-radius:4px;border:1.5px solid;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;transition:all .15s;margin-top:1px;position:relative;z-index:2;touch-action:manipulation}
+.chk svg{pointer-events:none;display:block}
+.dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-top:4px;pointer-events:none}
+.ci{flex:1;min-width:0;cursor:pointer;padding:1px 0;border-radius:4px}
+.ci:active{cursor:grabbing}
 .ccode{font-size:11px;font-weight:700}
 .cname{font-size:10px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;margin-top:1px}
 .cnote{font-size:9px;color:var(--text3);font-style:italic;display:block;margin-top:1px}
@@ -477,7 +478,7 @@ body{font-family:-apple-system,'Segoe UI',system-ui,sans-serif;background:var(--
 </script>
 <script>
 // ─── Static data ──────────────────────────────────────────────────────────────
-const APP_VERSION='2026.06.11.18';
+const APP_VERSION='2026.06.11.19';
 // Raw URL is used only for parsing APP_VERSION on the live copy — never as a user link
 // (raw.githubusercontent.com serves text/plain, so the browser shows source instead of rendering).
 const UPDATE_URL='https://raw.githubusercontent.com/rorohecker/college-course-planner/main/college-course-planner.html';
@@ -2026,13 +2027,13 @@ function rCourse(semId,c){
     ?`<span class="cgrade editable" title="Click to set grade" onclick="cgClick('${semId}','${c.id}',event)">${esc(c.grade||'+ grade')}</span>`
     :(c.grade?`<span class="cgrade">${esc(c.grade)}</span>`:'');
   return `<div class="cc${c.done?' done':''}${isSel?' sel':''}" style="background:${cat.bg};border-color:${cat.brd}"
-      draggable="true" ondragstart="wDSCustom('${semId}','${c.id}',event)" ondragend="wDE()"
-      onclick="cClick('${semId}','${c.id}',event)">
-    <div class="chk" style="border-color:${chkBrd};background:${chkBg}" data-a="toggle" data-sem="${semId}" data-cid="${c.id}">
-      ${c.done?`<svg width="9" height="9" viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2.5" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/></svg>`:''}
+      draggable="true" ondragstart="wDSCustom('${semId}','${c.id}',event)" ondragend="wDE()">
+    <div class="chk" style="border-color:${chkBrd};background:${chkBg}" data-cid="${c.id}" role="checkbox" aria-checked="${c.done?'true':'false'}" title="Mark done"
+      onclick="toggleDone('${semId}','${c.id}',event)">
+      ${c.done?`<svg width="10" height="10" viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2.5" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/></svg>`:''}
     </div>
     <div class="dot" style="background:${cat.txt}"></div>
-    <div class="ci">
+    <div class="ci" onclick="cClick('${semId}','${c.id}',event)">
       <span class="ccode" style="color:${cat.txt}">${esc(c.code)}</span>
       <span class="cname">${esc(c.name)}</span>
       ${c.note?`<span class="cnote">${esc(c.note)}</span>`:''}
@@ -2736,8 +2737,11 @@ GOV 310L   AMERICAN GOVERNMENT   CR   16210   Credit by exam   3.0   0.00</pre>
       ['P','Print or save as PDF'],
       ['Ctrl + Z','Undo'],
       ['Ctrl + Shift + Z','Redo'],
-      ['Click course','Select for delete / move'],
+      ['Click course name','Select for delete / move'],
+      ['Checkbox','Mark course done (separate from select)'],
       ['Shift + click','Add to selection'],
+      ['Space','Toggle done on selected course'],
+      ['E','Edit selected course'],
       ['Delete / Backspace','Delete selected courses (or open course in editor)'],
       ['1 to 4','Jump to year section'],
       ['Esc','Close modal or clear selection'],
@@ -2888,7 +2892,6 @@ document.addEventListener('click',e=>{
     recomputeExportReminder();render();
   }
   else if(a==='open-backup'){S.modal='backup';render();}
-  else if(a==='toggle'){e.stopPropagation();mutate(()=>setAS(getAS().map(s=>s.id!==sem?s:{...s,courses:s.courses.map(c=>c.id!==cid?c:{...c,done:!c.done})})));} 
   else if(a==='edit'){
     e.stopPropagation();
     const sems=getAS();const s=sems.find(x=>x.id===sem);const c=s?.courses.find(x=>x.id===cid);
@@ -2942,10 +2945,21 @@ document.addEventListener('click',e=>{
 });
 
 // ─── Course click (selection) ────────────────────────────────────────────────
+let _toggleLock=null;
+function applyToggleDone(semId,cid){
+  const key=semId+'\0'+cid;
+  const now=Date.now();
+  if(_toggleLock?.key===key&&now-_toggleLock.t<300)return;
+  _toggleLock={key,t:now};
+  mutate(()=>setAS(getAS().map(s=>s.id!==semId?s:{...s,courses:s.courses.map(c=>c.id!==cid?c:{...c,done:!c.done})})));
+}
+window.toggleDone=(semId,cid,e)=>{
+  if(e){e.stopPropagation();e.preventDefault();}
+  applyToggleDone(semId,cid);
+};
 window.cClick=(semId,cid,e)=>{
-  if(actionTarget(e.target)||(e.target instanceof Element?e.target:e.target?.parentElement)?.closest('.cacts'))return;
-  if(e.shiftKey){
-    e.preventDefault();
+  if(e){e.stopPropagation();e.preventDefault();}
+  if(e?.shiftKey){
     if(S.selectionSem&&S.selectionSem!==semId)S.selection.clear();
     S.selectionSem=semId;
     if(S.selection.has(cid))S.selection.delete(cid);else S.selection.add(cid);
@@ -3174,6 +3188,16 @@ document.addEventListener('keydown',e=>{
   if((e.ctrlKey||e.metaKey)&&(e.key.toLowerCase()==='y'||(e.shiftKey&&e.key.toLowerCase()==='z'))){e.preventDefault();redo();return;}
   if(inField)return;
   const k=e.key.toLowerCase();
+  if((e.key===' '||e.code==='Space')&&S.selection.size===1&&S.selectionSem){
+    applyToggleDone(S.selectionSem,[...S.selection][0]);
+    e.preventDefault();return;
+  }
+  if(k==='e'&&S.selection.size===1&&S.selectionSem){
+    const semId=S.selectionSem,cid=[...S.selection][0];
+    const c=getAS().find(s=>s.id===semId)?.courses.find(x=>x.id===cid);
+    if(c){S.edit={semId,courseId:cid,isNew:false};S.form={...c,semId};render();window.scrollTo(0,0);}
+    e.preventDefault();return;
+  }
   if(k==='n'){const sems=getAS().filter(s=>!s.isOff);const target=sems[0];if(target){S.edit={semId:target.id,isNew:true};S.form={id:uid(),code:'',name:'',cat:getAct()?.kind==='business'?'BUSINESS':'ECE',credits:3,done:false,note:'',grade:'',semId:target.id};render();window.scrollTo(0,0);}e.preventDefault();}
   else if(k==='c'){S.cmpPickId=null;S.modal='compare-pick';render();e.preventDefault();}
   else if(k==='s'){S.modal='search';render();e.preventDefault();}
@@ -3511,6 +3535,7 @@ window.applyCurriculum=key=>{
 // start, drag a ghost element, drop on the target semester card.
 let touchDrag=null;
 document.addEventListener('touchstart',e=>{
+  if(e.target.closest('.chk,.cacts,.cgrade,button'))return;
   const card=e.target.closest('.cc');if(!card)return;
   const semCard=card.closest('.sc');if(!semCard)return;
   const semId=semCard.id.replace(/^sc-/,'');
@@ -3567,7 +3592,7 @@ document.addEventListener('touchend',e=>{
 // ─── Custom drag preview ─────────────────────────────────────────────────────
 // Replaces the browser's default drag ghost with a small canvas-rendered chip.
 window.wDSCustom=(semId,courseId,e)=>{
-  // Build preview if dataTransfer is available.
+  if(e?.target?.closest?.('.chk,.cacts,.cgrade,button')){e.preventDefault();return false;}
   try{
     if(e&&e.dataTransfer&&e.dataTransfer.setDragImage){
       const sems=getAS();const c=sems.find(s=>s.id===semId)?.courses.find(x=>x.id===courseId);
