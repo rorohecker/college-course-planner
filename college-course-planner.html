@@ -478,7 +478,7 @@ body{font-family:-apple-system,'Segoe UI',system-ui,sans-serif;background:var(--
 </script>
 <script>
 // ─── Static data ──────────────────────────────────────────────────────────────
-const APP_VERSION='2026.06.11.19';
+const APP_VERSION='2026.06.11.20';
 // Raw URL is used only for parsing APP_VERSION on the live copy — never as a user link
 // (raw.githubusercontent.com serves text/plain, so the browser shows source instead of rendering).
 const UPDATE_URL='https://raw.githubusercontent.com/rorohecker/college-course-planner/main/college-course-planner.html';
@@ -1130,6 +1130,19 @@ const SEM_LABELS={y1f:'Year 1 Fall',y1s:'Year 1 Spring',y2f:'Year 2 Fall',y2s:'Y
 function syncSemLabels(sems){
   return(sems||[]).map(s=>SEM_LABELS[s.id]?{...s,label:SEM_LABELS[s.id]}:s);
 }
+// Old saves (esp. ECB) can end up with duplicate course ids after template merges — toggling one flipped all matches.
+function ensureUniqueCourseIds(sems){
+  const seen=new Set();
+  return(sems||[]).map(s=>({
+    ...s,
+    courses:(s.courses||[]).map(c=>{
+      let id=c?.id;
+      if(!id||seen.has(id))id=uid();
+      seen.add(id);
+      return id===c.id?c:{...c,id};
+    }),
+  }));
+}
 
 const S={
   schedules:[],activeId:null,
@@ -1678,7 +1691,9 @@ function apSlotKey(code){
   if(c.includes('PHY 303K'))return 'PHY 303K';
   if(c.includes('PHY 105M'))return 'PHY 105M';
   if(c.includes('GOV 310'))return 'GOV 310L';
-  if(c.includes('E 316'))return 'E 316';
+  // Humanities E 316 only — not ECE 316 (digital logic).
+  if(c.startsWith('ECE'))return c;
+  if(/^E\s*316\b/.test(c)||c==='E316')return 'E 316';
   if(c.includes('VAPA'))return 'VAPA';
   if(c.includes('HIS'))return 'HIS';
   if(c.includes('ECO 304K'))return 'ECO 304K';
@@ -1749,7 +1764,7 @@ function stripStandaloneApRow(sems){
 }
 function normalizeSchedule(sch){
   const looksBusiness=(sch.sems||[]).some(s=>['lower','upper','major','canfield','electives','human'].includes(s.id))||(sch.bizTracks||[]).length>0;
-  let synced={...sch,sems:syncSemLabels(syncSemCredits(sch.sems))};
+  let synced={...sch,sems:syncSemLabels(syncSemCredits(ensureUniqueCourseIds(sch.sems)))};
   if(looksBusiness||sch.kind==='business')return syncBusinessTracks({...synced,kind:'business'},businessTrackKeys(synced));
   const eceKind=inferEceKind(synced);
   synced={kind:eceKind,...synced};
@@ -2951,7 +2966,16 @@ function applyToggleDone(semId,cid){
   const now=Date.now();
   if(_toggleLock?.key===key&&now-_toggleLock.t<300)return;
   _toggleLock={key,t:now};
-  mutate(()=>setAS(getAS().map(s=>s.id!==semId?s:{...s,courses:s.courses.map(c=>c.id!==cid?c:{...c,done:!c.done})})));
+  mutate(()=>{
+    setAS(getAS().map(s=>{
+      if(s.id!==semId)return s;
+      const idx=(s.courses||[]).findIndex(c=>c.id===cid);
+      if(idx<0)return s;
+      const courses=[...s.courses];
+      courses[idx]={...courses[idx],done:!courses[idx].done};
+      return{...s,courses};
+    }));
+  });
 }
 window.toggleDone=(semId,cid,e)=>{
   if(e){e.stopPropagation();e.preventDefault();}
