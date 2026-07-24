@@ -6,7 +6,7 @@ If you have ever wished UT IDA could let you build and compare what-if schedules
 
 ## What it does
 
-- Drop-in ECB default curriculum covering AP credits, summer physics, and all eight semesters of the four year plan, updated to the 2026-2028 catalog (ECE 402H/406H/412H/419H, Canfield BA 110G/111G/120G/130G/140G).
+- Drop-in ECB default curriculum covering AP credits, Physics I (summer/AP), Physics II in Year 2 Fall, and all eight semesters of the four year plan, updated to the 2026-2028 catalog (ECE 402H/406H/412H/419H/313H, PHY 303E, Canfield BA 110G/111G/120G/130G/140G).
 - Pick from dedicated 2026-2028 engineering curricula in the picker: ECE + Canfield Business Honors (ECB), Electrical Engineering Honors, and Electrical & Computer Engineering (General).
 - Swap to an Undeclared Business BBA template at any time from the curriculum picker, with McCombs major tracks (Finance, Accounting, MIS, Marketing, BAX, IB Skills, iMPA) and Canfield Business Honors layered on top.
 - Auto-checks GitHub on startup so you know when a newer version is published, with one click to grab the latest copy.
