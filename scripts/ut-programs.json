@@ -3,7 +3,7 @@
   "scrapedAt": "2026-08-27",
   "minors": [
     {
-      "key": "architectural-history",
+      "key": "minor-architecture-architectural-history",
       "name": "Architectural History",
       "school": "Architecture",
       "type": "minor",
@@ -11,7 +11,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "architectural-studies",
+      "key": "minor-architecture-architectural-studies",
       "name": "Architectural Studies",
       "school": "Architecture",
       "type": "minor",
@@ -19,7 +19,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "interior-design",
+      "key": "minor-architecture-interior-design",
       "name": "Interior Design",
       "school": "Architecture",
       "type": "minor",
@@ -27,7 +27,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "landscape-studies",
+      "key": "minor-architecture-landscape-studies",
       "name": "Landscape Studies",
       "school": "Architecture",
       "type": "minor",
@@ -35,7 +35,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "accounting",
+      "key": "minor-business-accounting",
       "name": "Accounting",
       "school": "Business",
       "type": "minor",
@@ -43,7 +43,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "accounting-for-business-economics-option-program",
+      "key": "minor-business-accounting-for-business-economics-option-program",
       "name": "Accounting for Business Economics Option Program",
       "school": "Business",
       "type": "minor",
@@ -51,7 +51,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "analytics-and-the-business-of-sports",
+      "key": "minor-business-analytics-and-the-business-of-sports",
       "name": "Analytics and the Business of Sports",
       "school": "Business",
       "type": "minor",
@@ -59,7 +59,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "business-analytics",
+      "key": "minor-business-business-analytics",
       "name": "Business Analytics",
       "school": "Business",
       "type": "minor",
@@ -67,7 +67,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "business-and-public-policy",
+      "key": "minor-business-business-and-public-policy",
       "name": "Business and Public Policy",
       "school": "Business",
       "type": "minor",
@@ -75,7 +75,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "business-foundations",
+      "key": "minor-business-business-foundations",
       "name": "Business Foundations",
       "school": "Business",
       "type": "minor",
@@ -83,7 +83,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "energy-studies",
+      "key": "minor-business-energy-studies",
       "name": "Energy Studies",
       "school": "Business",
       "type": "minor",
@@ -91,7 +91,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "entrepreneurship",
+      "key": "minor-business-entrepreneurship",
       "name": "Entrepreneurship",
       "school": "Business",
       "type": "minor",
@@ -99,7 +99,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "finance",
+      "key": "minor-business-finance",
       "name": "Finance",
       "school": "Business",
       "type": "minor",
@@ -107,7 +107,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "finance-for-business-economics-option-program",
+      "key": "minor-business-finance-for-business-economics-option-program",
       "name": "Finance for Business Economics Option Program",
       "school": "Business",
       "type": "minor",
@@ -115,7 +115,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "healthcare-industry-reform-and-innovation",
+      "key": "minor-business-healthcare-industry-reform-and-innovation",
       "name": "Healthcare Industry Reform and Innovation",
       "school": "Business",
       "type": "minor",
@@ -123,7 +123,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "international-business",
+      "key": "minor-business-international-business",
       "name": "International Business",
       "school": "Business",
       "type": "minor",
@@ -131,7 +131,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "leadership-in-global-sustainability",
+      "key": "minor-business-leadership-in-global-sustainability",
       "name": "Leadership in Global Sustainability",
       "school": "Business",
       "type": "minor",
@@ -139,7 +139,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "management",
+      "key": "minor-business-management",
       "name": "Management",
       "school": "Business",
       "type": "minor",
@@ -147,7 +147,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "management-information-systems",
+      "key": "minor-business-management-information-systems",
       "name": "Management Information Systems",
       "school": "Business",
       "type": "minor",
@@ -155,7 +155,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "marketing",
+      "key": "minor-business-marketing",
       "name": "Marketing",
       "school": "Business",
       "type": "minor",
@@ -163,7 +163,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "national-security-and-international-business",
+      "key": "minor-business-national-security-and-international-business",
       "name": "National Security and International Business",
       "school": "Business",
       "type": "minor",
@@ -171,7 +171,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "professional-sales-and-business-development",
+      "key": "minor-business-professional-sales-and-business-development",
       "name": "Professional Sales and Business Development",
       "school": "Business",
       "type": "minor",
@@ -179,7 +179,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "real-estate",
+      "key": "minor-business-real-estate",
       "name": "Real Estate",
       "school": "Business",
       "type": "minor",
@@ -187,7 +187,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "risk-management",
+      "key": "minor-business-risk-management",
       "name": "Risk Management",
       "school": "Business",
       "type": "minor",
@@ -195,7 +195,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "supply-chain-management",
+      "key": "minor-business-supply-chain-management",
       "name": "Supply Chain Management",
       "school": "Business",
       "type": "minor",
@@ -203,7 +203,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "wealth-management",
+      "key": "minor-business-wealth-management",
       "name": "Wealth Management",
       "school": "Business",
       "type": "minor",
@@ -211,7 +211,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "civic-leadership",
+      "key": "minor-civic-leadership-civic-leadership",
       "name": "Civic Leadership",
       "school": "Civic Leadership",
       "type": "minor",
@@ -219,7 +219,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "advertising",
+      "key": "minor-communication-advertising",
       "name": "Advertising",
       "school": "Communication",
       "type": "minor",
@@ -227,7 +227,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "communicating-for-development-and-philanthropy",
+      "key": "minor-communication-communicating-for-development-and-philanthropy",
       "name": "Communicating for Development and Philanthropy",
       "school": "Communication",
       "type": "minor",
@@ -235,7 +235,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "communicating-social-issues",
+      "key": "minor-communication-communicating-social-issues",
       "name": "Communicating Social Issues",
       "school": "Communication",
       "type": "minor",
@@ -243,7 +243,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "communication-studies",
+      "key": "minor-communication-communication-studies",
       "name": "Communication Studies",
       "school": "Communication",
       "type": "minor",
@@ -251,7 +251,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "digital-game-industries",
+      "key": "minor-communication-digital-game-industries",
       "name": "Digital Game Industries",
       "school": "Communication",
       "type": "minor",
@@ -259,7 +259,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "health-communication",
+      "key": "minor-communication-health-communication",
       "name": "Health Communication",
       "school": "Communication",
       "type": "minor",
@@ -267,7 +267,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "journalism-and-media",
+      "key": "minor-communication-journalism-and-media",
       "name": "Journalism and Media",
       "school": "Communication",
       "type": "minor",
@@ -275,7 +275,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "latino-media-arts-and-studies",
+      "key": "minor-communication-latino-media-arts-and-studies",
       "name": "Latino Media Arts and Studies",
       "school": "Communication",
       "type": "minor",
@@ -283,7 +283,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "media-and-entertainment-industries",
+      "key": "minor-communication-media-and-entertainment-industries",
       "name": "Media and Entertainment Industries",
       "school": "Communication",
       "type": "minor",
@@ -291,7 +291,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "professional-sales-and-business-development",
+      "key": "minor-communication-professional-sales-and-business-development",
       "name": "Professional Sales and Business Development",
       "school": "Communication",
       "type": "minor",
@@ -299,7 +299,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "radio-television-film",
+      "key": "minor-communication-radio-television-film",
       "name": "Radio-Television-Film",
       "school": "Communication",
       "type": "minor",
@@ -307,7 +307,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "science-communication",
+      "key": "minor-communication-science-communication",
       "name": "Science Communication",
       "school": "Communication",
       "type": "minor",
@@ -315,7 +315,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "sports-production-and-broadcasting",
+      "key": "minor-communication-sports-production-and-broadcasting",
       "name": "Sports Production and Broadcasting",
       "school": "Communication",
       "type": "minor",
@@ -323,7 +323,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "sports-media",
+      "key": "minor-communication-sports-media",
       "name": "Sports Media",
       "school": "Communication",
       "type": "minor",
@@ -331,7 +331,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "educational-leadership-and-policy-studies",
+      "key": "minor-education-educational-leadership-and-policy-studies",
       "name": "Educational Leadership and Policy Studies",
       "school": "Education",
       "type": "minor",
@@ -339,7 +339,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "educational-psychology",
+      "key": "minor-education-educational-psychology",
       "name": "Educational Psychology",
       "school": "Education",
       "type": "minor",
@@ -347,7 +347,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "kinesiology-and-health-education",
+      "key": "minor-education-kinesiology-and-health-education",
       "name": "Kinesiology and Health Education",
       "school": "Education",
       "type": "minor",
@@ -355,7 +355,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "urban-teachers",
+      "key": "minor-education-urban-teachers",
       "name": "Urban Teachers",
       "school": "Education",
       "type": "minor",
@@ -363,7 +363,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "materials-science-and-engineering",
+      "key": "minor-engineering-materials-science-and-engineering",
       "name": "Materials Science and Engineering",
       "school": "Engineering",
       "type": "minor",
@@ -371,7 +371,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "nuclear-engineering",
+      "key": "minor-engineering-nuclear-engineering",
       "name": "Nuclear Engineering",
       "school": "Engineering",
       "type": "minor",
@@ -379,7 +379,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "semiconductor-science-and-engineering",
+      "key": "minor-engineering-semiconductor-science-and-engineering",
       "name": "Semiconductor Science and Engineering",
       "school": "Engineering",
       "type": "minor",
@@ -387,7 +387,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "sustainable-energy",
+      "key": "minor-engineering-sustainable-energy",
       "name": "Sustainable Energy",
       "school": "Engineering",
       "type": "minor",
@@ -395,7 +395,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "art-history",
+      "key": "minor-fine-arts-art-history",
       "name": "Art History",
       "school": "Fine Arts",
       "type": "minor",
@@ -403,7 +403,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "arts-management-and-administration",
+      "key": "minor-fine-arts-arts-management-and-administration",
       "name": "Arts Management and Administration",
       "school": "Fine Arts",
       "type": "minor",
@@ -411,7 +411,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "dance",
+      "key": "minor-fine-arts-dance",
       "name": "Dance",
       "school": "Fine Arts",
       "type": "minor",
@@ -419,7 +419,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "music",
+      "key": "minor-fine-arts-music",
       "name": "Music",
       "school": "Fine Arts",
       "type": "minor",
@@ -427,7 +427,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "studio-art",
+      "key": "minor-fine-arts-studio-art",
       "name": "Studio Art",
       "school": "Fine Arts",
       "type": "minor",
@@ -435,7 +435,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "theatre",
+      "key": "minor-fine-arts-theatre",
       "name": "Theatre",
       "school": "Fine Arts",
       "type": "minor",
@@ -443,7 +443,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "computational-geosciences",
+      "key": "minor-geosciences-computational-geosciences",
       "name": "Computational Geosciences",
       "school": "Geosciences",
       "type": "minor",
@@ -451,7 +451,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "geosciences",
+      "key": "minor-geosciences-geosciences",
       "name": "Geosciences",
       "school": "Geosciences",
       "type": "minor",
@@ -459,7 +459,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "hydrology",
+      "key": "minor-geosciences-hydrology",
       "name": "Hydrology",
       "school": "Geosciences",
       "type": "minor",
@@ -467,7 +467,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "sedimentology-and-earth-surface-processes",
+      "key": "minor-geosciences-sedimentology-and-earth-surface-processes",
       "name": "Sedimentology and Earth Surface Processes",
       "school": "Geosciences",
       "type": "minor",
@@ -475,7 +475,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "african-and-african-diaspora-studies",
+      "key": "minor-liberal-arts-african-and-african-diaspora-studies",
       "name": "African and African Diaspora Studies",
       "school": "Liberal Arts",
       "type": "minor",
@@ -483,7 +483,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "american-sign-language-studies",
+      "key": "minor-liberal-arts-american-sign-language-studies",
       "name": "American Sign Language Studies",
       "school": "Liberal Arts",
       "type": "minor",
@@ -491,7 +491,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "american-studies",
+      "key": "minor-liberal-arts-american-studies",
       "name": "American Studies",
       "school": "Liberal Arts",
       "type": "minor",
@@ -499,7 +499,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "anthropology",
+      "key": "minor-liberal-arts-anthropology",
       "name": "Anthropology",
       "school": "Liberal Arts",
       "type": "minor",
@@ -507,7 +507,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "applied-economics",
+      "key": "minor-liberal-arts-applied-economics",
       "name": "Applied Economics",
       "school": "Liberal Arts",
       "type": "minor",
@@ -515,7 +515,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "arabic",
+      "key": "minor-liberal-arts-arabic",
       "name": "Arabic",
       "school": "Liberal Arts",
       "type": "minor",
@@ -523,7 +523,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "archaeology",
+      "key": "minor-liberal-arts-archaeology",
       "name": "Archaeology",
       "school": "Liberal Arts",
       "type": "minor",
@@ -531,7 +531,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "asian-american-studies",
+      "key": "minor-liberal-arts-asian-american-studies",
       "name": "Asian American Studies",
       "school": "Liberal Arts",
       "type": "minor",
@@ -539,7 +539,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "asian-religions",
+      "key": "minor-liberal-arts-asian-religions",
       "name": "Asian Religions",
       "school": "Liberal Arts",
       "type": "minor",
@@ -547,7 +547,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "bengali",
+      "key": "minor-liberal-arts-bengali",
       "name": "Bengali",
       "school": "Liberal Arts",
       "type": "minor",
@@ -555,7 +555,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "chinese",
+      "key": "minor-liberal-arts-chinese",
       "name": "Chinese",
       "school": "Liberal Arts",
       "type": "minor",
@@ -563,7 +563,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "classical-studies",
+      "key": "minor-liberal-arts-classical-studies",
       "name": "Classical Studies",
       "school": "Liberal Arts",
       "type": "minor",
@@ -571,7 +571,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "comparative-literature",
+      "key": "minor-liberal-arts-comparative-literature",
       "name": "Comparative Literature",
       "school": "Liberal Arts",
       "type": "minor",
@@ -579,7 +579,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "core-texts-and-ideas",
+      "key": "minor-liberal-arts-core-texts-and-ideas",
       "name": "Core Texts and Ideas",
       "school": "Liberal Arts",
       "type": "minor",
@@ -587,7 +587,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "creative-writing-in-spanish",
+      "key": "minor-liberal-arts-creative-writing-in-spanish",
       "name": "Creative Writing in Spanish",
       "school": "Liberal Arts",
       "type": "minor",
@@ -595,7 +595,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "cultural-anthropology",
+      "key": "minor-liberal-arts-cultural-anthropology",
       "name": "Cultural Anthropology",
       "school": "Liberal Arts",
       "type": "minor",
@@ -603,7 +603,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "cultural-expression-human-experience-and-thought",
+      "key": "minor-liberal-arts-cultural-expression-human-experience-and-thought",
       "name": "Cultural Expression, Human Experience, and Thought",
       "school": "Liberal Arts",
       "type": "minor",
@@ -611,7 +611,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "economics",
+      "key": "minor-liberal-arts-economics",
       "name": "Economics",
       "school": "Liberal Arts",
       "type": "minor",
@@ -619,7 +619,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "english",
+      "key": "minor-liberal-arts-english",
       "name": "English",
       "school": "Liberal Arts",
       "type": "minor",
@@ -627,7 +627,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "european-studies",
+      "key": "minor-liberal-arts-european-studies",
       "name": "European Studies",
       "school": "Liberal Arts",
       "type": "minor",
@@ -635,7 +635,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "evolutionary-and-functional-anatomy",
+      "key": "minor-liberal-arts-evolutionary-and-functional-anatomy",
       "name": "Evolutionary and Functional Anatomy",
       "school": "Liberal Arts",
       "type": "minor",
@@ -643,7 +643,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "french-studies",
+      "key": "minor-liberal-arts-french-studies",
       "name": "French Studies",
       "school": "Liberal Arts",
       "type": "minor",
@@ -651,7 +651,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "geography",
+      "key": "minor-liberal-arts-geography",
       "name": "Geography",
       "school": "Liberal Arts",
       "type": "minor",
@@ -659,7 +659,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "german-scandinavian-and-dutch-studies",
+      "key": "minor-liberal-arts-german-scandinavian-and-dutch-studies",
       "name": "German, Scandinavian, and Dutch Studies",
       "school": "Liberal Arts",
       "type": "minor",
@@ -667,7 +667,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "global-interreligious-dynamics",
+      "key": "minor-liberal-arts-global-interreligious-dynamics",
       "name": "Global Interreligious Dynamics",
       "school": "Liberal Arts",
       "type": "minor",
@@ -675,7 +675,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "government",
+      "key": "minor-liberal-arts-government",
       "name": "Government",
       "school": "Liberal Arts",
       "type": "minor",
@@ -683,7 +683,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "greek",
+      "key": "minor-liberal-arts-greek",
       "name": "Greek",
       "school": "Liberal Arts",
       "type": "minor",
@@ -691,7 +691,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "hebrew",
+      "key": "minor-liberal-arts-hebrew",
       "name": "Hebrew",
       "school": "Liberal Arts",
       "type": "minor",
@@ -699,7 +699,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "hindi",
+      "key": "minor-liberal-arts-hindi",
       "name": "Hindi",
       "school": "Liberal Arts",
       "type": "minor",
@@ -707,7 +707,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "history",
+      "key": "minor-liberal-arts-history",
       "name": "History",
       "school": "Liberal Arts",
       "type": "minor",
@@ -715,7 +715,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "holocaust-and-genocide-studies",
+      "key": "minor-liberal-arts-holocaust-and-genocide-studies",
       "name": "Holocaust and Genocide Studies",
       "school": "Liberal Arts",
       "type": "minor",
@@ -723,7 +723,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "italian-studies",
+      "key": "minor-liberal-arts-italian-studies",
       "name": "Italian Studies",
       "school": "Liberal Arts",
       "type": "minor",
@@ -731,7 +731,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "jewish-studies",
+      "key": "minor-liberal-arts-jewish-studies",
       "name": "Jewish Studies",
       "school": "Liberal Arts",
       "type": "minor",
@@ -739,7 +739,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "korean",
+      "key": "minor-liberal-arts-korean",
       "name": "Korean",
       "school": "Liberal Arts",
       "type": "minor",
@@ -747,7 +747,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "language-culture-and-communication",
+      "key": "minor-liberal-arts-language-culture-and-communication",
       "name": "Language, Culture, and Communication",
       "school": "Liberal Arts",
       "type": "minor",
@@ -755,7 +755,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "latin",
+      "key": "minor-liberal-arts-latin",
       "name": "Latin",
       "school": "Liberal Arts",
       "type": "minor",
@@ -763,7 +763,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "law-and-religion",
+      "key": "minor-liberal-arts-law-and-religion",
       "name": "Law and Religion",
       "school": "Liberal Arts",
       "type": "minor",
@@ -771,7 +771,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "law-justice-and-society",
+      "key": "minor-liberal-arts-law-justice-and-society",
       "name": "Law, Justice, and Society",
       "school": "Liberal Arts",
       "type": "minor",
@@ -779,7 +779,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "lesbian-gay-bisexual-transgender-and-queer-sexualities-studies",
+      "key": "minor-liberal-arts-lesbian-gay-bisexual-transgender-and-queer-sexualities-studies",
       "name": "Lesbian, Gay, Bisexual, Transgender, and Queer/Sexualities Studies",
       "school": "Liberal Arts",
       "type": "minor",
@@ -787,7 +787,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "malayalam",
+      "key": "minor-liberal-arts-malayalam",
       "name": "Malayalam",
       "school": "Liberal Arts",
       "type": "minor",
@@ -795,7 +795,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "medieval-studies",
+      "key": "minor-liberal-arts-medieval-studies",
       "name": "Medieval Studies",
       "school": "Liberal Arts",
       "type": "minor",
@@ -803,7 +803,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "mexican-american-and-latina-o-studies",
+      "key": "minor-liberal-arts-mexican-american-and-latina-o-studies",
       "name": "Mexican American and Latina/o Studies",
       "school": "Liberal Arts",
       "type": "minor",
@@ -811,7 +811,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "middle-eastern-studies",
+      "key": "minor-liberal-arts-middle-eastern-studies",
       "name": "Middle Eastern Studies",
       "school": "Liberal Arts",
       "type": "minor",
@@ -819,7 +819,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "military-leadership",
+      "key": "minor-liberal-arts-military-leadership",
       "name": "Military Leadership",
       "school": "Liberal Arts",
       "type": "minor",
@@ -827,7 +827,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "philosophy",
+      "key": "minor-liberal-arts-philosophy",
       "name": "Philosophy",
       "school": "Liberal Arts",
       "type": "minor",
@@ -835,7 +835,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "philosophy-of-law",
+      "key": "minor-liberal-arts-philosophy-of-law",
       "name": "Philosophy of Law",
       "school": "Liberal Arts",
       "type": "minor",
@@ -843,7 +843,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "philosophy-of-the-mind-and-language",
+      "key": "minor-liberal-arts-philosophy-of-the-mind-and-language",
       "name": "Philosophy of the Mind and Language",
       "school": "Liberal Arts",
       "type": "minor",
@@ -851,7 +851,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "politics-politics-and-economics",
+      "key": "minor-liberal-arts-politics-politics-and-economics",
       "name": "Politics, Politics, and Economics",
       "school": "Liberal Arts",
       "type": "minor",
@@ -859,7 +859,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "portuguese",
+      "key": "minor-liberal-arts-portuguese",
       "name": "Portuguese",
       "school": "Liberal Arts",
       "type": "minor",
@@ -867,7 +867,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "primatology",
+      "key": "minor-liberal-arts-primatology",
       "name": "Primatology",
       "school": "Liberal Arts",
       "type": "minor",
@@ -875,7 +875,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "religious-studies",
+      "key": "minor-liberal-arts-religious-studies",
       "name": "Religious Studies",
       "school": "Liberal Arts",
       "type": "minor",
@@ -883,7 +883,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "russian",
+      "key": "minor-liberal-arts-russian",
       "name": "Russian",
       "school": "Liberal Arts",
       "type": "minor",
@@ -891,7 +891,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "russian-east-european-and-eurasian-studies",
+      "key": "minor-liberal-arts-russian-east-european-and-eurasian-studies",
       "name": "Russian, East European, and Eurasian Studies",
       "school": "Liberal Arts",
       "type": "minor",
@@ -899,7 +899,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "sanskrit",
+      "key": "minor-liberal-arts-sanskrit",
       "name": "Sanskrit",
       "school": "Liberal Arts",
       "type": "minor",
@@ -907,7 +907,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "slavic-and-eurasian-languages",
+      "key": "minor-liberal-arts-slavic-and-eurasian-languages",
       "name": "Slavic and Eurasian Languages",
       "school": "Liberal Arts",
       "type": "minor",
@@ -915,7 +915,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "social-and-behavioral-sciences",
+      "key": "minor-liberal-arts-social-and-behavioral-sciences",
       "name": "Social and Behavioral Sciences",
       "school": "Liberal Arts",
       "type": "minor",
@@ -923,7 +923,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "sociology",
+      "key": "minor-liberal-arts-sociology",
       "name": "Sociology",
       "school": "Liberal Arts",
       "type": "minor",
@@ -931,7 +931,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "spanish",
+      "key": "minor-liberal-arts-spanish",
       "name": "Spanish",
       "school": "Liberal Arts",
       "type": "minor",
@@ -939,7 +939,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "tamil",
+      "key": "minor-liberal-arts-tamil",
       "name": "Tamil",
       "school": "Liberal Arts",
       "type": "minor",
@@ -947,7 +947,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "turkish",
+      "key": "minor-liberal-arts-turkish",
       "name": "Turkish",
       "school": "Liberal Arts",
       "type": "minor",
@@ -955,7 +955,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "ukrainian",
+      "key": "minor-liberal-arts-ukrainian",
       "name": "Ukrainian",
       "school": "Liberal Arts",
       "type": "minor",
@@ -963,7 +963,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "urban-studies",
+      "key": "minor-liberal-arts-urban-studies",
       "name": "Urban Studies",
       "school": "Liberal Arts",
       "type": "minor",
@@ -971,7 +971,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "urdu",
+      "key": "minor-liberal-arts-urdu",
       "name": "Urdu",
       "school": "Liberal Arts",
       "type": "minor",
@@ -979,7 +979,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "uteach-liberal-arts",
+      "key": "minor-liberal-arts-uteach-liberal-arts",
       "name": "UTeach-Liberal Arts",
       "school": "Liberal Arts",
       "type": "minor",
@@ -987,7 +987,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "women-s-and-gender-studies",
+      "key": "minor-liberal-arts-women-s-and-gender-studies",
       "name": "Women's and Gender Studies",
       "school": "Liberal Arts",
       "type": "minor",
@@ -995,7 +995,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "child-and-family-health",
+      "key": "minor-natural-sciences-child-and-family-health",
       "name": "Child and Family Health",
       "school": "Natural Sciences",
       "type": "minor",
@@ -1003,7 +1003,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "fashion-and-consumer-science",
+      "key": "minor-natural-sciences-fashion-and-consumer-science",
       "name": "Fashion and Consumer Science",
       "school": "Natural Sciences",
       "type": "minor",
@@ -1011,7 +1011,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "human-development-and-family-sciences",
+      "key": "minor-natural-sciences-human-development-and-family-sciences",
       "name": "Human Development and Family Sciences",
       "school": "Natural Sciences",
       "type": "minor",
@@ -1019,7 +1019,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "informatics",
+      "key": "minor-natural-sciences-informatics",
       "name": "Informatics",
       "school": "Natural Sciences",
       "type": "minor",
@@ -1027,7 +1027,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "robotics",
+      "key": "minor-natural-sciences-robotics",
       "name": "Robotics",
       "school": "Natural Sciences",
       "type": "minor",
@@ -1035,7 +1035,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "statistics-and-data-science",
+      "key": "minor-natural-sciences-statistics-and-data-science",
       "name": "Statistics and Data Science",
       "school": "Natural Sciences",
       "type": "minor",
@@ -1043,7 +1043,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "international-development",
+      "key": "minor-public-affairs-international-development",
       "name": "International Development",
       "school": "Public Affairs",
       "type": "minor",
@@ -1051,7 +1051,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "national-security",
+      "key": "minor-public-affairs-national-security",
       "name": "National Security",
       "school": "Public Affairs",
       "type": "minor",
@@ -1059,7 +1059,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "critical-disability-studies",
+      "key": "minor-social-work-critical-disability-studies",
       "name": "Critical Disability Studies",
       "school": "Social Work",
       "type": "minor",
@@ -1067,7 +1067,7 @@
       "hours": "15-18 hrs"
     },
     {
-      "key": "social-work",
+      "key": "minor-social-work-social-work",
       "name": "Social Work",
       "school": "Social Work",
       "type": "minor",
@@ -1077,7 +1077,7 @@
   ],
   "certificates": [
     {
-      "key": "children-and-society",
+      "key": "certificate-undergraduate-studies-children-and-society",
       "name": "Children and Society",
       "school": "Undergraduate Studies",
       "type": "certificate",
@@ -1085,7 +1085,7 @@
       "hours": "18-24 hrs"
     },
     {
-      "key": "community-resilience-and-the-environment",
+      "key": "certificate-undergraduate-studies-community-resilience-and-the-environment",
       "name": "Community Resilience and the Environment",
       "school": "Undergraduate Studies",
       "type": "certificate",
@@ -1093,7 +1093,7 @@
       "hours": "18-24 hrs"
     },
     {
-      "key": "conflict-prevention-management-and-resolution",
+      "key": "certificate-undergraduate-studies-conflict-prevention-management-and-resolution",
       "name": "Conflict Prevention, Management, and Resolution",
       "school": "Undergraduate Studies",
       "type": "certificate",
@@ -1101,7 +1101,7 @@
       "hours": "18-24 hrs"
     },
     {
-      "key": "criminal-law-justice-and-inequality",
+      "key": "certificate-undergraduate-studies-criminal-law-justice-and-inequality",
       "name": "Criminal Law, Justice, and Inequality",
       "school": "Undergraduate Studies",
       "type": "certificate",
@@ -1109,7 +1109,7 @@
       "hours": "18-24 hrs"
     },
     {
-      "key": "design-strategies",
+      "key": "certificate-undergraduate-studies-design-strategies",
       "name": "Design Strategies",
       "school": "Undergraduate Studies",
       "type": "certificate",
@@ -1117,7 +1117,7 @@
       "hours": "18-24 hrs"
     },
     {
-      "key": "digital-arts-and-media",
+      "key": "certificate-undergraduate-studies-digital-arts-and-media",
       "name": "Digital Arts and Media",
       "school": "Undergraduate Studies",
       "type": "certificate",
@@ -1125,7 +1125,7 @@
       "hours": "18-24 hrs"
     },
     {
-      "key": "environment-and-sustainability",
+      "key": "certificate-undergraduate-studies-environment-and-sustainability",
       "name": "Environment and Sustainability",
       "school": "Undergraduate Studies",
       "type": "certificate",
@@ -1133,7 +1133,7 @@
       "hours": "18-24 hrs"
     },
     {
-      "key": "ethics-and-leadership-in-business",
+      "key": "certificate-undergraduate-studies-ethics-and-leadership-in-business",
       "name": "Ethics and Leadership in Business",
       "school": "Undergraduate Studies",
       "type": "certificate",
@@ -1141,7 +1141,7 @@
       "hours": "18-24 hrs"
     },
     {
-      "key": "ethics-and-leadership-in-health-care",
+      "key": "certificate-undergraduate-studies-ethics-and-leadership-in-health-care",
       "name": "Ethics and Leadership in Health Care",
       "school": "Undergraduate Studies",
       "type": "certificate",
@@ -1149,7 +1149,7 @@
       "hours": "18-24 hrs"
     },
     {
-      "key": "ethics-and-leadership-in-law-politics-and-government",
+      "key": "certificate-undergraduate-studies-ethics-and-leadership-in-law-politics-and-government",
       "name": "Ethics and Leadership in Law, Politics, and Government",
       "school": "Undergraduate Studies",
       "type": "certificate",
@@ -1157,7 +1157,7 @@
       "hours": "18-24 hrs"
     },
     {
-      "key": "game-design-and-development",
+      "key": "certificate-undergraduate-studies-game-design-and-development",
       "name": "Game Design and Development",
       "school": "Undergraduate Studies",
       "type": "certificate",
@@ -1165,7 +1165,7 @@
       "hours": "18-24 hrs"
     },
     {
-      "key": "human-rights-and-social-justice",
+      "key": "certificate-undergraduate-studies-human-rights-and-social-justice",
       "name": "Human Rights and Social Justice",
       "school": "Undergraduate Studies",
       "type": "certificate",
@@ -1173,7 +1173,7 @@
       "hours": "18-24 hrs"
     },
     {
-      "key": "innovation-creativity-and-entrepreneurship",
+      "key": "certificate-undergraduate-studies-innovation-creativity-and-entrepreneurship",
       "name": "Innovation, Creativity, and Entrepreneurship",
       "school": "Undergraduate Studies",
       "type": "certificate",
@@ -1181,7 +1181,7 @@
       "hours": "18-24 hrs"
     },
     {
-      "key": "museum-studies",
+      "key": "certificate-undergraduate-studies-museum-studies",
       "name": "Museum Studies",
       "school": "Undergraduate Studies",
       "type": "certificate",
@@ -1189,7 +1189,7 @@
       "hours": "18-24 hrs"
     },
     {
-      "key": "nonprofits-and-social-entrepreneurship",
+      "key": "certificate-undergraduate-studies-nonprofits-and-social-entrepreneurship",
       "name": "Nonprofits and Social Entrepreneurship",
       "school": "Undergraduate Studies",
       "type": "certificate",
@@ -1197,7 +1197,7 @@
       "hours": "18-24 hrs"
     },
     {
-      "key": "patients-practitioners-and-cultures-of-care",
+      "key": "certificate-undergraduate-studies-patients-practitioners-and-cultures-of-care",
       "name": "Patients, Practitioners, and Cultures of Care",
       "school": "Undergraduate Studies",
       "type": "certificate",
@@ -1205,7 +1205,7 @@
       "hours": "18-24 hrs"
     },
     {
-      "key": "public-policy",
+      "key": "certificate-undergraduate-studies-public-policy",
       "name": "Public Policy",
       "school": "Undergraduate Studies",
       "type": "certificate",
@@ -1213,7 +1213,7 @@
       "hours": "18-24 hrs"
     },
     {
-      "key": "smart-cities",
+      "key": "certificate-undergraduate-studies-smart-cities",
       "name": "Smart Cities",
       "school": "Undergraduate Studies",
       "type": "certificate",
@@ -1221,7 +1221,7 @@
       "hours": "18-24 hrs"
     },
     {
-      "key": "social-inequality-health-and-policy",
+      "key": "certificate-undergraduate-studies-social-inequality-health-and-policy",
       "name": "Social Inequality, Health, and Policy",
       "school": "Undergraduate Studies",
       "type": "certificate",
@@ -1229,7 +1229,7 @@
       "hours": "18-24 hrs"
     },
     {
-      "key": "elements-of-business",
+      "key": "certificate-business-elements-of-business",
       "name": "Elements of Business",
       "school": "Business",
       "type": "certificate",
@@ -1237,7 +1237,7 @@
       "hours": "18-24 hrs"
     },
     {
-      "key": "classical-education",
+      "key": "certificate-civic-leadership-classical-education",
       "name": "Classical Education",
       "school": "Civic Leadership",
       "type": "certificate",
@@ -1245,7 +1245,7 @@
       "hours": "18-24 hrs"
     },
     {
-      "key": "deaf-access",
+      "key": "certificate-education-deaf-access",
       "name": "Deaf Access",
       "school": "Education",
       "type": "certificate",
@@ -1253,7 +1253,7 @@
       "hours": "18-24 hrs"
     },
     {
-      "key": "computational-science-and-engineering",
+      "key": "certificate-engineering-computational-science-and-engineering",
       "name": "Computational Science and Engineering",
       "school": "Engineering",
       "type": "certificate",
@@ -1261,7 +1261,7 @@
       "hours": "18-24 hrs"
     },
     {
-      "key": "humanitarian-engineering",
+      "key": "certificate-engineering-humanitarian-engineering",
       "name": "Humanitarian Engineering",
       "school": "Engineering",
       "type": "certificate",
@@ -1269,7 +1269,7 @@
       "hours": "18-24 hrs"
     },
     {
-      "key": "national-academy-of-engineering-grand-challenges-scholars-program",
+      "key": "certificate-engineering-national-academy-of-engineering-grand-challenges-scholars-program",
       "name": "National Academy of Engineering Grand Challenges Scholars Program",
       "school": "Engineering",
       "type": "certificate",
@@ -1277,7 +1277,7 @@
       "hours": "18-24 hrs"
     },
     {
-      "key": "computational-science-and-engineering",
+      "key": "certificate-geosciences-computational-science-and-engineering",
       "name": "Computational Science and Engineering",
       "school": "Geosciences",
       "type": "certificate",
@@ -1285,7 +1285,7 @@
       "hours": "18-24 hrs"
     },
     {
-      "key": "african-studies",
+      "key": "certificate-liberal-arts-african-studies",
       "name": "African Studies",
       "school": "Liberal Arts",
       "type": "certificate",
@@ -1293,7 +1293,7 @@
       "hours": "18-24 hrs"
     },
     {
-      "key": "business-spanish",
+      "key": "certificate-liberal-arts-business-spanish",
       "name": "Business Spanish",
       "school": "Liberal Arts",
       "type": "certificate",
@@ -1301,7 +1301,7 @@
       "hours": "18-24 hrs"
     },
     {
-      "key": "computational-science-and-engineering",
+      "key": "certificate-liberal-arts-computational-science-and-engineering",
       "name": "Computational Science and Engineering",
       "school": "Liberal Arts",
       "type": "certificate",
@@ -1309,7 +1309,7 @@
       "hours": "18-24 hrs"
     },
     {
-      "key": "core-texts-and-ideas",
+      "key": "certificate-liberal-arts-core-texts-and-ideas",
       "name": "Core Texts and Ideas",
       "school": "Liberal Arts",
       "type": "certificate",
@@ -1317,7 +1317,7 @@
       "hours": "18-24 hrs"
     },
     {
-      "key": "creative-writing",
+      "key": "certificate-liberal-arts-creative-writing",
       "name": "Creative Writing",
       "school": "Liberal Arts",
       "type": "certificate",
@@ -1325,7 +1325,7 @@
       "hours": "18-24 hrs"
     },
     {
-      "key": "digital-humanities",
+      "key": "certificate-liberal-arts-digital-humanities",
       "name": "Digital Humanities",
       "school": "Liberal Arts",
       "type": "certificate",
@@ -1333,7 +1333,7 @@
       "hours": "18-24 hrs"
     },
     {
-      "key": "geospatial-artificial-intelligence",
+      "key": "certificate-liberal-arts-geospatial-artificial-intelligence",
       "name": "Geospatial Artificial Intelligence",
       "school": "Liberal Arts",
       "type": "certificate",
@@ -1341,7 +1341,7 @@
       "hours": "18-24 hrs"
     },
     {
-      "key": "german",
+      "key": "certificate-liberal-arts-german",
       "name": "German",
       "school": "Liberal Arts",
       "type": "certificate",
@@ -1349,7 +1349,7 @@
       "hours": "18-24 hrs"
     },
     {
-      "key": "history-and-philosophy-of-science",
+      "key": "certificate-liberal-arts-history-and-philosophy-of-science",
       "name": "History and Philosophy of Science",
       "school": "Liberal Arts",
       "type": "certificate",
@@ -1357,7 +1357,7 @@
       "hours": "18-24 hrs"
     },
     {
-      "key": "indigenous-studies",
+      "key": "certificate-liberal-arts-indigenous-studies",
       "name": "Indigenous Studies",
       "school": "Liberal Arts",
       "type": "certificate",
@@ -1365,7 +1365,7 @@
       "hours": "18-24 hrs"
     },
     {
-      "key": "japanese",
+      "key": "certificate-liberal-arts-japanese",
       "name": "Japanese",
       "school": "Liberal Arts",
       "type": "certificate",
@@ -1373,7 +1373,7 @@
       "hours": "18-24 hrs"
     },
     {
-      "key": "lesbian-gay-bisexual-transgender-and-queer-sexualities-studies",
+      "key": "certificate-liberal-arts-lesbian-gay-bisexual-transgender-and-queer-sexualities-studies",
       "name": "Lesbian, Gay, Bisexual, Transgender, and Queer/Sexualities Studies",
       "school": "Liberal Arts",
       "type": "certificate",
@@ -1381,7 +1381,7 @@
       "hours": "18-24 hrs"
     },
     {
-      "key": "security-studies",
+      "key": "certificate-liberal-arts-security-studies",
       "name": "Security Studies",
       "school": "Liberal Arts",
       "type": "certificate",
@@ -1389,7 +1389,7 @@
       "hours": "18-24 hrs"
     },
     {
-      "key": "spanish-for-medical-professions",
+      "key": "certificate-liberal-arts-spanish-for-medical-professions",
       "name": "Spanish for Medical Professions",
       "school": "Liberal Arts",
       "type": "certificate",
@@ -1397,7 +1397,7 @@
       "hours": "18-24 hrs"
     },
     {
-      "key": "spanish-for-mental-health-professions",
+      "key": "certificate-liberal-arts-spanish-for-mental-health-professions",
       "name": "Spanish for Mental Health Professions",
       "school": "Liberal Arts",
       "type": "certificate",
@@ -1405,7 +1405,7 @@
       "hours": "18-24 hrs"
     },
     {
-      "key": "advanced-mathematics",
+      "key": "certificate-natural-sciences-advanced-mathematics",
       "name": "Advanced Mathematics",
       "school": "Natural Sciences",
       "type": "certificate",
@@ -1413,7 +1413,7 @@
       "hours": "18-24 hrs"
     },
     {
-      "key": "applied-statistical-modeling",
+      "key": "certificate-natural-sciences-applied-statistical-modeling",
       "name": "Applied Statistical Modeling",
       "school": "Natural Sciences",
       "type": "certificate",
@@ -1421,7 +1421,7 @@
       "hours": "18-24 hrs"
     },
     {
-      "key": "computational-science-and-engineering",
+      "key": "certificate-natural-sciences-computational-science-and-engineering",
       "name": "Computational Science and Engineering",
       "school": "Natural Sciences",
       "type": "certificate",
@@ -1429,7 +1429,7 @@
       "hours": "18-24 hrs"
     },
     {
-      "key": "digital-humanities",
+      "key": "certificate-natural-sciences-digital-humanities",
       "name": "Digital Humanities",
       "school": "Natural Sciences",
       "type": "certificate",
@@ -1437,7 +1437,7 @@
       "hours": "18-24 hrs"
     },
     {
-      "key": "evidence-and-inquiry",
+      "key": "certificate-natural-sciences-evidence-and-inquiry",
       "name": "Evidence and Inquiry",
       "school": "Natural Sciences",
       "type": "certificate",
@@ -1445,7 +1445,7 @@
       "hours": "18-24 hrs"
     },
     {
-      "key": "food-and-society",
+      "key": "certificate-natural-sciences-food-and-society",
       "name": "Food and Society",
       "school": "Natural Sciences",
       "type": "certificate",
@@ -1453,7 +1453,7 @@
       "hours": "18-24 hrs"
     },
     {
-      "key": "forensic-science",
+      "key": "certificate-natural-sciences-forensic-science",
       "name": "Forensic Science",
       "school": "Natural Sciences",
       "type": "certificate",
@@ -1461,7 +1461,7 @@
       "hours": "18-24 hrs"
     },
     {
-      "key": "marine-science",
+      "key": "certificate-natural-sciences-marine-science",
       "name": "Marine Science",
       "school": "Natural Sciences",
       "type": "certificate",
@@ -1469,7 +1469,7 @@
       "hours": "18-24 hrs"
     },
     {
-      "key": "pre-health-professions",
+      "key": "certificate-natural-sciences-pre-health-professions",
       "name": "Pre-Health Professions",
       "school": "Natural Sciences",
       "type": "certificate",
@@ -1477,7 +1477,7 @@
       "hours": "18-24 hrs"
     },
     {
-      "key": "programming-and-computation",
+      "key": "certificate-natural-sciences-programming-and-computation",
       "name": "Programming and Computation",
       "school": "Natural Sciences",
       "type": "certificate",
@@ -1485,7 +1485,7 @@
       "hours": "18-24 hrs"
     },
     {
-      "key": "quantum-information-science",
+      "key": "certificate-natural-sciences-quantum-information-science",
       "name": "Quantum Information Science",
       "school": "Natural Sciences",
       "type": "certificate",
@@ -1493,7 +1493,7 @@
       "hours": "18-24 hrs"
     },
     {
-      "key": "textile-conservation-and-museum-studies",
+      "key": "certificate-natural-sciences-textile-conservation-and-museum-studies",
       "name": "Textile Conservation and Museum Studies",
       "school": "Natural Sciences",
       "type": "certificate",
@@ -1501,7 +1501,7 @@
       "hours": "18-24 hrs"
     },
     {
-      "key": "uteach-natural-sciences-secondary-teaching",
+      "key": "certificate-natural-sciences-uteach-natural-sciences-secondary-teaching",
       "name": "UTeach-Natural Sciences Secondary Teaching",
       "school": "Natural Sciences",
       "type": "certificate",
@@ -1509,7 +1509,7 @@
       "hours": "18-24 hrs"
     },
     {
-      "key": "uteach-natural-sciences-secondary-teaching-option-accelerated-track",
+      "key": "certificate-natural-sciences-uteach-natural-sciences-secondary-teaching-option-accelerated-track",
       "name": "UTeach-Natural Sciences Secondary Teaching Option Accelerated Track",
       "school": "Natural Sciences",
       "type": "certificate",
@@ -1517,7 +1517,7 @@
       "hours": "18-24 hrs"
     },
     {
-      "key": "uteach-teacher-certification",
+      "key": "certificate-natural-sciences-uteach-teacher-certification",
       "name": "UTeach Teacher Certification",
       "school": "Natural Sciences",
       "type": "certificate",

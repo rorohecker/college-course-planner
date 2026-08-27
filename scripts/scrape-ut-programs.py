@@ -50,7 +50,7 @@ def parse_section(html: str, start_marker: str, end_marker: str, ptype: str) -> 
                 continue
             programs.append(
                 {
-                    "key": slugify(name),
+                    "key": slugify(f"{ptype}-{school}-{name}"),
                     "name": name,
                     "school": school,
                     "type": ptype,
