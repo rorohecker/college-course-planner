@@ -206,6 +206,12 @@ body{font-family:-apple-system,'Segoe UI',system-ui,sans-serif;background:var(--
 .start-update{font-size:11px;color:var(--text3);padding:8px 10px;border-radius:7px;background:var(--surface2);margin-top:8px}
 .start-actions{display:flex;gap:8px;justify-content:flex-end;align-items:center;margin-top:14px;flex-wrap:wrap}
 .start-check{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text2);margin-right:auto;cursor:pointer;user-select:none}
+.update-settings{margin-top:14px;padding-top:12px;border-top:1px solid var(--border2)}
+.update-settings .tk-h{margin-bottom:8px}
+.update-pref{display:flex;align-items:flex-start;gap:7px;font-size:12px;color:var(--text2);line-height:1.4;margin-bottom:7px;cursor:pointer;user-select:none}
+.update-pref input{margin-top:2px;flex-shrink:0}
+.update-pref-hint{font-size:10px;color:var(--text3);margin-top:2px}
+.update-remembered{font-size:11px;color:var(--text3);margin-top:8px;padding:6px 9px;background:var(--surface2);border-radius:6px;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
 .linkbtn{padding:6px 12px;border-radius:6px;border:1px solid var(--border2);background:var(--surface2);color:var(--text);cursor:pointer;font-size:12px;text-decoration:none}
 .linkbtn.p{background:var(--accent);border-color:var(--accent);color:#fff}
 .linkbtn:hover{background:var(--border)}
@@ -482,7 +488,7 @@ body{font-family:-apple-system,'Segoe UI',system-ui,sans-serif;background:var(--
 </script>
 <script>
 // ─── Static data ──────────────────────────────────────────────────────────────
-const APP_VERSION='2026.08.27.3';
+const APP_VERSION='2026.09.01.2';
 // Bump when migrateFlowchartLayout rules change — migrations run once per schedule per version.
 const LAYOUT_MIGRATION_VERSION=22;
 // Raw URL is used only for parsing APP_VERSION on the live copy — never as a user link
@@ -497,6 +503,13 @@ const LAST_EXPORT_KEY='cp-last-export';
 const EXPORT_SNOOZE_KEY='cp-export-snooze';
 const UPDATE_DISMISS_KEY='cp-update-dismissed';
 const UPDATE_VERIFY_KEY='cp-update-verify';
+const UPDATE_NOTIFY_KEY='cp-update-notified';
+const AUTO_UPDATE_PREFS_KEY='cp-auto-update-prefs';
+const UPDATE_LAST_CHECK_KEY='cp-update-last-check';
+const UPDATE_HANDLE_DB='cp-update-db';
+const UPDATE_HANDLE_STORE='file';
+const AUTO_CHECK_INTERVAL_MS=6*60*60*1000;
+const AUTO_CHECK_MIN_INTERVAL_MS=30*60*1000;
 const EXPORT_REMINDER_DAYS=14;
 const EXPORT_SNOOZE_DAYS=7;
 
@@ -1182,6 +1195,7 @@ const S={
   startNote:true,
   update:{state:'idle',latest:null,checkedAt:null,error:null},
   updateDismissed:false,
+  updateRememberedFile:null,
   lastSaved:null,
   lastExportAt:null,
   exportSnoozedUntil:0,
@@ -1256,6 +1270,153 @@ function readUpdateVerify(){
   }catch(e){return null;}
 }
 function clearUpdateVerify(){try{localStorage.removeItem(UPDATE_VERIFY_KEY);}catch(e){}}
+const DEFAULT_AUTO_UPDATE_PREFS={autoCheck:true,autoApply:false,autoDownload:false,notify:true};
+function readAutoUpdatePrefs(){
+  try{
+    const raw=localStorage.getItem(AUTO_UPDATE_PREFS_KEY);
+    if(!raw)return{...DEFAULT_AUTO_UPDATE_PREFS};
+    return{...DEFAULT_AUTO_UPDATE_PREFS,...JSON.parse(raw)};
+  }catch(e){return{...DEFAULT_AUTO_UPDATE_PREFS};}
+}
+function writeAutoUpdatePrefs(prefs){
+  try{localStorage.setItem(AUTO_UPDATE_PREFS_KEY,JSON.stringify(prefs));}catch(e){}
+}
+function readUpdateLastCheck(){
+  try{return parseInt(localStorage.getItem(UPDATE_LAST_CHECK_KEY)||'0',10)||0;}catch(e){return 0;}
+}
+function writeUpdateLastCheck(ts){
+  try{localStorage.setItem(UPDATE_LAST_CHECK_KEY,String(ts));}catch(e){}
+}
+function shouldNotifyForVersion(latest){
+  try{return localStorage.getItem(UPDATE_NOTIFY_KEY)!==latest;}catch(e){return true;}
+}
+function markNotifiedForVersion(latest){
+  try{localStorage.setItem(UPDATE_NOTIFY_KEY,latest);}catch(e){}
+}
+function openUpdateHandleDb(){
+  return new Promise((resolve,reject)=>{
+    if(!('indexedDB'in window)){reject(new Error('indexedDB unavailable'));return;}
+    const req=indexedDB.open(UPDATE_HANDLE_DB,1);
+    req.onupgradeneeded=()=>{req.result.createObjectStore(UPDATE_HANDLE_STORE);};
+    req.onsuccess=()=>resolve(req.result);
+    req.onerror=()=>reject(req.error||new Error('indexedDB open failed'));
+  });
+}
+async function saveUpdateFileHandle(handle){
+  if(!handle)return;
+  const db=await openUpdateHandleDb();
+  await new Promise((resolve,reject)=>{
+    const tx=db.transaction(UPDATE_HANDLE_STORE,'readwrite');
+    tx.objectStore(UPDATE_HANDLE_STORE).put(handle,'planner');
+    tx.oncomplete=()=>resolve();
+    tx.onerror=()=>reject(tx.error);
+  });
+  S.updateRememberedFile=handle.name||'planner file';
+}
+async function loadUpdateFileHandle(){
+  if(!('indexedDB'in window))return null;
+  try{
+    const db=await openUpdateHandleDb();
+    const handle=await new Promise((resolve,reject)=>{
+      const tx=db.transaction(UPDATE_HANDLE_STORE,'readonly');
+      const req=tx.objectStore(UPDATE_HANDLE_STORE).get('planner');
+      req.onsuccess=()=>resolve(req.result||null);
+      req.onerror=()=>reject(req.error);
+    });
+    if(handle)S.updateRememberedFile=handle.name||'planner file';
+    return handle||null;
+  }catch(e){return null;}
+}
+async function clearUpdateFileHandle(){
+  try{
+    const db=await openUpdateHandleDb();
+    await new Promise((resolve,reject)=>{
+      const tx=db.transaction(UPDATE_HANDLE_STORE,'readwrite');
+      tx.objectStore(UPDATE_HANDLE_STORE).delete('planner');
+      tx.oncomplete=()=>resolve();
+      tx.onerror=()=>reject(tx.error);
+    });
+  }catch(e){}
+  S.updateRememberedFile=null;
+}
+async function writePlannerHtmlToHandle(handle,html){
+  const perm=await handle.queryPermission({mode:'readwrite'});
+  const granted=perm==='granted'?perm:await handle.requestPermission({mode:'readwrite'});
+  if(granted!=='granted')throw new Error('Permission denied for write access.');
+  const writable=await handle.createWritable();
+  await writable.write(new Blob([html],{type:'text/html'}));
+  await writable.close();
+  return handle.name||'(unknown)';
+}
+async function fetchLatestPlannerHtml(){
+  const res=await fetch(UPDATE_URL+'?v='+Date.now(),{cache:'no-store'});
+  if(!res.ok)throw new Error('HTTP '+res.status);
+  return res.text();
+}
+function parsePlannerVersion(html){
+  return(html.match(/const APP_VERSION=['"]([^'"]+)['"]/)||[])[1]||null;
+}
+async function notifyUpdateAvailable(latest){
+  const prefs=readAutoUpdatePrefs();
+  if(!prefs.notify||!('Notification'in window)||!shouldNotifyForVersion(latest))return;
+  try{
+    if(Notification.permission==='default')await Notification.requestPermission();
+    if(Notification.permission!=='granted')return;
+    new Notification('College Course Planner update',{
+      body:`v${latest} is available (you're on v${APP_VERSION}). Open the planner to apply.`,
+      tag:'cp-update',
+    });
+    markNotifiedForVersion(latest);
+  }catch(e){}
+}
+async function maybeAutoApplyUpdate(html,latest){
+  const prefs=readAutoUpdatePrefs();
+  if(!prefs.autoApply&&!prefs.autoDownload)return;
+  if(S.update?.state==='applying'||S.update?.state==='applied'||S.update?.state==='downloaded')return;
+  if(prefs.autoApply&&canUseFilePicker()){
+    const handle=await loadUpdateFileHandle();
+    if(handle){
+      try{
+        S.update={...S.update,state:'applying',error:null,savedAs:null,nameMismatch:false,autoTriggered:true};render();
+        const savedAs=await writePlannerHtmlToHandle(handle,html);
+        const expected=currentFileName();
+        const nameMismatch=!!expected&&savedAs.toLowerCase()!==expected.toLowerCase();
+        S.update={...S.update,state:'applied',latest,savedAs,nameMismatch,autoTriggered:true};render();
+        return;
+      }catch(e){
+        S.update={...S.update,state:'available',error:e?.message||String(e),autoTriggered:true};render();
+      }
+    }
+  }
+  if(prefs.autoDownload){
+    const dlName=currentFileName()||'college-course-planner.html';
+    downloadPlannerHtml(html,dlName);
+    S.update={...S.update,state:'downloaded',latest,downloadedAs:dlName,autoTriggered:true};render();
+  }
+}
+function updateSettingsHtml(){
+  const prefs=readAutoUpdatePrefs();
+  const fsa=canUseFilePicker();
+  const remembered=S.updateRememberedFile;
+  const lastCheck=readUpdateLastCheck();
+  const lastCheckLine=lastCheck?`Last checked ${relTime(lastCheck)}.`:'Not checked yet this session.';
+  return`<div class="update-settings">
+    <div class="tk-h">Auto-update</div>
+    <label class="update-pref"><input type="checkbox" data-a="toggle-update-pref" data-pref="autoCheck" ${prefs.autoCheck?'checked':''}>
+      <span>Check for updates every 6 hours and when you return to this tab<div class="update-pref-hint">${esc(lastCheckLine)}</div></span>
+    </label>
+    <label class="update-pref"><input type="checkbox" data-a="toggle-update-pref" data-pref="autoApply" ${prefs.autoApply?'checked':''} ${fsa?'':'disabled'}>
+      <span>Apply updates automatically to a remembered file${fsa?'':' <span class="update-pref-hint">(Chrome/Edge on https or localhost only)</span>'}</span>
+    </label>
+    <label class="update-pref"><input type="checkbox" data-a="toggle-update-pref" data-pref="autoDownload" ${prefs.autoDownload?'checked':''}>
+      <span>Auto-download when an update is found (if in-place apply isn't available)</span>
+    </label>
+    <label class="update-pref"><input type="checkbox" data-a="toggle-update-pref" data-pref="notify" ${prefs.notify?'checked':''}>
+      <span>Desktop notification when an update is available</span>
+    </label>
+    ${remembered?`<div class="update-remembered"><span>Remembered file: <code>${esc(remembered)}</code></span><button type="button" class="linkbtn" data-a="forget-update-file" style="font-size:10px;padding:2px 8px">Forget</button></div>`:fsa?`<div class="update-pref-hint" style="margin-top:4px">Use <b>Apply update</b> once to remember your planner file for future auto-updates.</div>`:''}
+  </div>`;
+}
 function reloadPlanner(){
   const u=S.update||{};
   const expected=u.state==='verify-failed'?(u.expected||u.latest):u.latest;
@@ -1280,26 +1441,30 @@ function downloadPlannerHtml(html,filename){
 async function applyUpdate(){
   if(typeof fetch!=='function'){alert('Your browser cannot fetch updates here.');return;}
   const prevState=S.update?.state||'idle';
-  S.update={...S.update,state:'applying',_prevState:prevState,error:null,savedAs:null,nameMismatch:false};render();
+  S.update={...S.update,state:'applying',_prevState:prevState,error:null,savedAs:null,nameMismatch:false,autoTriggered:false};render();
   try{
-    const res=await fetch(UPDATE_URL+'?v='+Date.now(),{cache:'no-store'});
-    if(!res.ok)throw new Error('HTTP '+res.status);
-    const html=await res.text();
-    const latestMatch=html.match(/const APP_VERSION=['"]([^'"]+)['"]/);
-    const latest=latestMatch?latestMatch[1]:S.update.latest;
-    // In-place overwrite only works on https/localhost — not when opened as a local file.
+    const html=await fetchLatestPlannerHtml();
+    const latest=parsePlannerVersion(html)||S.update.latest;
     if(canUseFilePicker()){
+      const remembered=await loadUpdateFileHandle();
+      if(remembered){
+        try{
+          const savedAs=await writePlannerHtmlToHandle(remembered,html);
+          const expected=currentFileName();
+          const nameMismatch=!!expected&&savedAs.toLowerCase()!==expected.toLowerCase();
+          S.update={...S.update,state:'applied',latest,savedAs,nameMismatch};render();
+          return;
+        }catch(e){
+          if(e?.name!=='NotAllowedError'){/* fall through to picker */}
+        }
+      }
       try{
         const [handle]=await window.showOpenFilePicker({
           types:[{description:'College Course Planner',accept:{'text/html':['.html','.htm']}}],
           multiple:false,
         });
-        const perm=await handle.requestPermission({mode:'readwrite'});
-        if(perm!=='granted')throw new Error('Permission denied for write access.');
-        const writable=await handle.createWritable();
-        await writable.write(new Blob([html],{type:'text/html'}));
-        await writable.close();
-        const savedAs=handle.name||'(unknown)';
+        const savedAs=await writePlannerHtmlToHandle(handle,html);
+        await saveUpdateFileHandle(handle);
         const expected=currentFileName();
         const nameMismatch=!!expected&&savedAs.toLowerCase()!==expected.toLowerCase();
         S.update={...S.update,state:'applied',latest,savedAs,nameMismatch};render();
@@ -1309,7 +1474,6 @@ async function applyUpdate(){
           const restore=S.update._prevState||'current';
           S.update={...S.update,state:restore,error:'File selection cancelled.'};render();return;
         }
-        // NotAllowedError and other FSA errors → fall through to download
       }
     }
     const dlName=currentFileName()||'college-course-planner.html';
@@ -1323,7 +1487,7 @@ async function applyUpdate(){
   }
 }
 
-async function checkForUpdates(showModal=false){
+async function checkForUpdates(showModal=false,{trigger='manual'}={}){
   const pending=readUpdateVerify();
   if(pending)showModal=true;
   if(showModal){S.modal='update';}
@@ -1333,10 +1497,9 @@ async function checkForUpdates(showModal=false){
   try{
     S.update={state:pending?'verifying':'checking',latest:null,checkedAt:null,error:null,expected:pending?.expected||null};
     if(showModal)render();
-    const res=await fetch(UPDATE_URL+'?v='+Date.now(),{cache:'no-store'});
-    if(!res.ok)throw new Error('HTTP '+res.status);
-    const text=await res.text();
-    const latest=(text.match(/const APP_VERSION=['"]([^'"]+)['"]/)||[])[1];
+    const text=await fetchLatestPlannerHtml();
+    writeUpdateLastCheck(Date.now());
+    const latest=parsePlannerVersion(text);
     if(!latest)throw new Error('Missing version');
     if(pending){
       if(versionCmp(APP_VERSION,pending.expected)>=0){
@@ -1359,12 +1522,32 @@ async function checkForUpdates(showModal=false){
     S.update={state:available?'available':'current',latest,checkedAt:Date.now(),error:null};
     if(available){
       try{const dismissed=localStorage.getItem(UPDATE_DISMISS_KEY);S.updateDismissed=dismissed===latest;}catch(e){S.updateDismissed=false;}
+      notifyUpdateAvailable(latest);
+      if(trigger==='auto')await maybeAutoApplyUpdate(text,latest);
     }
     if(showModal&&typeof document!=='undefined')document.title=available?'(update) College Course Planner':'College Course Planner';
   }catch(err){
     S.update={state:'offline',latest:null,checkedAt:Date.now(),error:err?.message||String(err),expected:pending?.expected||null};
   }
   render();
+}
+
+async function maybeAutoCheckUpdates(){
+  const prefs=readAutoUpdatePrefs();
+  if(!prefs.autoCheck)return;
+  const last=readUpdateLastCheck();
+  const elapsed=Date.now()-last;
+  if(elapsed<AUTO_CHECK_MIN_INTERVAL_MS)return;
+  if(['checking','verifying','applying'].includes(S.update?.state))return;
+  if(document.visibilityState&&document.visibilityState!=='visible')return;
+  await checkForUpdates(false,{trigger:'auto'});
+}
+
+function setupAutoUpdateScheduler(){
+  document.addEventListener('visibilitychange',()=>{
+    if(document.visibilityState==='visible')maybeAutoCheckUpdates();
+  });
+  setInterval(()=>maybeAutoCheckUpdates(),AUTO_CHECK_INTERVAL_MS);
 }
 
 function readStartSeen(){try{return localStorage.getItem(START_SEEN_KEY)==='1';}catch(e){return false;}}
@@ -2435,7 +2618,13 @@ function rSelToolbar(){
 
 function rBanners(){
   let html='';
-  if(S.update?.state==='available'&&!S.updateDismissed){
+  if((S.update?.state==='applied'||S.update?.state==='downloaded')&&S.update?.autoTriggered){
+    html+=`<div class="top-banner update">
+      <span class="grow">⬆ Auto-update ready — v${esc(S.update.latest||'?')} ${S.update.state==='applied'?'was applied':'was downloaded'}. Reload to run it.</span>
+      <button onclick="reloadPlanner()">Reload now</button>
+      <button data-a="open-update-modal" class="ghost">Details</button>
+    </div>`;
+  }else if(S.update?.state==='available'&&!S.updateDismissed){
     html+=`<div class="top-banner update">
       <span class="grow">⬆ Update available — v${esc(S.update.latest||'?')} is out (you're on v${esc(APP_VERSION)}).</span>
       <button data-a="open-update-modal">${canUseFilePicker()?'Apply update':'Download update'}</button>
@@ -2489,12 +2678,14 @@ function rModal(){
     if(st==='applied'){
       const savedAs=S.update.savedAs||'(unknown)';
       const mismatch=S.update.nameMismatch;
-      body=`<p style="font-size:13px;color:var(--green);line-height:1.45;margin-bottom:8px">✓ New version written to <code>${esc(savedAs)}</code>.</p>
+      const autoNote=S.update.autoTriggered?`<p style="font-size:11px;color:var(--green);line-height:1.45;margin-bottom:8px">Auto-update applied this version.</p>`:'';
+      body=`${autoNote}<p style="font-size:13px;color:var(--green);line-height:1.45;margin-bottom:8px">✓ New version written to <code>${esc(savedAs)}</code>.</p>
         ${mismatch?`<p style="font-size:12px;color:#C00;background:#FEE;padding:7px 10px;border-radius:6px;line-height:1.45;margin-bottom:8px">⚠ The file you picked (<code>${esc(savedAs)}</code>) doesn't match the file this tab is running (<code>${esc(runFile)}</code>). Reloading won't help — open <code>${esc(savedAs)}</code> directly instead, or run Apply again and pick the right file.</p>`:`<p style="font-size:12px;color:var(--text2);line-height:1.45;margin-bottom:8px">Click <b>Reload now</b> to run the new version. Your autosaved plan stays in this browser.</p>`}
         <p style="font-size:11px;color:var(--text3);line-height:1.45">After reload, this modal will show <b>"You are up to date on v${esc(S.update.latest||'?')}"</b> — that's how you'll know it worked.</p>`;
     }else if(st==='downloaded'){
       const dlAs=S.update.downloadedAs||'college-course-planner.html';
-      body=`<p style="font-size:13px;color:var(--green);line-height:1.45;margin-bottom:8px">📥 Downloaded <code>${esc(dlAs)}</code> — check your browser's download bar or Downloads folder.</p>
+      const autoNote=S.update.autoTriggered?`<p style="font-size:11px;color:var(--green);line-height:1.45;margin-bottom:8px">Auto-update downloaded this version.</p>`:'';
+      body=`${autoNote}<p style="font-size:13px;color:var(--green);line-height:1.45;margin-bottom:8px">📥 Downloaded <code>${esc(dlAs)}</code> — check your browser's download bar or Downloads folder.</p>
         <p style="font-size:12px;color:var(--text2);line-height:1.45;margin-bottom:8px"><b>Move/replace</b> that file over your existing planner (same folder and name), then click <b>Reload now</b>. Your autosaved plan stays in this browser.</p>
         ${pathHint}`;
     }else if(st==='applying'||st==='verifying'){
@@ -2528,7 +2719,7 @@ function rModal(){
     return`<div class="mbk" id="mbk">
       <div class="modal" style="max-width:520px">
         <div class="mhdr"><h3>Planner Updates</h3><button class="mclose" data-a="close-modal">×</button></div>
-        <div class="mbody">${body}</div>
+        <div class="mbody">${body}${updateSettingsHtml()}</div>
         <div class="mfooter">
           ${checkBtn}${applyBtn}${reloadBtn}
           <button data-a="close-modal" style="padding:6px 14px;border:1px solid var(--border2);border-radius:6px;cursor:pointer;font-size:12px;background:var(--surface2);color:var(--text)">Close</button>
@@ -3185,6 +3376,17 @@ document.addEventListener('click',e=>{
   else if(a==='dismiss-update'){
     if(S.update?.latest){try{localStorage.setItem(UPDATE_DISMISS_KEY,S.update.latest);}catch(e){}}
     S.updateDismissed=true;render();
+  }
+  else if(a==='toggle-update-pref'){
+    const pref=el.dataset.pref;
+    if(!pref)return;
+    const prefs=readAutoUpdatePrefs();
+    prefs[pref]=!prefs[pref];
+    writeAutoUpdatePrefs(prefs);
+    render();
+  }
+  else if(a==='forget-update-file'){
+    clearUpdateFileHandle().then(()=>render());
   }
   else if(a==='snooze-export'){
     writeExportSnooze(Date.now()+EXPORT_SNOOZE_DAYS*86400000);
@@ -4047,6 +4249,8 @@ function prewarmModals(){
   recomputeExportReminder();
   render();
   await checkForUpdates(false);
+  loadUpdateFileHandle().catch(()=>{});
+  setupAutoUpdateScheduler();
   setInterval(()=>{
     const stamp=document.getElementById('saved-stamp');
     if(stamp&&S.lastSaved)stamp.textContent='saved '+relTime(S.lastSaved);

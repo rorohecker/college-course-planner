@@ -4,6 +4,9 @@ A running list of things that would make the planner more useful. Not all of the
 
 ## Near term
 
+### Auto-update (shipped)
+The planner checks GitHub on load, every 6 hours, and when you return to the tab. Optional settings in the Update modal: auto-apply to a remembered file (Chrome/Edge), auto-download fallback, and desktop notifications.
+
 ### Prerequisite graph and validation
 Show a warning when a course is placed in a semester before its prerequisites. The data is already in the `note` field for most courses, but it is free text. Parsing it into a real list of prereq codes would unlock real validation, and eventually a visual graph of which courses unblock which.
 
