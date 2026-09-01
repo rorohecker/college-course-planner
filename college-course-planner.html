@@ -482,7 +482,7 @@ body{font-family:-apple-system,'Segoe UI',system-ui,sans-serif;background:var(--
 </script>
 <script>
 // ─── Static data ──────────────────────────────────────────────────────────────
-const APP_VERSION='2026.08.27.3';
+const APP_VERSION='2026.09.01.1';
 // Bump when migrateFlowchartLayout rules change — migrations run once per schedule per version.
 const LAYOUT_MIGRATION_VERSION=22;
 // Raw URL is used only for parsing APP_VERSION on the live copy — never as a user link
@@ -542,6 +542,12 @@ function isEceHonorsSch(sch){
   if(courses.some(c=>/^eg\d+$/.test(String(c.id))))return false;
   if(courses.some(c=>/^eh\d+$/.test(String(c.id))))return true;
   return false;
+}
+function isEceStandaloneSch(sch){
+  return(sch?.sems||[]).some(s=>(s.courses||[]).some(c=>/^(eh|eg)\d+$/.test(String(c.id))));
+}
+function isEcbSch(sch){
+  return(sch?.sems||[]).some(s=>(s.courses||[]).some(c=>/^c\d+$/.test(String(c.id))));
 }
 const BUSINESS_LAYOUT=[
   {type:'pair',label:'Year 1',ids:['y1f','y1s']},
@@ -1709,16 +1715,21 @@ function clearTrackElectivesFromPlan(sems){
 function eceTrackKind(sch){
   return inferEceKind(sch)==='general'?'general':'ecb';
 }
+function eceKindLocked(sch){
+  if(isEceStandaloneSch(sch))return 'general';
+  if(isEcbSch(sch))return 'ecb';
+  return null;
+}
 function trackElectiveName(code){
   const nc=normTrackCode(code);
   const hit=CATALOG.find(e=>normTrackCode(e.code)===nc);
   return hit?.name||code;
 }
 function inferEceKind(sch){
-  if(sch?.kind==='general'||sch?.kind==='business')return sch.kind;
-  const courses=(sch.sems||[]).flatMap(s=>s.courses||[]);
-  if(courses.some(c=>/^(eh|eg)\d+$/.test(String(c.id))))return 'general';
-  return sch?.kind||'ecb';
+  if(sch?.kind==='business')return 'business';
+  if(isEceStandaloneSch(sch))return 'general';
+  if(isEcbSch(sch))return 'ecb';
+  return sch?.kind==='general'?'general':(sch?.kind||'ecb');
 }
 function stripAdvTechPlaceholders(sems){
   return(sems||[]).map(s=>({...s,courses:(s.courses||[]).filter(c=>!isAdvTechPlaceholder(c.code))}));
@@ -1947,7 +1958,7 @@ function normalizeSchedule(sch){
   let synced={...sch,sems:syncSemLabels(syncSemCredits(ensureUniqueCourseIds(sch.sems)))};
   if(looksBusiness||sch.kind==='business')return syncPrograms(syncBusinessTracks({...synced,kind:'business',layoutVersion:LAYOUT_MIGRATION_VERSION},businessTrackKeys(synced)));
   const eceKind=inferEceKind(synced);
-  synced={kind:eceKind,...synced};
+  synced={...synced,kind:eceKind};
   const needsLayoutMigrate=(sch.layoutVersion||0)<LAYOUT_MIGRATION_VERSION;
   if(eceKind==='ecb'){
     synced={...synced,sems:syncApSection(synced.sems)};
@@ -2901,7 +2912,7 @@ GOV 310L   AMERICAN GOVERNMENT   CR   16210   Credit by exam   3.0   0.00</pre>
           const hasReq=!!p.req;
           return`<div class="tk-card${sel?' sel':''}" onclick="toggleProgramKey('${p.key}')">
             <div class="tk-name">${esc(p.name)}</div>
-            <div class="tk-grad">${p.type==='certificate'?'Certificate':'Minor'} · ${esc(p.hours)} · ${esc(p.school)}${hasReq?' · catalog courses':''}</div>
+            <div class="tk-grad">${p.type==='certificate'?'Certificate':'Minor'} · ${esc(p.hours)} · ${esc(p.school)}${hasReq?' · catalog courses':' · placeholder plan (no catalog detail)'}</div>
           </div>`;
         }).join('')}</div>
       </div>`).join('');
@@ -2963,11 +2974,12 @@ GOV 310L   AMERICAN GOVERNMENT   CR   16210   Credit by exam   3.0   0.00</pre>
     }
     const cur=getAct();const sel=cur?.track||'';
     const kind=eceTrackKind(cur);
+    const kindLock=eceKindLocked(cur);
     const prog=trackProgress();
     const cards=Object.entries(TRACKS).map(([k,t])=>`
       <div class="tk-card${sel===k?' sel':''}" onclick="setTrack('${k}')">
         <div class="tk-name">${esc(t.name)}</div>
-        <div class="tk-grad">Grad track: ${esc(t.grad)} · ECB ${ECB_TRACK_PICK} electives · General/Honors ${GENERAL_TRACK_PICK}</div>
+        <div class="tk-grad">Grad track: ${esc(t.grad)} · ${kind==='general'?`up to ${GENERAL_TRACK_PICK} electives`:`up to ${ECB_TRACK_PICK} electives (ECB)`}</div>
       </div>`).join('');
     const planSems=getAS();
     const codes=new Set(planSems.flatMap(s=>s.courses).map(x=>x.code.trim().toUpperCase().replace(/H$/,'')));
@@ -3003,8 +3015,9 @@ GOV 310L   AMERICAN GOVERNMENT   CR   16210   Credit by exam   3.0   0.00</pre>
         <div class="mbody">
           <div style="display:flex;gap:10px;align-items:center;margin-bottom:12px;font-size:12px;color:var(--text2);flex-wrap:wrap">
             <span>Student type:</span>
-            <label><input type="radio" name="kind" value="ecb" ${kind==='ecb'?'checked':''} onchange="setKind('ecb')"> ECB Dual Degree</label>
-            <label><input type="radio" name="kind" value="general" ${kind==='general'?'checked':''} onchange="setKind('general')"> General / Honors</label>
+            ${kindLock?`<span style="font-weight:600;color:var(--text)">${kindLock==='general'?'General / Honors ECE':'ECB Dual Degree'}</span><span style="color:var(--text3)">(from your degree plan — ${kindLock==='general'?GENERAL_TRACK_PICK:ECB_TRACK_PICK} track electives)</span>`:`
+            <label><input type="radio" name="kind" value="ecb" ${kind==='ecb'?'checked':''} onchange="setKind('ecb')"> ECB Dual Degree (${ECB_TRACK_PICK} electives)</label>
+            <label><input type="radio" name="kind" value="general" ${kind==='general'?'checked':''} onchange="setKind('general')"> General / Honors (${GENERAL_TRACK_PICK} electives)</label>`}
           </div>
           ${progBox}
           <div class="tk-h">Pick a track</div>
@@ -3447,6 +3460,8 @@ window.clearProgramElectives=programKey=>mutate(()=>{
 window.setKind=k=>mutate(()=>{
   S.schedules=S.schedules.map(s=>{
     if(s.id!==S.activeId)return s;
+    const lock=eceKindLocked(s);
+    if(lock&&lock!==(k==='general'?'general':'ecb'))return s;
     let next={...s,kind:k==='general'?'general':'ecb'};
     if(next.track)next.sems=trimTrackElectivesToMax(next.sems,trackElectiveNeed(next,next.track),next.track);
     return normalizeSchedule(next);
