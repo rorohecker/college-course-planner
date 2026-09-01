@@ -507,7 +507,7 @@ body{font-family:-apple-system,'Segoe UI',system-ui,sans-serif;background:var(--
 </script>
 <script>
 // ─── Static data ──────────────────────────────────────────────────────────────
-const APP_VERSION='2026.09.01.4';
+const APP_VERSION='2026.09.01.5';
 // Bump when migrateFlowchartLayout rules change — migrations run once per schedule per version.
 const LAYOUT_MIGRATION_VERSION=22;
 // Raw URL is used only for parsing APP_VERSION on the live copy — never as a user link
@@ -574,6 +574,12 @@ function isEceHonorsSch(sch){
   if(courses.some(c=>/^eg\d+$/.test(String(c.id))))return false;
   if(courses.some(c=>/^eh\d+$/.test(String(c.id))))return true;
   return false;
+}
+function isEceStandaloneSch(sch){
+  return(sch?.sems||[]).some(s=>(s.courses||[]).some(c=>/^(eh|eg)\d+$/.test(String(c.id))));
+}
+function isEcbSch(sch){
+  return(sch?.sems||[]).some(s=>(s.courses||[]).some(c=>/^c\d+$/.test(String(c.id))));
 }
 const BUSINESS_LAYOUT=[
   {type:'pair',label:'Year 1',ids:['y1f','y1s']},
@@ -1408,11 +1414,13 @@ function injectPWAMeta(){
   document.head.appendChild(link);
 }
 let _validationCache={rev:-1,val:null};
+let _preIssueByCid=null;
 function planValidation(){
   if(_validationCache.rev===_saveRev)return _validationCache.val;
   const sems=getAS();
   const val={prereqs:validatePlanPrereqs(sems),loads:checkSemesterLoads(sems),flags:flagProgressSummary(sems),overlap:computeRequirementOverlap(getAct())};
   _validationCache={rev:_saveRev,val};
+  _preIssueByCid=new Map(val.prereqs.map(i=>[i.course.id,i]));
   return val;
 }
 
@@ -2243,16 +2251,21 @@ function clearTrackElectivesFromPlan(sems){
 function eceTrackKind(sch){
   return inferEceKind(sch)==='general'?'general':'ecb';
 }
+function eceKindLocked(sch){
+  if(isEceStandaloneSch(sch))return 'general';
+  if(isEcbSch(sch))return 'ecb';
+  return null;
+}
 function trackElectiveName(code){
   const nc=normTrackCode(code);
   const hit=CATALOG.find(e=>normTrackCode(e.code)===nc);
   return hit?.name||code;
 }
 function inferEceKind(sch){
-  if(sch?.kind==='general'||sch?.kind==='business')return sch.kind;
-  const courses=(sch.sems||[]).flatMap(s=>s.courses||[]);
-  if(courses.some(c=>/^(eh|eg)\d+$/.test(String(c.id))))return 'general';
-  return sch?.kind||'ecb';
+  if(sch?.kind==='business')return 'business';
+  if(isEceStandaloneSch(sch))return 'general';
+  if(isEcbSch(sch))return 'ecb';
+  return sch?.kind==='general'?'general':(sch?.kind||'ecb');
 }
 function stripAdvTechPlaceholders(sems){
   return(sems||[]).map(s=>({...s,courses:(s.courses||[]).filter(c=>!isAdvTechPlaceholder(c.code))}));
@@ -2481,7 +2494,7 @@ function normalizeSchedule(sch){
   let synced={...sch,sems:syncSemLabels(syncSemCredits(ensureUniqueCourseIds(sch.sems)))};
   if(looksBusiness||sch.kind==='business')return syncPrograms(syncBusinessTracks({...synced,kind:'business',layoutVersion:LAYOUT_MIGRATION_VERSION},businessTrackKeys(synced)));
   const eceKind=inferEceKind(synced);
-  synced={kind:eceKind,...synced};
+  synced={...synced,kind:eceKind};
   const needsLayoutMigrate=(sch.layoutVersion||0)<LAYOUT_MIGRATION_VERSION;
   if(eceKind==='ecb'){
     synced={...synced,sems:syncApSection(synced.sems)};
@@ -2755,7 +2768,7 @@ function rCourse(semId,c){
   const chkBg=c.done?'#2A7A47':'transparent',chkBrd=c.done?'#2A7A47':cat.txt;
   const isSel=S.selection.has(c.id)&&S.selectionSem===semId;
   const val=planValidation();
-  const preIssue=val.prereqs.find(i=>i.course.id===c.id);
+  const preIssue=_preIssueByCid?.get(c.id);
   const dist=gradeDistFor(c.code);
   const gradePill=c.done
     ?`<span class="cgrade editable" title="Click to set grade" onclick="cgClick('${semId}','${c.id}',event)">${esc(c.grade||'+ grade')}</span>`
@@ -3141,7 +3154,7 @@ function rModal(){
         ${body}
       </div>
       <div class="mfooter">
-        <button onclick="${tab==='md'?`copyText('md-out','copy-md-badge')`:tab==='advise'?`copyText('advise-url','copy-advise-badge')`:`copyCode()`}" style="padding:6px 14px;background:var(--accent);color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px">${tab==='ics'||tab==='pdf'?'':'Copy'}</button>
+        ${tab!=='ics'&&tab!=='pdf'?`<button onclick="${tab==='md'?`copyText('md-out','copy-md-badge')`:tab==='advise'?`copyText('advise-url','copy-advise-badge')`:`copyCode()`}" style="padding:6px 14px;background:var(--accent);color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px">Copy</button>`:''}
         <button data-a="close-modal" style="padding:6px 14px;border:1px solid var(--border2);border-radius:6px;cursor:pointer;font-size:12px;background:var(--surface2);color:var(--text)">Close</button>
       </div>
     </div></div>`;
@@ -3635,11 +3648,12 @@ GOV 310L   AMERICAN GOVERNMENT   CR   16210   Credit by exam   3.0   0.00</pre>
     }
     const cur=getAct();const sel=cur?.track||'';
     const kind=eceTrackKind(cur);
+    const kindLock=eceKindLocked(cur);
     const prog=trackProgress();
     const cards=Object.entries(TRACKS).map(([k,t])=>`
       <div class="tk-card${sel===k?' sel':''}" onclick="setTrack('${k}')">
         <div class="tk-name">${esc(t.name)}</div>
-        <div class="tk-grad">Grad track: ${esc(t.grad)} · ECB ${ECB_TRACK_PICK} electives · General/Honors ${GENERAL_TRACK_PICK}</div>
+        <div class="tk-grad">Grad track: ${esc(t.grad)} · ${kind==='general'?`up to ${GENERAL_TRACK_PICK} electives`:`up to ${ECB_TRACK_PICK} electives (ECB)`}</div>
       </div>`).join('');
     const planSems=getAS();
     const codes=new Set(planSems.flatMap(s=>s.courses).map(x=>x.code.trim().toUpperCase().replace(/H$/,'')));
@@ -3675,8 +3689,9 @@ GOV 310L   AMERICAN GOVERNMENT   CR   16210   Credit by exam   3.0   0.00</pre>
         <div class="mbody">
           <div style="display:flex;gap:10px;align-items:center;margin-bottom:12px;font-size:12px;color:var(--text2);flex-wrap:wrap">
             <span>Student type:</span>
-            <label><input type="radio" name="kind" value="ecb" ${kind==='ecb'?'checked':''} onchange="setKind('ecb')"> ECB Dual Degree</label>
-            <label><input type="radio" name="kind" value="general" ${kind==='general'?'checked':''} onchange="setKind('general')"> General / Honors</label>
+            ${kindLock?`<span style="font-weight:600;color:var(--text)">${kindLock==='general'?'General / Honors ECE':'ECB Dual Degree'}</span><span style="color:var(--text3)">(from your degree plan — ${kindLock==='general'?GENERAL_TRACK_PICK:ECB_TRACK_PICK} track electives)</span>`:`
+            <label><input type="radio" name="kind" value="ecb" ${kind==='ecb'?'checked':''} onchange="setKind('ecb')"> ECB Dual Degree (${ECB_TRACK_PICK} electives)</label>
+            <label><input type="radio" name="kind" value="general" ${kind==='general'?'checked':''} onchange="setKind('general')"> General / Honors (${GENERAL_TRACK_PICK} electives)</label>`}
           </div>
           ${progBox}
           <div class="tk-h">Pick a track</div>
@@ -4144,6 +4159,8 @@ window.clearProgramElectives=programKey=>mutate(()=>{
 window.setKind=k=>mutate(()=>{
   S.schedules=S.schedules.map(s=>{
     if(s.id!==S.activeId)return s;
+    const lock=eceKindLocked(s);
+    if(lock&&lock!==(k==='general'?'general':'ecb'))return s;
     let next={...s,kind:k==='general'?'general':'ecb'};
     if(next.track)next.sems=trimTrackElectivesToMax(next.sems,trackElectiveNeed(next,next.track),next.track);
     return normalizeSchedule(next);
@@ -4735,9 +4752,11 @@ function prewarmModals(){
 
 // ─── Init ─────────────────────────────────────────────────────────────────────
 (async()=>{
-  if(loadAdvisingFromUrl()){/* advising share loaded */}
-  const ok=await load();
-  if(!ok&&!S.readOnly)initDefault();
+  const fromAdvise=loadAdvisingFromUrl();
+  if(!fromAdvise){
+    const ok=await load();
+    if(!ok)initDefault();
+  }
   S.schedules=S.schedules.map(s=>normalizeSchedule(s));
   if(readStartSeen())S.startNote=false;
   S.lastExportAt=readLastExport();
@@ -4767,19 +4786,25 @@ window.downloadSemesterICS=semId=>{
 };
 window.saveGistPrefsFromForm=()=>{
   const prefs=readGistPrefs();
-  prefs.token=document.getElementById('gist-token')?.value.trim()||'';
-  prefs.gistId=document.getElementById('gist-id')?.value.trim()||'';
+  const tokenEl=document.getElementById('gist-token');
+  const idEl=document.getElementById('gist-id');
+  if(tokenEl)prefs.token=tokenEl.value.trim()||'';
+  if(idEl)prefs.gistId=idEl.value.trim()||'';
   writeGistPrefs(prefs);
   S.gistMsg='Gist settings saved.';
   render();
 };
 window.doGistPush=async()=>{
-  saveGistPrefsFromForm();
+  const tokenEl=document.getElementById('gist-token');
+  if(tokenEl)saveGistPrefsFromForm();
+  else writeGistPrefs(readGistPrefs());
   try{S.gistMsg='Pushing…';render();const id=await gistSyncPush();S.gistMsg=`Pushed to gist ${id}`;}catch(e){S.gistMsg='Error: '+(e.message||e);}
   render();
 };
 window.doGistPull=async()=>{
-  saveGistPrefsFromForm();
+  const tokenEl=document.getElementById('gist-token');
+  if(tokenEl)saveGistPrefsFromForm();
+  else writeGistPrefs(readGistPrefs());
   try{S.gistMsg='Pulling…';render();await gistSyncPull();S.gistMsg='Restored from gist.';}catch(e){S.gistMsg='Error: '+(e.message||e);}
   render();
 };
