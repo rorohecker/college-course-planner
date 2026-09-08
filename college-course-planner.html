@@ -82,8 +82,9 @@ body{font-family:-apple-system,'Segoe UI',system-ui,sans-serif;background:var(--
 .fld{display:flex;flex-direction:column;gap:3px}
 .fld.full{margin-bottom:8px}
 .fld label{font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:.4px}
-.fld input,.fld select{padding:6px 9px;border:1px solid var(--border2);border-radius:6px;font-size:12px;background:var(--surface2);color:var(--text);outline:none;width:100%}
-.fld input:focus,.fld select:focus{border-color:var(--accent)}
+.fld input,.fld select,.fld textarea{padding:6px 9px;border:1px solid var(--border2);border-radius:6px;font-size:12px;background:var(--surface2);color:var(--text);outline:none;width:100%}
+.fld input:focus,.fld select:focus,.fld textarea:focus{border-color:var(--accent)}
+.fld textarea{resize:vertical;min-height:52px;font-family:inherit;line-height:1.35}
 .ea{display:flex;justify-content:space-between;align-items:center;margin-top:12px}
 .bdel{padding:5px 11px;background:#FEE;color:#C00;border:1px solid #FCC;border-radius:6px;cursor:pointer;font-size:11px}
 .bcancel{padding:5px 11px;border:1px solid var(--border2);border-radius:6px;cursor:pointer;font-size:11px;background:transparent;color:var(--text2)}
@@ -143,6 +144,24 @@ body{font-family:-apple-system,'Segoe UI',system-ui,sans-serif;background:var(--
 .ccode{font-size:11px;font-weight:700}
 .cname{font-size:10px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;margin-top:1px}
 .cnote{font-size:9px;color:var(--text3);font-style:italic;display:block;margin-top:1px}
+.cuser-note{font-size:9px;color:var(--text2);display:block;margin-top:1px}
+.cdiff{font-size:9px;font-weight:700;padding:1px 5px;border-radius:3px;margin-top:1px;flex-shrink:0;white-space:nowrap}
+.cdiff.d1{background:#EAF3DE;color:#3B6D11}
+.cdiff.d2{background:#E8F0D8;color:#4A6B1C}
+.cdiff.d3{background:#FEF3DC;color:#7A4A00}
+.cdiff.d4{background:#FCEBEB;color:#A32D2D}
+.cdiff.d5{background:#F5C4C4;color:#791F1F}
+@media(prefers-color-scheme:dark){
+  .cdiff.d1{background:#173404;color:#97C459}
+  .cdiff.d2{background:#1A3008;color:#8BB84A}
+  .cdiff.d3{background:#3A2200;color:#F0C060}
+  .cdiff.d4{background:#4A1010;color:#F09595}
+  .cdiff.d5{background:#5C1212;color:#F5AAAA}
+}
+.diff-pick{display:flex;gap:4px;flex-wrap:wrap}
+.diff-pick button{width:28px;height:28px;border-radius:6px;border:1px solid var(--border2);background:var(--surface2);color:var(--text2);font-size:11px;font-weight:700;cursor:pointer}
+.diff-pick button.on{border-color:var(--accent);background:var(--accent);color:#fff}
+.diff-pick button.clr{width:auto;padding:0 8px;font-weight:500;font-size:10px}
 .cc.done .ccode,.cc.done .cname{text-decoration:line-through}
 .crdt{font-size:9px;color:var(--text3);flex-shrink:0;margin-top:2px}
 .cgrade{font-size:9px;font-weight:700;padding:1px 5px;border-radius:3px;background:var(--surface2);color:var(--text2);margin-top:1px}
@@ -507,7 +526,7 @@ body{font-family:-apple-system,'Segoe UI',system-ui,sans-serif;background:var(--
 </script>
 <script>
 // ─── Static data ──────────────────────────────────────────────────────────────
-const APP_VERSION='2026.09.01.5';
+const APP_VERSION='2026.09.08.1';
 // Bump when migrateFlowchartLayout rules change — migrations run once per schedule per version.
 const LAYOUT_MIGRATION_VERSION=22;
 // Raw URL is used only for parsing APP_VERSION on the live copy — never as a user link
@@ -1088,6 +1107,15 @@ const BUSINESS_TRACKS={
 // UT grade points (A+ counts as 4.0 per UT policy). CR/NC/Q/W/IP excluded from GPA.
 const GRADE_PTS={'A+':4.0,'A':4.0,'A-':3.67,'B+':3.33,'B':3.0,'B-':2.67,'C+':2.33,'C':2.0,'C-':1.67,'D+':1.33,'D':1.0,'D-':0.67,'F':0,'CR':null,'NC':null,'Q':null,'W':null,'IP':null};
 const GRADE_OPTS=['','A+','A','A-','B+','B','B-','C+','C','C-','D+','D','D-','F','CR','NC','Q','W','IP'];
+const DIFF_LABELS={1:'Easy',2:'Light',3:'Moderate',4:'Hard',5:'Brutal'};
+function normalizeDifficulty(v){
+  const n=parseInt(v,10);
+  return(n>=1&&n<=5)?n:0;
+}
+function difficultyLabel(n){
+  const d=normalizeDifficulty(n);
+  return d?`${d}/5 · ${DIFF_LABELS[d]}`:'';
+}
 
 // Generic UT week-based deadlines (most fall/spring terms). Update from registrar each year.
 const UT_DEADLINES=[
@@ -1990,7 +2018,8 @@ function businessTrackCourses(key,prev){
     const old=prevByCode.get(String(c.code).toUpperCase());
     return {
       id:`biz_${key}_${i+1}`,code:c.code,name:c.name,cat:'BUSINESS',
-      credits:c.credits,done:old?.done||false,note:c.note||'',grade:old?.grade||'',bizTrack:key
+      credits:c.credits,done:old?.done||false,note:c.note||'',grade:old?.grade||'',
+      difficulty:old?.difficulty||0,userNote:old?.userNote||'',bizTrack:key
     };
   });
 }
@@ -2115,6 +2144,8 @@ function programPlaceholderCourses(key,prev){
       done:old?.done||false,
       note:old?.note||`Placeholder — see UT catalog${prog.catalogUrl?': '+prog.catalogUrl:''}. Add courses manually or check catalog for ${prog.school} ${prog.type}.`,
       grade:old?.grade||'',
+      difficulty:old?.difficulty||0,
+      userNote:old?.userNote||'',
       programKey:key,
     });
   }
@@ -2140,6 +2171,8 @@ function programCoursesForKey(key,prevSem,earlierSems){
       done:old?.done||false,
       note:'Program core',
       grade:old?.grade||'',
+      difficulty:old?.difficulty||0,
+      userNote:old?.userNote||'',
       programKey:key,
     });
   });
@@ -2651,7 +2684,7 @@ function toMarkdown(){
     md+=`## ${sem.label}\n\n`;
     if(sem.isOff){md+=`_${sem.offNote||'No classes this term.'}_\n\n`;return;}
     if(!sem.courses.length){md+=`_No courses._\n\n`;return;}
-    for(const c of sem.courses)md+=`- ${c.done?'[x]':'[ ]'} **${c.code}** ${c.name} — ${c.credits}cr${c.grade?` (${c.grade})`:''}${c.note?`  \n  _${c.note}_`:''}\n`;
+    for(const c of sem.courses)md+=`- ${c.done?'[x]':'[ ]'} **${c.code}** ${c.name} — ${c.credits}cr${c.grade?` (${c.grade})`:''}${normalizeDifficulty(c.difficulty)?` · difficulty ${normalizeDifficulty(c.difficulty)}/5`:''}${c.note?`  \n  _${c.note}_`:''}${c.userNote?`  \n  Note: ${c.userNote}`:''}\n`;
     md+=`\n`;
   };
   const layout=layoutFor(getAct()),known=knownFor(getAct());
@@ -2814,9 +2847,13 @@ function rCourse(semId,c){
   const val=planValidation();
   const preIssue=_preIssueByCid?.get(c.id);
   const dist=gradeDistFor(c.code);
+  const diff=normalizeDifficulty(c.difficulty);
   const gradePill=c.done
     ?`<span class="cgrade editable" title="Click to set grade" onclick="cgClick('${semId}','${c.id}',event)">${esc(c.grade||'+ grade')}</span>`
     :(c.grade?`<span class="cgrade">${esc(c.grade)}</span>`:'');
+  const diffPill=diff
+    ?`<span class="cdiff d${diff}" title="Difficulty ${esc(difficultyLabel(diff))}" onclick="diffClick('${semId}','${c.id}',event)">${diff}/5</span>`
+    :(!S.readOnly?`<span class="cdiff editable" title="Set difficulty 1–5" onclick="diffClick('${semId}','${c.id}',event)" style="cursor:pointer;border:1px dashed var(--border2);background:var(--surface2);color:var(--text3)">+ diff</span>`:'');
   const dragAttr=S.readOnly?'':' draggable="true" ondragstart="wDSCustom(\''+semId+'\',\''+c.id+'\',event)" ondragend="wDE()"';
   return `<div class="cc${c.done?' done':''}${isSel?' sel':''}" style="background:${cat.bg};border-color:${cat.brd}"${dragAttr}>
     <div class="chk" style="border-color:${chkBrd};background:${chkBg}" data-cid="${c.id}" role="checkbox" aria-checked="${c.done?'true':'false'}" title="Mark done"
@@ -2830,9 +2867,11 @@ function rCourse(semId,c){
       ${c.prof?`<span class="cprof">${esc(c.prof)}</span>`:''}
       ${dist?`<span class="cmeta">avg GPA ~${dist.avg} · ${dist.aPct}% A</span>`:''}
       ${c.note?`<span class="cnote">${esc(c.note)}</span>`:''}
+      ${c.userNote?`<span class="cuser-note">📝 ${esc(c.userNote)}</span>`:''}
       ${preIssue?`<span class="cwarn" title="Missing prereqs: ${esc(preIssue.missing.join(', '))}">⚠ prereq: ${esc(preIssue.missing.join(', '))}</span>`:''}
       ${c.meeting?`<span class="cmeta">${esc(c.meeting)}</span>`:''}
     </div>
+    ${diffPill}
     ${gradePill}
     <span class="crdt">${c.credits}cr</span>
     ${S.readOnly?'':`<div class="cacts">
@@ -3011,6 +3050,9 @@ function rEP(){
   const semOpts=sems.map(s=>`<option value="${s.id}"${f.semId===s.id?' selected':''}>${esc(s.label)}</option>`).join('');
   const catOpts=Object.entries(CATS).map(([k,v])=>`<option value="${k}"${f.cat===k?' selected':''}>${v.name}</option>`).join('');
   const gradeOpts=GRADE_OPTS.map(g=>`<option value="${g}"${(f.grade||'')===g?' selected':''}>${g||'—'}</option>`).join('');
+  const diff=normalizeDifficulty(f.difficulty);
+  const diffBtns=[1,2,3,4,5].map(n=>`<button type="button" class="${diff===n?'on':''}" data-diff="${n}" title="${esc(DIFF_LABELS[n])}">${n}</button>`).join('')
+    +`<button type="button" class="clr" data-diff="0">Clear</button>`;
   return `<div class="ep">
     <h3>${S.edit.isNew?'Add Course':'Edit Course'}</h3>
     <div class="fg three">
@@ -3023,7 +3065,12 @@ function rEP(){
       <div class="fld"><label>Category</label><select id="f-cat">${catOpts}</select></div>
       <div class="fld"><label>Semester</label><select id="f-sem">${semOpts}</select></div>
     </div>
-    <div class="fld full"><label>Notes / Pre-reqs</label><input id="f-note" value="${esc(f.note||'')}" placeholder="e.g. Pre-req: ECE 302; Wr flag"></div>
+    <div class="fld full"><label>Difficulty (1 easy – 5 hard)</label>
+      <div class="diff-pick" id="f-diff-pick" data-diff="${diff||''}">${diffBtns}</div>
+      <input type="hidden" id="f-difficulty" value="${diff||''}">
+    </div>
+    <div class="fld full"><label>Your notes</label><textarea id="f-user-note" rows="2" placeholder="Personal notes — workload, tips, reminders…">${esc(f.userNote||'')}</textarea></div>
+    <div class="fld full"><label>Curriculum notes / Pre-reqs</label><input id="f-note" value="${esc(f.note||'')}" placeholder="e.g. Pre-req: ECE 302; Wr flag"></div>
     <div class="fg">
       <div class="fld"><label>Professor (optional)</label><input id="f-prof" value="${esc(f.prof||'')}" placeholder="Dr. Smith"></div>
       <div class="fld"><label>Meeting time (optional)</label><input id="f-meeting" value="${esc(f.meeting||'')}" placeholder="MWF 9-10"></div>
@@ -3951,7 +3998,7 @@ document.addEventListener('click',e=>{
   else if(a==='add'){
     e.stopPropagation();
     S.edit={semId:sem,isNew:true};
-    S.form={id:uid(),code:'',name:'',cat:getAct()?.kind==='business'?'BUSINESS':'ECE',credits:3,done:false,note:'',grade:'',semId:sem};
+    S.form={id:uid(),code:'',name:'',cat:getAct()?.kind==='business'?'BUSINESS':'ECE',credits:3,done:false,note:'',userNote:'',difficulty:0,grade:'',semId:sem};
     render();window.scrollTo(0,0);
   }
   else if(a==='cancel'){S.edit=null;S.form={};render();}
@@ -3963,10 +4010,15 @@ document.addEventListener('click',e=>{
     const cat=document.getElementById('f-cat').value;
     const toSem=document.getElementById('f-sem').value;
     const note=document.getElementById('f-note').value.trim();
+    const userNote=(document.getElementById('f-user-note')?.value||'').trim();
+    const difficulty=normalizeDifficulty(document.getElementById('f-difficulty')?.value);
     const grade=document.getElementById('f-grade').value;
     const prof=(document.getElementById('f-prof')?.value||'').trim();
     const meeting=(document.getElementById('f-meeting')?.value||'').trim();
-    const updated={id:S.form.id,code,name,credits,cat,done:S.form.done||false,note,grade};
+    const updated={...S.form,id:S.form.id,code,name,credits,cat,done:S.form.done||false,note,grade};
+    delete updated.semId;
+    if(userNote)updated.userNote=userNote;else delete updated.userNote;
+    if(difficulty)updated.difficulty=difficulty;else delete updated.difficulty;
     if(prof)updated.prof=prof;else delete updated.prof;
     if(meeting)updated.meeting=meeting;else delete updated.meeting;
     mutate(()=>{
@@ -4079,6 +4131,15 @@ window.startCmp=()=>{if(!S.cmpPickId)return;S.compareId=S.cmpPickId;S.compareMod
 // ─── GPA / track ──────────────────────────────────────────────────────────────
 window.setGrade=(semId,cid,g)=>mutate(()=>{
   setAS(getAS().map(s=>s.id!==semId?s:{...s,courses:s.courses.map(c=>c.id!==cid?c:{...c,grade:g})}));
+});
+window.setDifficulty=(semId,cid,d)=>mutate(()=>{
+  const difficulty=normalizeDifficulty(d);
+  setAS(getAS().map(s=>s.id!==semId?s:{...s,courses:s.courses.map(c=>{
+    if(c.id!==cid)return c;
+    const next={...c};
+    if(difficulty)next.difficulty=difficulty;else delete next.difficulty;
+    return next;
+  })}));
 });
 window.updateTarget=()=>{
   const el=document.getElementById('gpa-target-res');if(!el)return;
@@ -4323,7 +4384,7 @@ document.addEventListener('keydown',e=>{
     if(c){S.edit={semId,courseId:cid,isNew:false};S.form={...c,semId};render();window.scrollTo(0,0);}
     e.preventDefault();return;
   }
-  if(k==='n'){const sems=getAS().filter(s=>!s.isOff);const target=(S.selectionSem&&sems.some(s=>s.id===S.selectionSem))?sems.find(s=>s.id===S.selectionSem):sems[0];if(target){S.edit={semId:target.id,isNew:true};S.form={id:uid(),code:'',name:'',cat:getAct()?.kind==='business'?'BUSINESS':'ECE',credits:3,done:false,note:'',grade:'',semId:target.id};render();window.scrollTo(0,0);}e.preventDefault();}
+  if(k==='n'){const sems=getAS().filter(s=>!s.isOff);const target=(S.selectionSem&&sems.some(s=>s.id===S.selectionSem))?sems.find(s=>s.id===S.selectionSem):sems[0];if(target){S.edit={semId:target.id,isNew:true};S.form={id:uid(),code:'',name:'',cat:getAct()?.kind==='business'?'BUSINESS':'ECE',credits:3,done:false,note:'',userNote:'',difficulty:0,grade:'',semId:target.id};render();window.scrollTo(0,0);}e.preventDefault();}
   else if(k==='c'){S.cmpPickId=null;S.modal='compare-pick';render();e.preventDefault();}
   else if(k==='s'){S.modal='search';render();e.preventDefault();}
   else if(k==='g'){S.modal='gpa';render();e.preventDefault();}
@@ -4404,7 +4465,7 @@ document.addEventListener('click',e=>{if(_acOpen&&!e.target.closest('#ac-pop')&&
 // ─── Inline grade pill ───────────────────────────────────────────────────────
 window.cgClick=(semId,cid,e)=>{
   e.stopPropagation();
-  closeGradePop();
+  closeGradePop();closeDiffPop();
   const sems=getAS();const c=sems.find(s=>s.id===semId)?.courses.find(x=>x.id===cid);
   if(!c||!c.done)return;
   const pop=document.createElement('div');pop.id='cg-pop';pop.className='cgrade-pop';
@@ -4417,6 +4478,40 @@ window.cgClick=(semId,cid,e)=>{
 };
 function closeGradePop(){const p=document.getElementById('cg-pop');if(p)p.remove();}
 document.addEventListener('click',e=>{if(!e.target.closest('#cg-pop'))closeGradePop();});
+
+// ─── Inline difficulty pill ──────────────────────────────────────────────────
+window.diffClick=(semId,cid,e)=>{
+  e.stopPropagation();
+  if(S.readOnly)return;
+  closeGradePop();closeDiffPop();
+  const pop=document.createElement('div');pop.id='cd-pop';pop.className='cgrade-pop';
+  pop.innerHTML=[1,2,3,4,5].map(n=>`<button data-d="${n}" title="${DIFF_LABELS[n]}">${n}</button>`).join('')
+    +`<button class="clr" data-d="0">Clear difficulty</button>`;
+  pop.querySelectorAll('button').forEach(b=>{b.onclick=ev=>{ev.stopPropagation();setDifficulty(semId,cid,b.dataset.d);closeDiffPop();};});
+  document.body.appendChild(pop);
+  const r=e.target.getBoundingClientRect();
+  pop.style.left=Math.min(window.innerWidth-pop.offsetWidth-8,r.left+window.scrollX)+'px';
+  pop.style.top=(r.bottom+window.scrollY+3)+'px';
+};
+function closeDiffPop(){const p=document.getElementById('cd-pop');if(p)p.remove();}
+document.addEventListener('click',e=>{if(!e.target.closest('#cd-pop'))closeDiffPop();});
+
+// Edit-form difficulty picker (does not re-render; keeps other field values)
+document.addEventListener('click',e=>{
+  const btn=e.target.closest('#f-diff-pick button[data-diff]');
+  if(!btn)return;
+  e.preventDefault();
+  const pick=document.getElementById('f-diff-pick');
+  const hidden=document.getElementById('f-difficulty');
+  const val=btn.dataset.diff==='0'?'':btn.dataset.diff;
+  if(hidden)hidden.value=val;
+  if(pick){
+    pick.dataset.diff=val;
+    pick.querySelectorAll('button[data-diff]').forEach(b=>{
+      b.classList.toggle('on',b.dataset.diff===val&&val!=='');
+    });
+  }
+});
 
 // ─── File backup / restore ───────────────────────────────────────────────────
 window.downloadBackup=()=>{
@@ -4662,7 +4757,7 @@ window.applyCurriculum=key=>{
 // start, drag a ghost element, drop on the target semester card.
 let touchDrag=null;
 document.addEventListener('touchstart',e=>{
-  if(e.target.closest('.chk,.cacts,.cgrade,button'))return;
+  if(e.target.closest('.chk,.cacts,.cgrade,.cdiff,button'))return;
   const card=e.target.closest('.cc');if(!card)return;
   const semCard=card.closest('.sc');if(!semCard)return;
   const semId=semCard.id.replace(/^sc-/,'');
@@ -4723,7 +4818,7 @@ document.addEventListener('touchend',e=>{
 // ─── Custom drag preview ─────────────────────────────────────────────────────
 // Replaces the browser's default drag ghost with a small canvas-rendered chip.
 window.wDSCustom=(semId,courseId,e)=>{
-  if(e?.target?.closest?.('.chk,.cacts,.cgrade,button')){e.preventDefault();return false;}
+  if(e?.target?.closest?.('.chk,.cacts,.cgrade,.cdiff,button')){e.preventDefault();return false;}
   try{
     if(e&&e.dataTransfer&&e.dataTransfer.setDragImage){
       const sems=getAS();const c=sems.find(s=>s.id===semId)?.courses.find(x=>x.id===courseId);
