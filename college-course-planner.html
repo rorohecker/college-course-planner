@@ -526,7 +526,7 @@ body{font-family:-apple-system,'Segoe UI',system-ui,sans-serif;background:var(--
 </script>
 <script>
 // ─── Static data ──────────────────────────────────────────────────────────────
-const APP_VERSION='2026.09.08.1';
+const APP_VERSION='2026.09.08.2';
 // Bump when migrateFlowchartLayout rules change — migrations run once per schedule per version.
 const LAYOUT_MIGRATION_VERSION=22;
 // Raw URL is used only for parsing APP_VERSION on the live copy — never as a user link
@@ -1162,18 +1162,6 @@ const UT_FLAG_DEFS=[
   {key:'ii',label:'Independent Inquiry',re:/\bindependent inquiry\b|\bii\b/i},
 ];
 const UT_FLAG_TARGETS={wr:1,qr:1,cd:1,gc:1,e:1,ii:1};
-const GRADE_DIST={
-  'ECE 302':{avg:'3.1',aPct:18},
-  'ECE 312':{avg:'3.0',aPct:15},
-  'ECE 316':{avg:'2.9',aPct:12},
-  'ECE 325':{avg:'2.8',aPct:10},
-  'ECE 339':{avg:'3.0',aPct:14},
-  'ECE 351M':{avg:'3.2',aPct:20},
-  'ECE 360C':{avg:'3.1',aPct:17},
-  'ECE 411':{avg:'2.7',aPct:8},
-  'M 408C':{avg:'2.6',aPct:7},
-  'M 408D':{avg:'2.7',aPct:9},
-};
 const TERM_STARTS={y1f:'2025-08-25',y1s:'2026-01-12',y2f:'2026-08-24',y2s:'2027-01-11',y3f:'2027-08-23',y3s:'2028-01-10',y4f:'2028-08-28',y4s:'2029-01-08'};
 const GIST_PREFS_KEY='cp-gist-sync';
 const SCHOOL_REGISTRY={
@@ -1412,10 +1400,6 @@ function weeklyScheduleAnalysis(sems){
     }
   }
   return{courses,conflicts};
-}
-function gradeDistFor(code){
-  const nc=normCourseCode(code);
-  return GRADE_DIST[nc]||GRADE_DIST[code]||null;
 }
 function readGistPrefs(){
   try{return JSON.parse(localStorage.getItem(GIST_PREFS_KEY)||'{}');}catch(e){return{};}
@@ -2846,7 +2830,6 @@ function rCourse(semId,c){
   const isSel=S.selection.has(c.id)&&S.selectionSem===semId;
   const val=planValidation();
   const preIssue=_preIssueByCid?.get(c.id);
-  const dist=gradeDistFor(c.code);
   const diff=normalizeDifficulty(c.difficulty);
   const gradePill=c.done
     ?`<span class="cgrade editable" title="Click to set grade" onclick="cgClick('${semId}','${c.id}',event)">${esc(c.grade||'+ grade')}</span>`
@@ -2865,7 +2848,6 @@ function rCourse(semId,c){
       <span class="ccode" style="color:${cat.txt}">${esc(c.code)}</span>
       <span class="cname">${esc(c.name)}</span>
       ${c.prof?`<span class="cprof">${esc(c.prof)}</span>`:''}
-      ${dist?`<span class="cmeta">avg GPA ~${dist.avg} · ${dist.aPct}% A</span>`:''}
       ${c.note?`<span class="cnote">${esc(c.note)}</span>`:''}
       ${c.userNote?`<span class="cuser-note">${esc(c.userNote)}</span>`:''}
       ${preIssue?`<span class="cwarn" title="Missing prereqs: ${esc(preIssue.missing.join(', '))}">⚠ prereq: ${esc(preIssue.missing.join(', '))}</span>`:''}

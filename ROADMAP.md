@@ -12,7 +12,6 @@ Shipped features are marked ✅. Remaining items are future improvements.
 - **What-if ECE tracks** — compare all 8 tracks against your current plan
 - **Calendar export** — download `.ics` per semester
 - **Weekly schedule / conflict check** — add meeting times (`MWF 9-10`) and detect overlaps
-- **Grade distribution hints** — avg GPA on common ECE courses (embedded sample data)
 - **Professor field** — optional prof name on course cards
 - **Cloud sync** — optional GitHub Gist push/pull from Backup modal
 - **Mobile polish** — horizontal swipe carousel for semester cards on narrow screens

@@ -36,18 +36,6 @@ const UT_FLAG_DEFS=[
   {key:'ii',label:'Independent Inquiry',re:/\bindependent inquiry\b|\bii\b/i},
 ];
 const UT_FLAG_TARGETS={wr:1,qr:1,cd:1,gc:1,e:1,ii:1};
-const GRADE_DIST={
-  'ECE 302':{avg:'3.1',aPct:18},
-  'ECE 312':{avg:'3.0',aPct:15},
-  'ECE 316':{avg:'2.9',aPct:12},
-  'ECE 325':{avg:'2.8',aPct:10},
-  'ECE 339':{avg:'3.0',aPct:14},
-  'ECE 351M':{avg:'3.2',aPct:20},
-  'ECE 360C':{avg:'3.1',aPct:17},
-  'ECE 411':{avg:'2.7',aPct:8},
-  'M 408C':{avg:'2.6',aPct:7},
-  'M 408D':{avg:'2.7',aPct:9},
-};
 const TERM_STARTS={y1f:'2025-08-25',y1s:'2026-01-12',y2f:'2026-08-24',y2s:'2027-01-11',y3f:'2027-08-23',y3s:'2028-01-10',y4f:'2028-08-28',y4s:'2029-01-08'};
 const GIST_PREFS_KEY='cp-gist-sync';
 const SCHOOL_REGISTRY={
@@ -286,10 +274,6 @@ function weeklyScheduleAnalysis(sems){
     }
   }
   return{courses,conflicts};
-}
-function gradeDistFor(code){
-  const nc=normCourseCode(code);
-  return GRADE_DIST[nc]||GRADE_DIST[code]||null;
 }
 function readGistPrefs(){
   try{return JSON.parse(localStorage.getItem(GIST_PREFS_KEY)||'{}');}catch(e){return{};}
