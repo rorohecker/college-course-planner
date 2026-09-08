@@ -32,8 +32,8 @@ const UT_FLAG_DEFS=[
   {key:'qr',label:'Quantitative Reasoning',re:/\bqr\b|quantitative reasoning/i},
   {key:'cd',label:'Cultural Diversity',re:/\bcd\b|cultural diversity/i},
   {key:'gc',label:'Global Cultures',re:/\bgc\b|global cultures/i},
-  {key:'e',label:'Ethics',re:/\bethics\b|\be\s*flag\b/i},
-  {key:'ii',label:'Independent Inquiry',re:/\bindependent inquiry\b|\bii\b/i},
+  {key:'e',label:'Ethics',re:/\be\s*flag\b|\bethics\s*flag\b/i},
+  {key:'ii',label:'Independent Inquiry',re:/\bindependent inquiry\b|\bii\s*flag\b/i},
 ];
 const UT_FLAG_TARGETS={wr:1,qr:1,cd:1,gc:1,e:1,ii:1};
 const TERM_STARTS={y1f:'2025-08-25',y1s:'2026-01-12',y2f:'2026-08-24',y2s:'2027-01-11',y3f:'2027-08-23',y3s:'2028-01-10',y4f:'2028-08-28',y4s:'2029-01-08'};
@@ -197,17 +197,25 @@ function computePlanDiff(schA,schB){
     return m;
   };
   const a=byCode(schA?.sems),b=byCode(schB?.sems);
-  const added=[],removed=[],moved=[],gradeChanges=[];
+  const added=[],removed=[],moved=[],gradeChanges=[],metaChanges=[];
   for(const [code,c] of b){
     if(!a.has(code))added.push(c);
     else{
       const o=a.get(code);
       if(o.semId!==c.semId)moved.push({code,from:o.semLabel,to:c.semLabel});
       if((o.grade||'')!==(c.grade||''))gradeChanges.push({code,from:o.grade||'—',to:c.grade||'—'});
+      const od=Number(o.difficulty)||0,nd=Number(c.difficulty)||0;
+      const on=o.userNote||'',nn=c.userNote||'';
+      if(od!==nd||on!==nn){
+        const bits=[];
+        if(od!==nd)bits.push(`diff ${od||'—'}→${nd||'—'}`);
+        if(on!==nn)bits.push('notes updated');
+        metaChanges.push({code,detail:bits.join(', ')});
+      }
     }
   }
   for(const [code,c] of a)if(!b.has(code))removed.push(c);
-  return{added,removed,moved,gradeChanges};
+  return{added,removed,moved,gradeChanges,metaChanges};
 }
 function trackWhatIfMatrix(sch){
   const codes=new Set((sch?.sems||[]).flatMap(s=>s.courses||[]).map(c=>normCourseCode(c.code)));

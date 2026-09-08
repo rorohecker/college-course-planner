@@ -526,7 +526,7 @@ body{font-family:-apple-system,'Segoe UI',system-ui,sans-serif;background:var(--
 </script>
 <script>
 // ─── Static data ──────────────────────────────────────────────────────────────
-const APP_VERSION='2026.09.08.2';
+const APP_VERSION='2026.09.08.3';
 // Bump when migrateFlowchartLayout rules change — migrations run once per schedule per version.
 const LAYOUT_MIGRATION_VERSION=22;
 // Raw URL is used only for parsing APP_VERSION on the live copy — never as a user link
@@ -706,7 +706,7 @@ const DS=[
     {id:'c45',code:'ECE 364D',name:'Intro to Engineering Design',cat:'ECE',credits:3,done:false,note:'Core 010; Pre-req: BA 324H; after FIN/MAN/MKT; Co-req: ATC-Lab'},
     {id:'c46',code:'ATC-3',name:'Advanced Tech Component',cat:'ADVANCED',credits:3,done:false,note:'Tech core'},
     {id:'c47',code:'ATC-4',name:'Advanced Tech Component',cat:'ADVANCED',credits:3,done:false,note:'Tech core'},
-    {id:'c48',code:'LEB 323H',name:'Business Law & Ethics Honors',cat:'BUSINESS',credits:3,done:false,note:'4th year; Pre-req: ACC 312H, BA 324H'},
+    {id:'c48',code:'LEB 323H',name:'Business Law & Ethics Honors',cat:'BUSINESS',credits:3,done:false,note:'4th year; Ethics flag; Pre-req: ACC 312H, BA 324H'},
     {id:'c49',code:'GOV 312L/P',name:'American Government',cat:'CORE',credits:3,done:false,note:'Core govt part 2'},
     {id:'c56',code:'BA 130G',name:'Internship Credit',cat:'BUSINESS',credits:3,done:false,note:'Summer prior; Pre-req: BA 324H'},
   ]},
@@ -910,7 +910,7 @@ const ECB_PREV_DS=[
   {id:'y4f',label:'Year 4 Fall',courses:[
     {id:'p45',code:'ECE 364D',name:'Intro to Engineering Design',cat:'ECE',credits:3,done:false,note:''},
     {id:'p46',code:'ATC-4',name:'Advanced Tech Component',cat:'ADVANCED',credits:3,done:false,note:'ECB students only'},
-    {id:'p47',code:'LEB 323H',name:'Business Law & Ethics Honors',cat:'BUSINESS',credits:3,done:false,note:'4th year; Pre-req: ACC 312H'},
+    {id:'p47',code:'LEB 323H',name:'Business Law & Ethics Honors',cat:'BUSINESS',credits:3,done:false,note:'4th year; Ethics flag; Pre-req: ACC 312H'},
     {id:'p48',code:'GOV 312L/P',name:'American Government',cat:'CORE',credits:3,done:false,note:''},
     {id:'p49',code:'BA 353',name:'Internship Credit',cat:'BUSINESS',credits:3,done:false,note:'Pre-req: BA 324H'},
   ]},
@@ -961,7 +961,7 @@ const BUSINESS_DS=[
     {id:'b23',code:'ACC 312',name:'Managerial Accounting',cat:'BUSINESS',credits:3,done:false,note:'',grade:''},
     {id:'b24',code:'D S 235',name:'Introduction to Decision Science',cat:'BUSINESS',credits:3,done:false,note:'',grade:''},
     {id:'b25',code:'O M 235',name:'Operations Management',cat:'BUSINESS',credits:3,done:false,note:'',grade:''},
-    {id:'b26',code:'LEB 323/BGS 337',name:'Business Law and Ethics',cat:'BUSINESS',credits:3,done:false,note:'',grade:''},
+    {id:'b26',code:'LEB 323/BGS 337',name:'Business Law and Ethics',cat:'BUSINESS',credits:3,done:false,note:'Ethics flag',grade:''},
     {id:'b27',code:'MAN 336',name:'Organizational Behavior',cat:'BUSINESS',credits:3,done:false,note:'',grade:''},
     {id:'b28',code:'MKT 337',name:'Principles of Marketing',cat:'BUSINESS',credits:3,done:false,note:'',grade:''},
     {id:'b29',code:'FIN 357',name:'Business Finance',cat:'BUSINESS',credits:3,done:false,note:'',grade:''},
@@ -1158,8 +1158,8 @@ const UT_FLAG_DEFS=[
   {key:'qr',label:'Quantitative Reasoning',re:/\bqr\b|quantitative reasoning/i},
   {key:'cd',label:'Cultural Diversity',re:/\bcd\b|cultural diversity/i},
   {key:'gc',label:'Global Cultures',re:/\bgc\b|global cultures/i},
-  {key:'e',label:'Ethics',re:/\bethics\b|\be\s*flag\b/i},
-  {key:'ii',label:'Independent Inquiry',re:/\bindependent inquiry\b|\bii\b/i},
+  {key:'e',label:'Ethics',re:/\be\s*flag\b|\bethics\s*flag\b/i},
+  {key:'ii',label:'Independent Inquiry',re:/\bindependent inquiry\b|\bii\s*flag\b/i},
 ];
 const UT_FLAG_TARGETS={wr:1,qr:1,cd:1,gc:1,e:1,ii:1};
 const TERM_STARTS={y1f:'2025-08-25',y1s:'2026-01-12',y2f:'2026-08-24',y2s:'2027-01-11',y3f:'2027-08-23',y3s:'2028-01-10',y4f:'2028-08-28',y4s:'2029-01-08'};
@@ -1323,17 +1323,25 @@ function computePlanDiff(schA,schB){
     return m;
   };
   const a=byCode(schA?.sems),b=byCode(schB?.sems);
-  const added=[],removed=[],moved=[],gradeChanges=[];
+  const added=[],removed=[],moved=[],gradeChanges=[],metaChanges=[];
   for(const [code,c] of b){
     if(!a.has(code))added.push(c);
     else{
       const o=a.get(code);
       if(o.semId!==c.semId)moved.push({code,from:o.semLabel,to:c.semLabel});
       if((o.grade||'')!==(c.grade||''))gradeChanges.push({code,from:o.grade||'—',to:c.grade||'—'});
+      const od=normalizeDifficulty(o.difficulty),nd=normalizeDifficulty(c.difficulty);
+      const on=o.userNote||'',nn=c.userNote||'';
+      if(od!==nd||on!==nn){
+        const bits=[];
+        if(od!==nd)bits.push(`diff ${od||'—'}→${nd||'—'}`);
+        if(on!==nn)bits.push('notes updated');
+        metaChanges.push({code,detail:bits.join(', ')});
+      }
     }
   }
   for(const [code,c] of a)if(!b.has(code))removed.push(c);
-  return{added,removed,moved,gradeChanges};
+  return{added,removed,moved,gradeChanges,metaChanges};
 }
 function trackWhatIfMatrix(sch){
   const codes=new Set((sch?.sems||[]).flatMap(s=>s.courses||[]).map(c=>normCourseCode(c.code)));
@@ -1353,7 +1361,7 @@ function toICSForSemester(sem,semId){
     if(isDegreePlaceholderCode(c.code))continue;
     const dt=start.replace(/-/g,'');
     const uid=`cp-${semId}-${i++}@planner`;
-    lines.push('BEGIN:VEVENT',`UID:${uid}`,`DTSTAMP:${dt}T120000Z`,`DTSTART;VALUE=DATE:${dt}`,`SUMMARY:${icsEscape(c.code+' — '+c.name)}`,`DESCRIPTION:${icsEscape(c.note||'')}`,'END:VEVENT');
+    lines.push('BEGIN:VEVENT',`UID:${uid}`,`DTSTAMP:${dt}T120000Z`,`DTSTART;VALUE=DATE:${dt}`,`SUMMARY:${icsEscape(c.code+' — '+c.name)}`,`DESCRIPTION:${icsEscape([c.note,c.userNote&&('Note: '+c.userNote),normalizeDifficulty(c.difficulty)&&('Difficulty: '+normalizeDifficulty(c.difficulty)+'/5')].filter(Boolean).join('\n'))}`,'END:VEVENT');
   }
   for(const d of UT_DEADLINES){
     lines.push('BEGIN:VEVENT',`UID:deadline-${semId}-${icsEscape(d.week)}@planner`,`DTSTAMP:20260101T120000Z`,`DTSTART;VALUE=DATE:20260101`,`SUMMARY:${icsEscape('UT Deadline: '+d.week)}`,`DESCRIPTION:${icsEscape(d.what)}`,'END:VEVENT');
@@ -2994,6 +3002,7 @@ function rCompareDiff(schA,schB){
       <div><b style="font-size:12px">Removed from A</b>${li(d.removed,c=>`<li><b>${esc(c.code)}</b> — ${esc(c.semLabel)}</li>`)}</div>
       <div><b style="font-size:12px">Moved</b>${li(d.moved,c=>`<li><b>${esc(c.code)}</b> ${esc(c.from)} → ${esc(c.to)}</li>`)}</div>
       <div><b style="font-size:12px">Grade changes</b>${li(d.gradeChanges,c=>`<li><b>${esc(c.code)}</b> ${esc(c.from)} → ${esc(c.to)}</li>`)}</div>
+      <div><b style="font-size:12px">Difficulty / notes</b>${li(d.metaChanges||[],c=>`<li><b>${esc(c.code)}</b> ${esc(c.detail)}</li>`)}</div>
     </div>
   </div>`;
 }
@@ -3492,7 +3501,7 @@ GOV 310L   AMERICAN GOVERNMENT   CR   16210   Credit by exam   3.0   0.00</pre>
     const val=planValidation();
     const pre=val.prereqs.map(i=>`<div class="tk-list"><div class="miss">⚠ ${esc(i.course.code)} in ${esc(i.semLabel)} — needs ${esc(i.missing.join(', '))}</div></div>`).join('');
     const loads=val.loads.map(l=>`<div class="tk-list"><div class="${l.over?'miss':'ok'}">${l.over?'⚠':'○'} ${esc(l.sem.label)}: ${l.cr}cr${l.over?' (over 18)':l.under?' (under 12)':''}</div></div>`).join('');
-    const flags=val.flags.map(f=>`<div class="tk-list"><div class="${f.ok?'ok':'miss'}">${f.ok?'✓':'○'} ${esc(f.label)}: ${f.hit.length}/${f.target}${f.courses.length?' — '+f.courses.map(c=>c.code).join(', '):''}</div></div>`).join('');
+    const flags=val.flags.map(f=>`<div class="tk-list"><div class="${f.ok?'ok':'miss'}">${f.ok?'✓':'○'} ${esc(f.label)}: ${f.hit}/${f.target}${f.courses.length?' — '+f.courses.map(c=>c.code).join(', '):''}</div></div>`).join('');
     const overlap=val.overlap.length?val.overlap.map(o=>`<div class="tk-list"><div class="ok">✓ ${esc(o.code)} counts for: ${esc(o.tags.join(' + '))}</div></div>`).join(''):'<p style="font-size:12px;color:var(--text3)">No double-counted courses detected.</p>';
     return`<div class="mbk" id="mbk"><div class="modal" style="max-width:620px">
       <div class="mhdr"><h3>✅ Plan health</h3><button class="mclose" data-a="close-modal">×</button></div>
@@ -3850,7 +3859,7 @@ function render(){
   const programsPill=planProg?`<div class="track-pill" onclick="S.modal='programs';render()" title="Minors &amp; Certificates">🎓 ${planProg.count} program${planProg.count===1?'':'s'} <span style="opacity:.7">${planProg.coreDone}/${planProg.coreTotal}c · ${planProg.electDone}/${planProg.electNeed}e</span></div>`:'';
   const val=planValidation();
   const healthPill=`<div class="track-pill val-pill${val.prereqs.length?' warn':' ok'}" onclick="S.modal='validation';render()" title="Plan health">✅ ${val.prereqs.length?val.prereqs.length+' issue'+(val.prereqs.length===1?'':'s'):'OK'}</div>`;
-  const flagPills=flagProgressSummary(sems).filter(f=>!f.ok).slice(0,3).map(f=>`<span class="val-pill warn" onclick="S.modal='validation';render()" title="Missing ${esc(f.label)} flag">${esc(f.label)} ${f.hit.length}/${f.target}</span>`).join('');
+  const flagPills=flagProgressSummary(sems).filter(f=>!f.ok).slice(0,3).map(f=>`<span class="val-pill warn" onclick="S.modal='validation';render()" title="Missing ${esc(f.label)} flag">${esc(f.label)} ${f.hit}/${f.target}</span>`).join('');
 
   document.getElementById('root').innerHTML=`
     ${S.readOnly?`<div class="readonly-banner">👁 Advising view — read only. <button onclick="S.readOnly=false;render()" style="margin-left:10px;padding:2px 8px;border:1px solid #fff;border-radius:4px;background:transparent;color:#fff;cursor:pointer;font-size:11px">Exit advising mode</button></div>`:''}
