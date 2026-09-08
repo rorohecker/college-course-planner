@@ -93,7 +93,7 @@ body{font-family:-apple-system,'Segoe UI',system-ui,sans-serif;background:var(--
 .yr-lbl{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:2px;margin:4px 0 6px}
 .sem-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
 .sem-row.full{grid-template-columns:1fr}
-@media(max-width:600px){.sem-row{grid-template-columns:1fr}.sem-carousel{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;gap:12px;padding-bottom:8px;-webkit-overflow-scrolling:touch}.sem-carousel .sc{min-width:88vw;scroll-snap-align:start;flex-shrink:0}.hdr-btns{max-height:120px;overflow-y:auto}}
+@media(max-width:600px){.sem-row{grid-template-columns:1fr}.sem-carousel{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;gap:12px;padding-bottom:8px;-webkit-overflow-scrolling:touch}.sem-carousel .sc{min-width:88vw;scroll-snap-align:start;flex-shrink:0}.hdr-btns{max-height:120px;overflow-y:auto}.tk-list[style*="columns"]{columns:1!important}}
 .sc.warn-over{border-color:#C04870;box-shadow:inset 0 0 0 1px #C0487040}
 .sc.warn-under{border-color:#8A5A00;box-shadow:inset 0 0 0 1px #8A5A0040}
 .cwarn{font-size:9px;color:#C04870;font-weight:600;display:block;margin-top:1px}
@@ -323,7 +323,7 @@ body{font-family:-apple-system,'Segoe UI',system-ui,sans-serif;background:var(--
 /* Inline grade pill — clickable on done courses */
 .cgrade.editable{cursor:pointer;border:1px dashed var(--border2)}
 .cgrade.editable:hover{background:var(--accent);color:#fff;border-color:var(--accent)}
-.cgrade-pop{position:absolute;background:var(--surface);border:1px solid var(--border2);border-radius:6px;box-shadow:0 6px 18px rgba(0,0,0,.18);padding:4px;z-index:60;display:grid;grid-template-columns:repeat(4,1fr);gap:2px}
+.cgrade-pop{position:fixed;background:var(--surface);border:1px solid var(--border2);border-radius:6px;box-shadow:0 6px 18px rgba(0,0,0,.18);padding:4px;z-index:60;display:grid;grid-template-columns:repeat(4,1fr);gap:2px}
 .cgrade-pop button{padding:4px 8px;font-size:10px;border:1px solid transparent;background:transparent;color:var(--text);border-radius:4px;cursor:pointer}
 .cgrade-pop button:hover{background:var(--accent);color:#fff}
 .cgrade-pop button.clr{color:var(--text3);grid-column:span 4;border-top:1px solid var(--border);margin-top:2px;padding-top:5px}
@@ -333,7 +333,7 @@ body{font-family:-apple-system,'Segoe UI',system-ui,sans-serif;background:var(--
 /* Lazy-render compare cards. Browsers skip layout for offscreen .csc cards. */
 .csc{content-visibility:auto;contain-intrinsic-size:auto 200px}
 /* Catalog autocomplete results */
-.ac-pop{position:absolute;background:var(--surface);border:1px solid var(--border2);border-radius:6px;box-shadow:0 6px 18px rgba(0,0,0,.18);max-height:220px;overflow-y:auto;z-index:50;font-size:12px;min-width:260px}
+.ac-pop{position:fixed;background:var(--surface);border:1px solid var(--border2);border-radius:6px;box-shadow:0 6px 18px rgba(0,0,0,.18);max-height:220px;overflow-y:auto;z-index:50;font-size:12px;min-width:260px}
 .ac-row{padding:6px 10px;cursor:pointer;display:flex;gap:8px;align-items:center;border-bottom:1px solid var(--border)}
 .ac-row:last-child{border-bottom:none}
 .ac-row:hover,.ac-row.on{background:var(--accent);color:#fff}
@@ -526,7 +526,7 @@ body{font-family:-apple-system,'Segoe UI',system-ui,sans-serif;background:var(--
 </script>
 <script>
 // ─── Static data ──────────────────────────────────────────────────────────────
-const APP_VERSION='2026.09.08.4';
+const APP_VERSION='2026.09.08.5';
 // Bump when migrateFlowchartLayout rules change — migrations run once per schedule per version.
 const LAYOUT_MIGRATION_VERSION=22;
 // Raw URL is used only for parsing APP_VERSION on the live copy — never as a user link
@@ -1532,8 +1532,10 @@ function isRequired(c){
   if(c?.req===false)return false;
   if(c?.req===true)return true;
   if(c?.note==='Track core'||c?.note==='Track elective')return true;
+  if(c?.note==='Program core'||c?.note==='Program elective')return true;
+  if(c?.programKey)return true;
   const id=String(c?.id||'');
-  if(id.startsWith('biz_'))return true;
+  if(id.startsWith('biz_')||id.startsWith('prog_'))return true;
   if(/^b\d+$/.test(id))return true;
   // Template ECE courses: c* (ECB), eh* (honors), eg* (general), p* (ECB prev).
   const m=/^c(\d+)$/.exec(id);
@@ -1604,7 +1606,7 @@ const S={
   compareMode:false,compareId:null,cmpPickId:null,
   edit:null,form:{},filter:null,
   dragSrc:null,dragOver:null,
-  showAddSem:false,addSemKind:'normal',
+  showAddSem:false,addSemKind:'normal',addSemName:'',
   modal:null,modalTab:null,
   renamingId:null,
   selection:new Set(),selectionSem:null,
@@ -3013,12 +3015,12 @@ function rMain(){
   const known=knownFor(getAct());
   let html='';
   if(S.showAddSem)html+=`<div class="asf">
-    <select onchange="S.addSemKind=this.value;render()">
+    <select onchange="S.addSemName=document.getElementById('nsn')?.value||'';S.addSemKind=this.value;render()">
       <option value="normal"${S.addSemKind==='normal'?' selected':''}>Custom semester</option>
       <option value="internship"${S.addSemKind==='internship'?' selected':''}>Internship / Co-op (no classes)</option>
       <option value="abroad"${S.addSemKind==='abroad'?' selected':''}>Study Abroad (transfer credits)</option>
     </select>
-    <input id="nsn" placeholder="${S.addSemKind==='internship'?'Internship at Acme, Summer 2026':S.addSemKind==='abroad'?'Study Abroad, Spring 2026':'Summer Research 2025'}" autofocus>
+    <input id="nsn" value="${esc(S.addSemName||'')}" placeholder="${S.addSemKind==='internship'?'Internship at Acme, Summer 2026':S.addSemKind==='abroad'?'Study Abroad, Spring 2026':'Summer Research 2025'}" autofocus>
     <button data-a="addsem" style="background:var(--accent);color:#fff;border:none">Add</button>
     <button data-a="cancelsem" style="background:transparent;border:1px solid var(--border2);color:var(--text2)">Cancel</button>
   </div>`;
@@ -3275,7 +3277,7 @@ function rModal(){
         <div class="si-dot" style="background:${sch.color}"></div>
         <div class="si-info">
           ${isRen
-            ?`<div class="si-name"><input id="ren-inp" value="${esc(sch.name)}" onclick="event.stopPropagation()" onkeydown="if(event.key==='Enter')commitRename('${sch.id}');if(event.key==='Escape'){S.renamingId=null;render();}"></div>`
+            ?`<div class="si-name"><input id="ren-inp" value="${esc(sch.name)}" onclick="event.stopPropagation()" onkeydown="if(event.key==='Enter'){event.preventDefault();commitRename('${sch.id}');}if(event.key==='Escape'){event.preventDefault();event.stopPropagation();S.renamingId=null;render();}"></div>`
             :`<div class="si-name">${esc(sch.name)}</div>`}
           <div class="si-meta">${all.length} courses · ${cr}cr · ${done} done${sch.kind==='business'?` · track: ${esc(businessTrackLabel(sch))}`:sch.track?` · track: ${TRACKS[sch.track]?.short||sch.track}`:''}</div>
         </div>
@@ -3911,6 +3913,7 @@ function render(){
   // Restore modal scroll so picking a grade in a long GPA list doesn't jump
   // the user back to the top of the modal.
   if(S.modal&&prevModalScroll){const mb=document.querySelector('.mbody');if(mb)mb.scrollTop=prevModalScroll;}
+  document.body.style.overflow=S.modal?'hidden':'';
 }
 
 // ─── Event delegation ─────────────────────────────────────────────────────────
@@ -3931,7 +3934,7 @@ document.addEventListener('click',e=>{
   if(e.target.id==='mbk'){S.modal=null;S.modalTab=null;S.renamingId=null;render();return;}
   const el=actionTarget(e.target);if(!el)return;
   const a=el.dataset.a,sem=el.dataset.sem,cid=el.dataset.cid;
-  if(a==='filter')mutate(()=>S.filter=el.dataset.cat||null);
+  if(a==='filter'){S.filter=el.dataset.cat||null;render();}
   else if(a==='hide-start-note'){
     const cb=document.getElementById('start-suppress');
     if(!cb||cb.checked)markStartSeen();
@@ -4010,15 +4013,15 @@ document.addEventListener('click',e=>{
     });
   }
   else if(a==='dsem'){mutate(()=>{setAS(getAS().filter(s=>s.id!==sem));if(S.edit?.semId===sem){S.edit=null;S.form={};}});}
-  else if(a==='show-add-sem'){S.showAddSem=true;render();}
+  else if(a==='show-add-sem'){S.showAddSem=true;S.addSemName='';render();}
   else if(a==='addsem'){
-    const n=document.getElementById('nsn')?.value.trim();
-    if(!n){S.showAddSem=false;render();return;}
+    const n=(document.getElementById('nsn')?.value||S.addSemName||'').trim();
+    if(!n){S.showAddSem=false;S.addSemName='';render();return;}
     const tpl=SEM_TEMPLATES[S.addSemKind]||SEM_TEMPLATES.normal;
     const newSem={id:'sem_'+Date.now(),label:n,courses:tpl.courses.map(c=>({...c,id:uid(),done:false})),isOff:!!tpl.isOff,offNote:tpl.offNote||''};
-    mutate(()=>{setAS([...getAS(),newSem]);S.showAddSem=false;S.addSemKind='normal';});
+    mutate(()=>{setAS([...getAS(),newSem]);S.showAddSem=false;S.addSemKind='normal';S.addSemName='';});
   }
-  else if(a==='cancelsem'){S.showAddSem=false;render();}
+  else if(a==='cancelsem'){S.showAddSem=false;S.addSemName='';render();}
   else if(a==='close-modal'){S.modal=null;S.modalTab=null;S.renamingId=null;render();}
 });
 
@@ -4127,7 +4130,15 @@ let _trackMsgTimer=null;
 function flashTrackMsg(msg){
   S.trackMsg=msg;
   if(_trackMsgTimer)clearTimeout(_trackMsgTimer);
-  _trackMsgTimer=setTimeout(()=>{S.trackMsg='';render();},2800);
+  _trackMsgTimer=setTimeout(()=>{
+    S.trackMsg='';
+    // Avoid full re-render while a modal input is focused (caret jump).
+    const flash=document.querySelector('.tk-flash');
+    if(flash){flash.remove();return;}
+    const ae=document.activeElement;
+    if(ae&&(ae.tagName==='INPUT'||ae.tagName==='TEXTAREA'))return;
+    render();
+  },2800);
 }
 window.setTrack=key=>mutate(()=>{
   S.schedules=S.schedules.map(s=>{
@@ -4202,7 +4213,15 @@ let _programMsgTimer=null;
 function flashProgramMsg(msg){
   S.programMsg=msg;
   if(_programMsgTimer)clearTimeout(_programMsgTimer);
-  _programMsgTimer=setTimeout(()=>{S.programMsg='';render();},2800);
+  _programMsgTimer=setTimeout(()=>{
+    S.programMsg='';
+    // Avoid full re-render while a modal input is focused (caret jump).
+    const flash=document.querySelector('.tk-flash');
+    if(flash){flash.remove();return;}
+    const ae=document.activeElement;
+    if(ae&&(ae.id==='program-inp'||ae.tagName==='INPUT'||ae.tagName==='TEXTAREA'))return;
+    render();
+  },2800);
 }
 window.toggleProgramElective=(programKey,code)=>{
   const sch=getAct();
@@ -4331,7 +4350,10 @@ document.addEventListener('keydown',e=>{
   const t=e.target;const tag=t?.tagName;
   const inField=tag==='INPUT'||tag==='TEXTAREA'||tag==='SELECT'||t?.isContentEditable;
   if(e.key==='Escape'){
-    if(document.getElementById('cg-pop')){closeGradePop();return;}
+    if(document.getElementById('cg-pop')){closeGradePop();e.preventDefault();return;}
+    if(document.getElementById('cd-pop')){closeDiffPop();e.preventDefault();return;}
+    if(document.getElementById('ac-pop')){closeAutocomplete();e.preventDefault();return;}
+    if(S.renamingId){S.renamingId=null;render();e.preventDefault();return;}
     if(S.modal){S.modal=null;S.modalTab=null;S.renamingId=null;render();}
     else if(S.selection.size)clearSel();
     else if(S.edit){S.edit=null;S.form={};render();}
@@ -4345,9 +4367,9 @@ document.addEventListener('keydown',e=>{
       e.preventDefault();return;
     }
   }
+  if(inField)return;
   if((e.ctrlKey||e.metaKey)&&!e.shiftKey&&e.key.toLowerCase()==='z'){e.preventDefault();undo();return;}
   if((e.ctrlKey||e.metaKey)&&(e.key.toLowerCase()==='y'||(e.shiftKey&&e.key.toLowerCase()==='z'))){e.preventDefault();redo();return;}
-  if(inField)return;
   if(S.modal||S.edit)return;
   const k=e.key.toLowerCase();
   if((e.key===' '||e.code==='Space')&&S.selection.size===1&&S.selectionSem){
@@ -4406,8 +4428,9 @@ function showAutocomplete(){
   if(!q){if(pop)pop.remove();_acOpen=false;return;}
   if(!pop){pop=document.createElement('div');pop.id='ac-pop';pop.className='ac-pop';document.body.appendChild(pop);}
   const r=input.getBoundingClientRect();
-  pop.style.left=(r.left+window.scrollX)+'px';
-  pop.style.top=(r.bottom+window.scrollY+2)+'px';
+  pop.style.position='fixed';
+  pop.style.left=r.left+'px';
+  pop.style.top=(r.bottom+2)+'px';
   pop.style.width=Math.max(r.width,260)+'px';
   if(!results.length){pop.innerHTML='<div class="ac-empty">No catalog match. Type and save to add as a new course.</div>';_acOpen=true;return;}
   pop.innerHTML=results.map((e,i)=>`<div class="ac-row${i===_acIdx?' on':''}" data-i="${i}"><span class="ac-code">${esc(e.code)}</span><span class="ac-name">${esc(e.name)}</span><span class="ac-cr">${parseCreditsFromCode(e.code)}cr</span></div>`).join('');
@@ -4434,7 +4457,7 @@ document.addEventListener('keydown',e=>{
   if(e.key==='ArrowDown'){e.preventDefault();_acIdx=Math.min(_acIdx+1,results.length-1);showAutocomplete();}
   else if(e.key==='ArrowUp'){e.preventDefault();_acIdx=Math.max(_acIdx-1,0);showAutocomplete();}
   else if(e.key==='Enter'&&results.length){e.preventDefault();pickAutocomplete(_acIdx);}
-  else if(e.key==='Escape'){closeAutocomplete();}
+  else if(e.key==='Escape'){e.preventDefault();e.stopPropagation();closeAutocomplete();}
 });
 document.addEventListener('click',e=>{if(_acOpen&&!e.target.closest('#ac-pop')&&e.target.id!=='f-code')closeAutocomplete();});
 
@@ -4449,8 +4472,9 @@ window.cgClick=(semId,cid,e)=>{
   pop.querySelectorAll('button').forEach(b=>{b.onclick=ev=>{ev.stopPropagation();setGrade(semId,cid,b.dataset.g);closeGradePop();};});
   document.body.appendChild(pop);
   const r=e.target.getBoundingClientRect();
-  pop.style.left=Math.min(window.innerWidth-pop.offsetWidth-8,r.left+window.scrollX)+'px';
-  pop.style.top=(r.bottom+window.scrollY+3)+'px';
+  pop.style.position='fixed';
+  pop.style.left=Math.min(window.innerWidth-pop.offsetWidth-8,r.left)+'px';
+  pop.style.top=(r.bottom+3)+'px';
 };
 function closeGradePop(){const p=document.getElementById('cg-pop');if(p)p.remove();}
 document.addEventListener('click',e=>{if(!e.target.closest('#cg-pop'))closeGradePop();});
@@ -4466,8 +4490,9 @@ window.diffClick=(semId,cid,e)=>{
   pop.querySelectorAll('button').forEach(b=>{b.onclick=ev=>{ev.stopPropagation();setDifficulty(semId,cid,b.dataset.d);closeDiffPop();};});
   document.body.appendChild(pop);
   const r=e.target.getBoundingClientRect();
-  pop.style.left=Math.min(window.innerWidth-pop.offsetWidth-8,r.left+window.scrollX)+'px';
-  pop.style.top=(r.bottom+window.scrollY+3)+'px';
+  pop.style.position='fixed';
+  pop.style.left=Math.min(window.innerWidth-pop.offsetWidth-8,r.left)+'px';
+  pop.style.top=(r.bottom+3)+'px';
 };
 function closeDiffPop(){const p=document.getElementById('cd-pop');if(p)p.remove();}
 document.addEventListener('click',e=>{if(!e.target.closest('#cd-pop'))closeDiffPop();});
@@ -4849,14 +4874,16 @@ function computeProgramResultsHtml(){
 function computeSearchResultsHtml(){
   const q=(S.searchQ||'').trim().toLowerCase();
   if(!q)return'<div class="sres-empty">Type a course code or name above.</div>';
+  const qCompact=q.replace(/\s+/g,'');
   // Ranked: exact code > prefix > code substring > name match.
   const out=[];
   for(const sch of S.schedules)for(const sem of sch.sems)for(const c of sem.courses){
     const code=c.code.toLowerCase(),name=c.name.toLowerCase();
+    const codeCompact=code.replace(/\s+/g,'');
     let score=0;
-    if(code===q)score=10;
-    else if(code.startsWith(q))score=6;
-    else if(code.includes(q))score=4;
+    if(code===q||codeCompact===qCompact)score=10;
+    else if(code.startsWith(q)||codeCompact.startsWith(qCompact))score=6;
+    else if(code.includes(q)||codeCompact.includes(qCompact))score=4;
     else if(name.startsWith(q))score=3;
     else if(name.includes(q))score=1;
     if(score)out.push({sch,sem,c,score});
