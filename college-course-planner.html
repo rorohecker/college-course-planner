@@ -2852,8 +2852,8 @@ function rCourse(semId,c){
     ?`<span class="cgrade editable" title="Click to set grade" onclick="cgClick('${semId}','${c.id}',event)">${esc(c.grade||'+ grade')}</span>`
     :(c.grade?`<span class="cgrade">${esc(c.grade)}</span>`:'');
   const diffPill=diff
-    ?`<span class="cdiff d${diff}" title="Difficulty ${esc(difficultyLabel(diff))}" onclick="diffClick('${semId}','${c.id}',event)">${diff}/5</span>`
-    :(!S.readOnly?`<span class="cdiff editable" title="Set difficulty 1–5" onclick="diffClick('${semId}','${c.id}',event)" style="cursor:pointer;border:1px dashed var(--border2);background:var(--surface2);color:var(--text3)">+ diff</span>`:'');
+    ?`<span class="cdiff d${diff}" title="Difficulty ${esc(difficultyLabel(diff))} — click to change" onclick="diffClick('${semId}','${c.id}',event)">${diff}/5</span>`
+    :'';
   const dragAttr=S.readOnly?'':' draggable="true" ondragstart="wDSCustom(\''+semId+'\',\''+c.id+'\',event)" ondragend="wDE()"';
   return `<div class="cc${c.done?' done':''}${isSel?' sel':''}" style="background:${cat.bg};border-color:${cat.brd}"${dragAttr}>
     <div class="chk" style="border-color:${chkBrd};background:${chkBg}" data-cid="${c.id}" role="checkbox" aria-checked="${c.done?'true':'false'}" title="Mark done"
@@ -2867,7 +2867,7 @@ function rCourse(semId,c){
       ${c.prof?`<span class="cprof">${esc(c.prof)}</span>`:''}
       ${dist?`<span class="cmeta">avg GPA ~${dist.avg} · ${dist.aPct}% A</span>`:''}
       ${c.note?`<span class="cnote">${esc(c.note)}</span>`:''}
-      ${c.userNote?`<span class="cuser-note">📝 ${esc(c.userNote)}</span>`:''}
+      ${c.userNote?`<span class="cuser-note">${esc(c.userNote)}</span>`:''}
       ${preIssue?`<span class="cwarn" title="Missing prereqs: ${esc(preIssue.missing.join(', '))}">⚠ prereq: ${esc(preIssue.missing.join(', '))}</span>`:''}
       ${c.meeting?`<span class="cmeta">${esc(c.meeting)}</span>`:''}
     </div>
