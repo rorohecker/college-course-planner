@@ -82,8 +82,9 @@ body{font-family:-apple-system,'Segoe UI',system-ui,sans-serif;background:var(--
 .fld{display:flex;flex-direction:column;gap:3px}
 .fld.full{margin-bottom:8px}
 .fld label{font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:.4px}
-.fld input,.fld select{padding:6px 9px;border:1px solid var(--border2);border-radius:6px;font-size:12px;background:var(--surface2);color:var(--text);outline:none;width:100%}
-.fld input:focus,.fld select:focus{border-color:var(--accent)}
+.fld input,.fld select,.fld textarea{padding:6px 9px;border:1px solid var(--border2);border-radius:6px;font-size:12px;background:var(--surface2);color:var(--text);outline:none;width:100%}
+.fld input:focus,.fld select:focus,.fld textarea:focus{border-color:var(--accent)}
+.fld textarea{resize:vertical;min-height:52px;font-family:inherit;line-height:1.35}
 .ea{display:flex;justify-content:space-between;align-items:center;margin-top:12px}
 .bdel{padding:5px 11px;background:#FEE;color:#C00;border:1px solid #FCC;border-radius:6px;cursor:pointer;font-size:11px}
 .bcancel{padding:5px 11px;border:1px solid var(--border2);border-radius:6px;cursor:pointer;font-size:11px;background:transparent;color:var(--text2)}
@@ -143,6 +144,24 @@ body{font-family:-apple-system,'Segoe UI',system-ui,sans-serif;background:var(--
 .ccode{font-size:11px;font-weight:700}
 .cname{font-size:10px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;margin-top:1px}
 .cnote{font-size:9px;color:var(--text3);font-style:italic;display:block;margin-top:1px}
+.cuser-note{font-size:9px;color:var(--text2);display:block;margin-top:1px}
+.cdiff{font-size:9px;font-weight:700;padding:1px 5px;border-radius:3px;margin-top:1px;flex-shrink:0;white-space:nowrap}
+.cdiff.d1{background:#EAF3DE;color:#3B6D11}
+.cdiff.d2{background:#E8F0D8;color:#4A6B1C}
+.cdiff.d3{background:#FEF3DC;color:#7A4A00}
+.cdiff.d4{background:#FCEBEB;color:#A32D2D}
+.cdiff.d5{background:#F5C4C4;color:#791F1F}
+@media(prefers-color-scheme:dark){
+  .cdiff.d1{background:#173404;color:#97C459}
+  .cdiff.d2{background:#1A3008;color:#8BB84A}
+  .cdiff.d3{background:#3A2200;color:#F0C060}
+  .cdiff.d4{background:#4A1010;color:#F09595}
+  .cdiff.d5{background:#5C1212;color:#F5AAAA}
+}
+.diff-pick{display:flex;gap:4px;flex-wrap:wrap}
+.diff-pick button{width:28px;height:28px;border-radius:6px;border:1px solid var(--border2);background:var(--surface2);color:var(--text2);font-size:11px;font-weight:700;cursor:pointer}
+.diff-pick button.on{border-color:var(--accent);background:var(--accent);color:#fff}
+.diff-pick button.clr{width:auto;padding:0 8px;font-weight:500;font-size:10px}
 .cc.done .ccode,.cc.done .cname{text-decoration:line-through}
 .crdt{font-size:9px;color:var(--text3);flex-shrink:0;margin-top:2px}
 .cgrade{font-size:9px;font-weight:700;padding:1px 5px;border-radius:3px;background:var(--surface2);color:var(--text2);margin-top:1px}
@@ -507,7 +526,7 @@ body{font-family:-apple-system,'Segoe UI',system-ui,sans-serif;background:var(--
 </script>
 <script>
 // ─── Static data ──────────────────────────────────────────────────────────────
-const APP_VERSION='2026.09.01.5';
+const APP_VERSION='2026.09.08.3';
 // Bump when migrateFlowchartLayout rules change — migrations run once per schedule per version.
 const LAYOUT_MIGRATION_VERSION=22;
 // Raw URL is used only for parsing APP_VERSION on the live copy — never as a user link
@@ -643,7 +662,7 @@ const DS=[
     {id:'c13',code:'M 408D',name:'Seq, Series & Multivariable Calculus',cat:'MATH',credits:4,done:false,note:'Pre-req: M 408C'},
     {id:'c14',code:'BA 110G',name:'Professional Dev & Career Planning Honors',cat:'BUSINESS',credits:1,done:false,note:'Fall only'},
     {id:'c15',code:'BA 111G',name:'Leadership & Innovation Honors',cat:'BUSINESS',credits:1,done:false,note:''},
-    {id:'c26',code:'BA 324H',name:'Business Communication',cat:'BUSINESS',credits:3,done:false,note:'Fall only; Core 010; Pre-req: RHE 306, BA 110G'},
+    {id:'c26',code:'BA 324H',name:'Business Communication',cat:'BUSINESS',credits:3,done:false,note:'Fall only; Core 010; Pre-req: RHE 306'},
   ]},
   {id:'y1s',label:'Year 1 Spring',courses:[
     {id:'c17',code:'ECE 419H',name:'Intro to Embedded Systems',cat:'ECE',credits:4,done:false,note:'Spring only; Pre-req: ECE 406H; Co-req: ECE 412H'},
@@ -669,30 +688,30 @@ const DS=[
     {id:'c16',code:'UGS 302/3',name:'First-Year Signature Course',cat:'CORE',credits:3,done:false,note:''},
   ]},
   {id:'y3f',label:'Year 3 Fall',courses:[
-    {id:'c24',code:'ECE 313H',name:'Linear Systems & Signals',cat:'ECE',credits:3,done:false,note:'Fall only; Pre-req: ECE 402H, M 427J; Co-req: M 340L'},
+    {id:'c24',code:'ECE 313H',name:'Linear Systems & Signals',cat:'ECE',credits:3,done:false,note:'Fall only; Pre-req: ECE 411H, M 427J, M 340L'},
     {id:'c36',code:'ATC-1',name:'Advanced Tech Component',cat:'ADVANCED',credits:3,done:false,note:'Tech core (1 of 7)'},
     {id:'c42',code:'FIN 357H',name:'Business Finance Honors',cat:'BUSINESS',credits:3,done:false,note:'Before ECE 364D; Pre-req: ECO 304K, ACC 312H, BA 324H, STA 235H, DS 235H'},
-    {id:'c38',code:'MAN 327H',name:'Entrepreneurship & Innovation Honors',cat:'BUSINESS',credits:3,done:false,note:'Fall only; Pre-req: M 408D; Co-req: BA 324H'},
+    {id:'c38',code:'MAN 327H',name:'Entrepreneurship & Innovation Honors',cat:'BUSINESS',credits:3,done:false,note:'Fall only; Pre-req: M 408D, BA 324H'},
     {id:'c55',code:'BA 120G',name:'Global Learning',cat:'BUSINESS',credits:0,done:false,note:'Pre-req: BA 324H'},
   ]},
   {id:'y3s',label:'Year 3 Spring',courses:[
     {id:'c41',code:'ATC-Lab',name:'Advanced Tech Component Lab',cat:'ADVANCED',credits:1,done:false,note:'Tech core'},
     {id:'c40',code:'ATC-2',name:'Advanced Tech Component',cat:'ADVANCED',credits:3,done:false,note:'Tech core'},
     {id:'c34',code:'P/S/A',name:'Psychology/Sociology/Anthropology Elective',cat:'CORE',credits:3,done:false,note:'McCombs core; statistics not accepted'},
-    {id:'c43',code:'MAN 336H',name:'Organizational Behavior Honors',cat:'BUSINESS',credits:3,done:false,note:'Before ECE 364D; Pre-req: ACC 312H, BA 324H, P/S/A'},
-    {id:'c44',code:'MKT 337H',name:'Principles of Marketing Honors',cat:'BUSINESS',credits:3,done:false,note:'Before ECE 364D; Pre-req: BA 324H, ACC 312H, ECO 304K & L, STA 235H, DS 235H'},
+    {id:'c43',code:'MAN 336H',name:'Organizational Behavior Honors',cat:'BUSINESS',credits:3,done:false,note:'Before ECE 364D; Pre-req: ACC 312H, BA 324H'},
+    {id:'c44',code:'MKT 337H',name:'Principles of Marketing Honors',cat:'BUSINESS',credits:3,done:false,note:'Before ECE 364D; Pre-req: BA 324H, ACC 312H, ECO 304K, ECO 304L, STA 235H, DS 235H'},
     {id:'c59',code:'HIS 315L',name:'US History',cat:'CORE',credits:3,done:false,note:'Core history part 2 (skip if AP covered both)'},
   ]},
   {id:'y4f',label:'Year 4 Fall',courses:[
     {id:'c45',code:'ECE 364D',name:'Intro to Engineering Design',cat:'ECE',credits:3,done:false,note:'Core 010; Pre-req: BA 324H; after FIN/MAN/MKT; Co-req: ATC-Lab'},
     {id:'c46',code:'ATC-3',name:'Advanced Tech Component',cat:'ADVANCED',credits:3,done:false,note:'Tech core'},
     {id:'c47',code:'ATC-4',name:'Advanced Tech Component',cat:'ADVANCED',credits:3,done:false,note:'Tech core'},
-    {id:'c48',code:'LEB 323H',name:'Business Law & Ethics Honors',cat:'BUSINESS',credits:3,done:false,note:'4th year; Pre-req: ACC 312H, BA 324H'},
+    {id:'c48',code:'LEB 323H',name:'Business Law & Ethics Honors',cat:'BUSINESS',credits:3,done:false,note:'4th year; Ethics flag; Pre-req: ACC 312H, BA 324H'},
     {id:'c49',code:'GOV 312L/P',name:'American Government',cat:'CORE',credits:3,done:false,note:'Core govt part 2'},
     {id:'c56',code:'BA 130G',name:'Internship Credit',cat:'BUSINESS',credits:3,done:false,note:'Summer prior; Pre-req: BA 324H'},
   ]},
   {id:'y4s',label:'Year 4 Spring',courses:[
-    {id:'c50',code:'ECE 464H',name:'Honors Senior Design Project',cat:'ECE',credits:4,done:false,note:'Pre-req: ECE 364D & ATC-Lab'},
+    {id:'c50',code:'ECE 464H',name:'Honors Senior Design Project',cat:'ECE',credits:4,done:false,note:'Pre-req: ECE 364D; ATC-Lab also required'},
     {id:'c52',code:'ATE',name:'Advanced Technical Elective',cat:'ADVANCED',credits:3,done:false,note:'UD ECE (3 hrs) or ECE 316'},
     {id:'c51',code:'ATC-5',name:'Advanced Tech Component',cat:'ADVANCED',credits:3,done:false,note:'Tech core (7 of 7)'},
     {id:'c53',code:'MAN 374H',name:'Gen Mgmt & Strategy Honors',cat:'BUSINESS',credits:3,done:false,note:'4th year; Pre-req: FIN 357H, MAN 336H, MKT 337H; Co-req: BA 130G'},
@@ -726,12 +745,12 @@ const ECE_HONORS_DS=[
     {id:'eh17',code:'M 427J',name:'Differential Equations',cat:'MATH',credits:4,done:false,note:'Pre-req: M 408D; Co-req: ECE 411H, PHY 303E'},
     {id:'eh20',code:'ECE 411H',name:'Circuit Theory',cat:'ECE',credits:4,done:false,note:'Pre-req: ECE 402H, PHY 303K, PHY 105M; Co-req: M 427J, PHY 303E'},
     {id:'eh22',code:'M 340L',name:'Matrices & Matrix Calculations',cat:'MATH',credits:3,done:false,note:'Pre-req: M 408D'},
-    {id:'eh21',code:'ECE 313H',name:'Linear Systems & Signals',cat:'ECE',credits:3,done:false,note:'Fall only; Pre-req: ECE 402H, M 427J, M 340L'},
     {id:'eh2',code:'RHE 306',name:'Rhetoric & Writing',cat:'CORE',credits:3,done:false,note:'AP Credit or Y2 Fall'},
     {id:'eh4',code:'GOV 310L',name:'American Government',cat:'CORE',credits:3,done:false,note:'AP Credit — core govt part 1'},
     {id:'eh19',code:'SBS',name:'Social & Behavioral Sciences',cat:'CORE',credits:3,done:false,note:'AP Credit'},
   ]},
   {id:'y2s',label:'Year 2 Spring',courses:[
+    {id:'eh21',code:'ECE 313H',name:'Linear Systems & Signals',cat:'ECE',credits:3,done:false,note:'Pre-req: ECE 411H, M 427J, M 340L'},
     {id:'eh24',code:'ECE 351H',name:'Probability / Random Processes',cat:'ECE',credits:3,done:false,note:'Pre-req: M 427J'},
     {id:'eh23',code:'ECE 333T',name:'Engineering Communications',cat:'ECE',credits:3,done:false,note:'Core 010; Pre-req: RHE 306, ECE 419H'},
     {id:'eh25',code:'ATC-M',name:'Advanced Tech Component (Math)',cat:'ADVANCED',credits:3,done:false,note:'M 427L or M 325K'},
@@ -757,7 +776,7 @@ const ECE_HONORS_DS=[
     {id:'eh37',code:'GOV 312L/P',name:'American Government',cat:'CORE',credits:3,done:false,note:'Core govt part 2'},
   ]},
   {id:'y4s',label:'Year 4 Spring',courses:[
-    {id:'eh40',code:'ECE 464H',name:'Honors Senior Design Project',cat:'ECE',credits:4,done:false,note:'Pre-req: ECE 364D & ATC-Lab'},
+    {id:'eh40',code:'ECE 464H',name:'Honors Senior Design Project',cat:'ECE',credits:4,done:false,note:'Pre-req: ECE 364D; ATC-Lab also required'},
     {id:'eh41',code:'FREE-3',name:'Free Elective',cat:'OTHER',credits:3,done:false,note:''},
     {id:'eh42',code:'HIS',name:'US History',cat:'CORE',credits:3,done:false,note:'AP Credit'},
     {id:'eh43',code:'ATC-6',name:'Advanced Tech Component',cat:'ADVANCED',credits:3,done:false,note:'Tech core (9 of 9)'},
@@ -769,17 +788,17 @@ const ECE_HONORS_DS=[
 const ECE_GENERAL_DS=[
   {id:'y1f',label:'Year 1 Fall',courses:[
     {id:'eg1',code:'M 408C',name:'Differential & Integral Calculus',cat:'MATH',credits:4,done:false,note:'AP Credit or Y1 Fall'},
-    {id:'eg11',code:'ECE 406',name:'Introduction to Computing',cat:'ECE',credits:4,done:false,note:'Pre-req: M 408C'},
+    {id:'eg11',code:'ECE 406',name:'Introduction to Computing',cat:'ECE',credits:4,done:false,note:'Co-req: M 408C'},
     {id:'eg13',code:'UGS 302/3',name:'First-Year Signature Course',cat:'CORE',credits:3,done:false,note:''},
     {id:'eg14',code:'UGS 016',name:'First-Year Interest Group',cat:'CORE',credits:0,done:false,note:''},
-    {id:'eg10',code:'ECE 402',name:'Intro to Electrical Engineering',cat:'ECE',credits:4,done:false,note:'Co-req: M 408D'},
+    {id:'eg10',code:'ECE 402',name:'Intro to Electrical Engineering',cat:'ECE',credits:4,done:false,note:'Co-req: M 408C'},
   ]},
   {id:'y1s',label:'Year 1 Spring',courses:[
     {id:'eg12',code:'M 408D',name:'Seq, Series & Multivariable Calculus',cat:'MATH',credits:4,done:false,note:'Pre-req: M 408C'},
     {id:'eg7',code:'PHY 303K',name:'Engineering Physics 1',cat:'PHY',credits:3,done:false,note:'AP Credit or Y1 Spring'},
     {id:'eg8',code:'PHY 105M',name:'Lab for PHY 303K',cat:'PHY',credits:1,done:false,note:'AP Credit or Y1 Spring'},
     {id:'eg3',code:'VAPA',name:'Visual & Performing Arts',cat:'CORE',credits:3,done:false,note:'AP Credit'},
-    {id:'eg15',code:'ECE 419K',name:'Intro to Embedded Systems',cat:'ECE',credits:4,done:false,note:'Pre-req: ECE 406, ECE 412'},
+    {id:'eg15',code:'ECE 419K',name:'Intro to Embedded Systems',cat:'ECE',credits:4,done:false,note:'Pre-req: ECE 406'},
   ]},
   {id:'y2f',label:'Year 2 Fall',courses:[
     {id:'eg9',code:'PHY 303E',name:'Electromagnetic, Quantum, Semiconductor Physics',cat:'PHY',credits:3,done:false,note:'Pre-req: PHY 303K, PHY 105M'},
@@ -791,8 +810,8 @@ const ECE_GENERAL_DS=[
   {id:'y2s',label:'Year 2 Spring',courses:[
     {id:'eg21',code:'M 340L',name:'Matrices & Matrix Calculations',cat:'MATH',credits:3,done:false,note:'Pre-req: M 408D'},
     {id:'eg5',code:'E 316',name:'Humanities Credit (L, M, N or P)',cat:'CORE',credits:3,done:false,note:'AP Credit or Y2 Spring'},
-    {id:'eg16',code:'ECE 412',name:'Software Design & Implementation I',cat:'ECE',credits:4,done:false,note:'Pre-req: ECE 406'},
-    {id:'eg20',code:'ECE 313',name:'Linear Systems & Signals',cat:'ECE',credits:3,done:false,note:'Pre-req: ECE 402, M 427J, M 340L'},
+    {id:'eg16',code:'ECE 412',name:'Software Design & Implementation I',cat:'ECE',credits:4,done:false,note:'Pre-req: ECE 406, ECE 419K'},
+    {id:'eg20',code:'ECE 313',name:'Linear Systems & Signals',cat:'ECE',credits:3,done:false,note:'Pre-req: ECE 411, M 427J; Co-req: M 340L'},
     {id:'eg38',code:'FREE-2',name:'Free Elective',cat:'OTHER',credits:3,done:false,note:''},
   ]},
   {id:'y3f',label:'Year 3 Fall',courses:[
@@ -817,7 +836,7 @@ const ECE_GENERAL_DS=[
     {id:'eg41',code:'HIS',name:'US History',cat:'CORE',credits:3,done:false,note:'In-person if no AP'},
   ]},
   {id:'y4s',label:'Year 4 Spring',courses:[
-    {id:'eg39',code:'ECE 464K',name:'Senior Design Project',cat:'ECE',credits:4,done:false,note:'Pre-req: ECE 364D & ATC-Lab'},
+    {id:'eg39',code:'ECE 464K',name:'Senior Design Project',cat:'ECE',credits:4,done:false,note:'Pre-req: ECE 364D; ATC-Lab also required'},
     {id:'eg40',code:'FREE-3',name:'Free Elective',cat:'OTHER',credits:3,done:false,note:''},
     {id:'eg36',code:'GOV 312L/P',name:'American Government',cat:'CORE',credits:3,done:false,note:'Core govt part 2'},
     {id:'eg26',code:'HIS',name:'US History',cat:'CORE',credits:3,done:false,note:'AP Credit'},
@@ -828,6 +847,10 @@ const ECE_GENERAL_DS=[
 // ─── ECE + Business Honors (ECB Dual Degree) · previous version ────────────────
 // Kept for reference/comparison. Uses the pre-2026 catalog course numbers.
 const ECB_PREV_DS=[
+  {id:'ap',label:'AP / IB / Pre-College Credits',courses:[
+    {id:'p1',code:'M 408C',name:'Differential & Integral Calculus',cat:'MATH',credits:4,done:false,note:'AP Credit'},
+    {id:'p2',code:'RHE 306',name:'Rhetoric & Writing',cat:'CORE',credits:3,done:false,note:'AP Credit'},
+  ]},
   {id:'phy',label:'Physics — Summer (between Y1 & Y2)',courses:[
     {id:'p7',code:'PHY 303K',name:'Engineering Physics 1',cat:'PHY',credits:3,done:false,note:''},
     {id:'p8',code:'PHY 105M',name:'Lab for PHY 303K',cat:'PHY',credits:1,done:false,note:''},
@@ -835,18 +858,16 @@ const ECB_PREV_DS=[
     {id:'p10',code:'PHY 105N',name:'Lab for PHY 303L',cat:'PHY',credits:1,done:false,note:''},
   ]},
   {id:'y1f',label:'Year 1 Fall',courses:[
-    {id:'p1',code:'M 408C',name:'Differential & Integral Calculus',cat:'MATH',credits:4,done:false,note:'AP Credit'},
-    {id:'p2',code:'RHE 306',name:'Rhetoric & Writing',cat:'CORE',credits:3,done:false,note:'AP Credit'},
-    {id:'p11',code:'ECE 302H',name:'Intro to Electrical Engineering Honors',cat:'ECE',credits:3,done:false,note:'Pre-req: M 408D'},
-    {id:'p12',code:'ECE 306H',name:'Introduction to Computing',cat:'ECE',credits:3,done:false,note:'Pre-req: M 408C'},
+    {id:'p11',code:'ECE 302H',name:'Intro to Electrical Engineering Honors',cat:'ECE',credits:3,done:false,note:'Co-req: M 408D'},
+    {id:'p12',code:'ECE 306H',name:'Introduction to Computing',cat:'ECE',credits:3,done:false,note:'Co-req: M 408C'},
     {id:'p13',code:'M 408D',name:'Seq. Series & Multivariable Calculus',cat:'MATH',credits:4,done:false,note:'Pre-req: M 408C'},
     {id:'p14',code:'BA 101H',name:'Professional Dev & Career Planning Honors',cat:'BUSINESS',credits:1,done:false,note:''},
     {id:'p15',code:'MAN 101H',name:'Leadership & Innovation Honors',cat:'BUSINESS',credits:1,done:false,note:''},
-    {id:'p16',code:'BA 324H',name:'Business Communication',cat:'BUSINESS',credits:3,done:false,note:'Pre-req: RHE 306, BA 101H'},
+    {id:'p16',code:'BA 324H',name:'Business Communication',cat:'BUSINESS',credits:3,done:false,note:'Pre-req: RHE 306'},
   ]},
   {id:'y1s',label:'Year 1 Spring',courses:[
-    {id:'p17',code:'ECE 319H',name:'Intro to Embedded Systems',cat:'ECE',credits:3,done:false,note:'Pre-req: ECE 302H, ECE 306H'},
-    {id:'p18',code:'ECE 312H',name:'Software Design & Implementation',cat:'ECE',credits:3,done:false,note:'Pre-req: ECE 306H, M 408C'},
+    {id:'p17',code:'ECE 319H',name:'Intro to Embedded Systems',cat:'ECE',credits:3,done:false,note:'Pre-req: ECE 306H'},
+    {id:'p18',code:'ECE 312H',name:'Software Design & Implementation',cat:'ECE',credits:3,done:false,note:'Pre-req: ECE 306H; Co-req: ECE 319H'},
     {id:'p19',code:'M 427J',name:'Differential Equations',cat:'MATH',credits:4,done:false,note:'Pre-req: M 408D'},
     {id:'p5',code:'ECO 304K',name:'Intro to Microeconomics (SBS)',cat:'BUSINESS',credits:3,done:false,note:'AP Credit or Y1 Spring'},
     {id:'p20',code:'MIS 301H',name:'Intro to Info Tech Mgmt Honors',cat:'BUSINESS',credits:3,done:false,note:''},
@@ -854,8 +875,7 @@ const ECB_PREV_DS=[
     {id:'p22',code:'ECO 304L',name:'Intro to Macroeconomics',cat:'BUSINESS',credits:3,done:false,note:''},
   ]},
   {id:'y2f',label:'Year 2 Fall',courses:[
-    {id:'p23',code:'ECE 411H',name:'Circuit Theory',cat:'ECE',credits:4,done:false,note:'Pre-req: ECE 302H, PHY 303L, M 427J'},
-    {id:'p24',code:'ECE 313H',name:'Linear Systems & Signals',cat:'ECE',credits:3,done:false,note:'Pre-req: ECE 302H, M 427J, M 340L'},
+    {id:'p23',code:'ECE 411H',name:'Circuit Theory',cat:'ECE',credits:4,done:false,note:'Pre-req: ECE 302H; Co-req: M 427J, PHY 303L, PHY 105N'},
     {id:'p25',code:'M 340L',name:'Matrices & Matrix Calculations',cat:'MATH',credits:3,done:false,note:'Pre-req: M 408D'},
     {id:'p4',code:'GOV 310L',name:'American Government',cat:'CORE',credits:3,done:false,note:'AP Credit'},
     {id:'p6',code:'E 316',name:'Humanities Credit (L, M, N or P)',cat:'CORE',credits:3,done:false,note:'AP Credit'},
@@ -864,7 +884,8 @@ const ECB_PREV_DS=[
     {id:'p28',code:'STA 235H',name:'Data Science for Bus Applications Honors',cat:'BUSINESS',credits:2,done:false,note:'Pre-req: STA 301H'},
   ]},
   {id:'y2s',label:'Year 2 Spring',courses:[
-    {id:'p29',code:'ECE 351H',name:'Probability / Random Processes',cat:'ECE',credits:3,done:false,note:''},
+    {id:'p24',code:'ECE 313H',name:'Linear Systems & Signals',cat:'ECE',credits:3,done:false,note:'Pre-req: ECE 411H, M 427J, M 340L'},
+    {id:'p29',code:'ECE 351H',name:'Probability / Random Processes',cat:'ECE',credits:3,done:false,note:'Pre-req: M 427J'},
     {id:'p3',code:'HIS',name:'US History',cat:'CORE',credits:3,done:false,note:'AP Credit'},
     {id:'p30',code:'O M 235H',name:'Operations Management Honors',cat:'BUSINESS',credits:2,done:false,note:''},
     {id:'p31',code:'ACC 312H',name:'Managerial Accounting Honors',cat:'BUSINESS',credits:3,done:false,note:'Pre-req: ACC 311H'},
@@ -876,7 +897,7 @@ const ECB_PREV_DS=[
     {id:'p35',code:'ATC-1',name:'Advanced Tech Component',cat:'ADVANCED',credits:3,done:false,note:'ECB students only'},
     {id:'p36',code:'ATC-M',name:'Advanced Tech Component (Math)',cat:'ADVANCED',credits:3,done:false,note:'ECB students only'},
     {id:'p37',code:'ATC-2',name:'Advanced Tech Component',cat:'ADVANCED',credits:3,done:false,note:'ECB students only'},
-    {id:'p38',code:'FIN 357H',name:'Business Finance Honors',cat:'BUSINESS',credits:3,done:false,note:'Pre-req: ECO 304K, ACC 311H, STA 235H'},
+    {id:'p38',code:'FIN 357H',name:'Business Finance Honors',cat:'BUSINESS',credits:3,done:false,note:'Pre-req: ECO 304K, ACC 312H, STA 235H'},
     {id:'p39',code:'MAN 327H',name:'Entrepreneurship & Innovation Honors',cat:'BUSINESS',credits:3,done:false,note:''},
   ]},
   {id:'y3s',label:'Year 3 Spring',courses:[
@@ -889,9 +910,9 @@ const ECB_PREV_DS=[
   {id:'y4f',label:'Year 4 Fall',courses:[
     {id:'p45',code:'ECE 364D',name:'Intro to Engineering Design',cat:'ECE',credits:3,done:false,note:''},
     {id:'p46',code:'ATC-4',name:'Advanced Tech Component',cat:'ADVANCED',credits:3,done:false,note:'ECB students only'},
-    {id:'p47',code:'LEB 323H',name:'Business Law & Ethics Honors',cat:'BUSINESS',credits:3,done:false,note:'4th year; Pre-req: ACC 312H'},
+    {id:'p47',code:'LEB 323H',name:'Business Law & Ethics Honors',cat:'BUSINESS',credits:3,done:false,note:'4th year; Ethics flag; Pre-req: ACC 312H'},
     {id:'p48',code:'GOV 312L/P',name:'American Government',cat:'CORE',credits:3,done:false,note:''},
-    {id:'p49',code:'BA 353',name:'Internship Credit',cat:'BUSINESS',credits:3,done:false,note:'Pre-req: BA 32H'},
+    {id:'p49',code:'BA 353',name:'Internship Credit',cat:'BUSINESS',credits:3,done:false,note:'Pre-req: BA 324H'},
   ]},
   {id:'y4s',label:'Year 4 Spring',courses:[
     {id:'p50',code:'ECE 464H',name:'Senior Design Project',cat:'ECE',credits:4,done:false,note:'Pre-req: ECE 364D'},
@@ -940,7 +961,7 @@ const BUSINESS_DS=[
     {id:'b23',code:'ACC 312',name:'Managerial Accounting',cat:'BUSINESS',credits:3,done:false,note:'',grade:''},
     {id:'b24',code:'D S 235',name:'Introduction to Decision Science',cat:'BUSINESS',credits:3,done:false,note:'',grade:''},
     {id:'b25',code:'O M 235',name:'Operations Management',cat:'BUSINESS',credits:3,done:false,note:'',grade:''},
-    {id:'b26',code:'LEB 323/BGS 337',name:'Business Law and Ethics',cat:'BUSINESS',credits:3,done:false,note:'',grade:''},
+    {id:'b26',code:'LEB 323/BGS 337',name:'Business Law and Ethics',cat:'BUSINESS',credits:3,done:false,note:'Ethics flag',grade:''},
     {id:'b27',code:'MAN 336',name:'Organizational Behavior',cat:'BUSINESS',credits:3,done:false,note:'',grade:''},
     {id:'b28',code:'MKT 337',name:'Principles of Marketing',cat:'BUSINESS',credits:3,done:false,note:'',grade:''},
     {id:'b29',code:'FIN 357',name:'Business Finance',cat:'BUSINESS',credits:3,done:false,note:'',grade:''},
@@ -1086,6 +1107,15 @@ const BUSINESS_TRACKS={
 // UT grade points (A+ counts as 4.0 per UT policy). CR/NC/Q/W/IP excluded from GPA.
 const GRADE_PTS={'A+':4.0,'A':4.0,'A-':3.67,'B+':3.33,'B':3.0,'B-':2.67,'C+':2.33,'C':2.0,'C-':1.67,'D+':1.33,'D':1.0,'D-':0.67,'F':0,'CR':null,'NC':null,'Q':null,'W':null,'IP':null};
 const GRADE_OPTS=['','A+','A','A-','B+','B','B-','C+','C','C-','D+','D','D-','F','CR','NC','Q','W','IP'];
+const DIFF_LABELS={1:'Easy',2:'Light',3:'Moderate',4:'Hard',5:'Brutal'};
+function normalizeDifficulty(v){
+  const n=parseInt(v,10);
+  return(n>=1&&n<=5)?n:0;
+}
+function difficultyLabel(n){
+  const d=normalizeDifficulty(n);
+  return d?`${d}/5 · ${DIFF_LABELS[d]}`:'';
+}
 
 // Generic UT week-based deadlines (most fall/spring terms). Update from registrar each year.
 const UT_DEADLINES=[
@@ -1095,45 +1125,43 @@ const UT_DEADLINES=[
 ];
 
 // Feature module — merged into college-course-planner.html
-// Prereq map (seed; notes also parsed at runtime)
+// Prereq map (catalog-verified seed; course notes also parsed at runtime).
+// Source: catalog.utexas.edu ECE / Mathematics course listings.
+// Old↔new ECE numbers (302/402, etc.) are equated in priorHas().
 const PREREQ_EXTRA={
-  'ECE 302':{requires:['ECE 202','ECE 230']},
-  'ECE 312':{requires:['ECE 202']},
+  'ECE 312':{requires:['ECE 306']},
   'ECE 316':{requires:['ECE 306']},
-  'ECE 325':{requires:['ECE 125','PHY 303L']},
-  'ECE 339':{requires:['ECE 325']},
-  'ECE 351M':{requires:['ECE 302']},
+  'ECE 325':{requires:['ECE 411','M 427J','PHY 303L']},
+  'ECE 339':{requires:['M 427J','PHY 303L']},
+  'ECE 351M':{requires:['ECE 313']},
   'ECE 360C':{requires:['ECE 312']},
-  'ECE 362K':{requires:['ECE 312']},
-  'ECE 411':{requires:['ECE 312']},
-  'ECE 422C':{requires:['ECE 422K']},
-  'ECE 445L':{requires:['ECE 316']},
-  'ECE 460N':{requires:['ECE 316']},
-  'M 408C':{requires:['M 408K']},
+  'ECE 362K':{requires:['ECE 313','M 340L']},
+  'ECE 411':{requires:['ECE 302']},
+  'ECE 422C':{requires:['ECE 312']},
+  'ECE 445L':{requires:['ECE 312','ECE 319K','ECE 411','ECE 313']},
+  'ECE 460N':{requires:['ECE 306','ECE 312','ECE 319K']},
   'M 408D':{requires:['M 408C']},
+  'M 427J':{requires:['M 408D']},
   'M 427L':{requires:['M 408D']},
+  'M 340L':{requires:['M 408D']},
 };
+const COURSE_EQUIV=[
+  ['ECE 302','ECE 402'],
+  ['ECE 306','ECE 406'],
+  ['ECE 312','ECE 412'],
+  ['ECE 319','ECE 419'],
+  ['ECE 319K','ECE 419K'],
+  ['PHY 303L','PHY 303E'],
+];
 const UT_FLAG_DEFS=[
   {key:'wr',label:'Writing',re:/\bwr(?:iting)?\s*flag\b/i},
   {key:'qr',label:'Quantitative Reasoning',re:/\bqr\b|quantitative reasoning/i},
   {key:'cd',label:'Cultural Diversity',re:/\bcd\b|cultural diversity/i},
   {key:'gc',label:'Global Cultures',re:/\bgc\b|global cultures/i},
-  {key:'e',label:'Ethics',re:/\bethics\b|\be\s*flag\b/i},
-  {key:'ii',label:'Independent Inquiry',re:/\bindependent inquiry\b|\bii\b/i},
+  {key:'e',label:'Ethics',re:/\be\s*flag\b|\bethics\s*flag\b/i},
+  {key:'ii',label:'Independent Inquiry',re:/\bindependent inquiry\b|\bii\s*flag\b/i},
 ];
 const UT_FLAG_TARGETS={wr:1,qr:1,cd:1,gc:1,e:1,ii:1};
-const GRADE_DIST={
-  'ECE 302':{avg:'3.1',aPct:18},
-  'ECE 312':{avg:'3.0',aPct:15},
-  'ECE 316':{avg:'2.9',aPct:12},
-  'ECE 325':{avg:'2.8',aPct:10},
-  'ECE 339':{avg:'3.0',aPct:14},
-  'ECE 351M':{avg:'3.2',aPct:20},
-  'ECE 360C':{avg:'3.1',aPct:17},
-  'ECE 411':{avg:'2.7',aPct:8},
-  'M 408C':{avg:'2.6',aPct:7},
-  'M 408D':{avg:'2.7',aPct:9},
-};
 const TERM_STARTS={y1f:'2025-08-25',y1s:'2026-01-12',y2f:'2026-08-24',y2s:'2027-01-11',y3f:'2027-08-23',y3s:'2028-01-10',y4f:'2028-08-28',y4s:'2029-01-08'};
 const GIST_PREFS_KEY='cp-gist-sync';
 const SCHOOL_REGISTRY={
@@ -1146,25 +1174,57 @@ const SCHOOL_REGISTRY={
 const SEM_ORDER=['ap','phy','y1f','y1s','y2f','y2s','y3f','y3s','y4f','y4s','lower','core','upper','human','major','canfield','electives'];
 
 function normCourseCode(code){return String(code||'').trim().toUpperCase().replace(/\s+/g,' ').replace(/H$/,'');}
-function parseCodesFromNote(note){
+function equivCodes(code){
+  const nc=normCourseCode(code);
+  for(const g of COURSE_EQUIV){
+    const ng=g.map(normCourseCode);
+    if(ng.includes(nc))return ng;
+  }
+  return[nc];
+}
+function priorHas(prior,req){
+  for(const alt of equivCodes(req)){
+    if(prior.has(alt)||prior.has(alt+'H'))return true;
+  }
+  return false;
+}
+function extractCourseCodes(fragment){
   const out=[];
-  const text=String(note||'');
-  const re=/(?:pre-?req|co-?req|prerequisite)s?:\s*([^.;]+)/gi;
-  let m;
-  while((m=re.exec(text))){
-    for(const part of m[1].split(/[,;]|\bor\b/i)){
-      const code=part.trim().toUpperCase().replace(/\s+/g,' ');
-      if(/^[A-Z]{2,4}\s*\d{3}/.test(code))out.push(code.replace(/\s+/,' '));
-    }
+  for(const part of String(fragment||'').split(/[,;&]|\bor\b/i)){
+    const code=part.trim().toUpperCase().replace(/\s+/g,' ');
+    const m=code.match(/^([A-Z]{1,4})\s*(\d{3}[A-Z]?)/);
+    if(m)out.push(`${m[1]} ${m[2]}`);
   }
   return out;
 }
+/** kind: 'pre' | 'co' — co-reqs are same-semester OK and are not validated as missing priors */
+function parseCodesFromNote(note,kind='pre'){
+  const out=[];
+  const text=String(note||'');
+  const re=kind==='co'
+    ?/co-?reqs?:\s*([^.;]+)/gi
+    :/(?:pre-?req|prerequisite)s?:\s*([^.;]+)/gi;
+  let m;
+  while((m=re.exec(text)))out.push(...extractCourseCodes(m[1]));
+  return out;
+}
+function prereqExtraFor(code){
+  const raw=String(code||'').trim().toUpperCase().replace(/\s+/g,' ');
+  for(const key of[raw,...equivCodes(code)]){
+    if(PREREQ_EXTRA[key])return PREREQ_EXTRA[key];
+  }
+  return null;
+}
 function prereqsForCourse(c){
-  const nc=normCourseCode(c.code);
-  const extra=PREREQ_EXTRA[nc]||PREREQ_EXTRA[c.code?.trim().toUpperCase()];
-  const fromNote=parseCodesFromNote(c.note);
+  const extra=prereqExtraFor(c.code);
+  const fromNote=parseCodesFromNote(c.note,'pre');
+  const fromCo=parseCodesFromNote(c.note,'co');
   const requires=[...(extra?.requires||[]),...fromNote];
-  return{requires:[...new Set(requires.map(normCourseCode))],coreqs:(extra?.coreqs||[]).map(normCourseCode)};
+  const coreqs=[...(extra?.coreqs||[]),...fromCo];
+  return{
+    requires:[...new Set(requires.map(normCourseCode))],
+    coreqs:[...new Set(coreqs.map(normCourseCode))],
+  };
 }
 function semesterOrderIndex(semId){
   const i=SEM_ORDER.indexOf(semId);
@@ -1192,7 +1252,7 @@ function validatePlanPrereqs(sems){
     for(const c of sem.courses||[]){
       if(isDegreePlaceholderCode(c.code))continue;
       const{requires}=prereqsForCourse(c);
-      const missing=requires.filter(r=>!prior.has(r)&&!prior.has(r+'H'));
+      const missing=requires.filter(r=>!priorHas(prior,r));
       if(missing.length)issues.push({semId:sem.id,semLabel:sem.label,course:c,missing});
     }
   }
@@ -1263,17 +1323,25 @@ function computePlanDiff(schA,schB){
     return m;
   };
   const a=byCode(schA?.sems),b=byCode(schB?.sems);
-  const added=[],removed=[],moved=[],gradeChanges=[];
+  const added=[],removed=[],moved=[],gradeChanges=[],metaChanges=[];
   for(const [code,c] of b){
     if(!a.has(code))added.push(c);
     else{
       const o=a.get(code);
       if(o.semId!==c.semId)moved.push({code,from:o.semLabel,to:c.semLabel});
       if((o.grade||'')!==(c.grade||''))gradeChanges.push({code,from:o.grade||'—',to:c.grade||'—'});
+      const od=normalizeDifficulty(o.difficulty),nd=normalizeDifficulty(c.difficulty);
+      const on=o.userNote||'',nn=c.userNote||'';
+      if(od!==nd||on!==nn){
+        const bits=[];
+        if(od!==nd)bits.push(`diff ${od||'—'}→${nd||'—'}`);
+        if(on!==nn)bits.push('notes updated');
+        metaChanges.push({code,detail:bits.join(', ')});
+      }
     }
   }
   for(const [code,c] of a)if(!b.has(code))removed.push(c);
-  return{added,removed,moved,gradeChanges};
+  return{added,removed,moved,gradeChanges,metaChanges};
 }
 function trackWhatIfMatrix(sch){
   const codes=new Set((sch?.sems||[]).flatMap(s=>s.courses||[]).map(c=>normCourseCode(c.code)));
@@ -1293,7 +1361,7 @@ function toICSForSemester(sem,semId){
     if(isDegreePlaceholderCode(c.code))continue;
     const dt=start.replace(/-/g,'');
     const uid=`cp-${semId}-${i++}@planner`;
-    lines.push('BEGIN:VEVENT',`UID:${uid}`,`DTSTAMP:${dt}T120000Z`,`DTSTART;VALUE=DATE:${dt}`,`SUMMARY:${icsEscape(c.code+' — '+c.name)}`,`DESCRIPTION:${icsEscape(c.note||'')}`,'END:VEVENT');
+    lines.push('BEGIN:VEVENT',`UID:${uid}`,`DTSTAMP:${dt}T120000Z`,`DTSTART;VALUE=DATE:${dt}`,`SUMMARY:${icsEscape(c.code+' — '+c.name)}`,`DESCRIPTION:${icsEscape([c.note,c.userNote&&('Note: '+c.userNote),normalizeDifficulty(c.difficulty)&&('Difficulty: '+normalizeDifficulty(c.difficulty)+'/5')].filter(Boolean).join('\n'))}`,'END:VEVENT');
   }
   for(const d of UT_DEADLINES){
     lines.push('BEGIN:VEVENT',`UID:deadline-${semId}-${icsEscape(d.week)}@planner`,`DTSTAMP:20260101T120000Z`,`DTSTART;VALUE=DATE:20260101`,`SUMMARY:${icsEscape('UT Deadline: '+d.week)}`,`DESCRIPTION:${icsEscape(d.what)}`,'END:VEVENT');
@@ -1340,10 +1408,6 @@ function weeklyScheduleAnalysis(sems){
     }
   }
   return{courses,conflicts};
-}
-function gradeDistFor(code){
-  const nc=normCourseCode(code);
-  return GRADE_DIST[nc]||GRADE_DIST[code]||null;
 }
 function readGistPrefs(){
   try{return JSON.parse(localStorage.getItem(GIST_PREFS_KEY)||'{}');}catch(e){return{};}
@@ -1946,7 +2010,8 @@ function businessTrackCourses(key,prev){
     const old=prevByCode.get(String(c.code).toUpperCase());
     return {
       id:`biz_${key}_${i+1}`,code:c.code,name:c.name,cat:'BUSINESS',
-      credits:c.credits,done:old?.done||false,note:c.note||'',grade:old?.grade||'',bizTrack:key
+      credits:c.credits,done:old?.done||false,note:c.note||'',grade:old?.grade||'',
+      difficulty:old?.difficulty||0,userNote:old?.userNote||'',bizTrack:key
     };
   });
 }
@@ -2071,6 +2136,8 @@ function programPlaceholderCourses(key,prev){
       done:old?.done||false,
       note:old?.note||`Placeholder — see UT catalog${prog.catalogUrl?': '+prog.catalogUrl:''}. Add courses manually or check catalog for ${prog.school} ${prog.type}.`,
       grade:old?.grade||'',
+      difficulty:old?.difficulty||0,
+      userNote:old?.userNote||'',
       programKey:key,
     });
   }
@@ -2096,6 +2163,8 @@ function programCoursesForKey(key,prevSem,earlierSems){
       done:old?.done||false,
       note:'Program core',
       grade:old?.grade||'',
+      difficulty:old?.difficulty||0,
+      userNote:old?.userNote||'',
       programKey:key,
     });
   });
@@ -2607,7 +2676,7 @@ function toMarkdown(){
     md+=`## ${sem.label}\n\n`;
     if(sem.isOff){md+=`_${sem.offNote||'No classes this term.'}_\n\n`;return;}
     if(!sem.courses.length){md+=`_No courses._\n\n`;return;}
-    for(const c of sem.courses)md+=`- ${c.done?'[x]':'[ ]'} **${c.code}** ${c.name} — ${c.credits}cr${c.grade?` (${c.grade})`:''}${c.note?`  \n  _${c.note}_`:''}\n`;
+    for(const c of sem.courses)md+=`- ${c.done?'[x]':'[ ]'} **${c.code}** ${c.name} — ${c.credits}cr${c.grade?` (${c.grade})`:''}${normalizeDifficulty(c.difficulty)?` · difficulty ${normalizeDifficulty(c.difficulty)}/5`:''}${c.note?`  \n  _${c.note}_`:''}${c.userNote?`  \n  Note: ${c.userNote}`:''}\n`;
     md+=`\n`;
   };
   const layout=layoutFor(getAct()),known=knownFor(getAct());
@@ -2769,10 +2838,13 @@ function rCourse(semId,c){
   const isSel=S.selection.has(c.id)&&S.selectionSem===semId;
   const val=planValidation();
   const preIssue=_preIssueByCid?.get(c.id);
-  const dist=gradeDistFor(c.code);
+  const diff=normalizeDifficulty(c.difficulty);
   const gradePill=c.done
     ?`<span class="cgrade editable" title="Click to set grade" onclick="cgClick('${semId}','${c.id}',event)">${esc(c.grade||'+ grade')}</span>`
     :(c.grade?`<span class="cgrade">${esc(c.grade)}</span>`:'');
+  const diffPill=diff
+    ?`<span class="cdiff d${diff}" title="Difficulty ${esc(difficultyLabel(diff))} — click to change" onclick="diffClick('${semId}','${c.id}',event)">${diff}/5</span>`
+    :'';
   const dragAttr=S.readOnly?'':' draggable="true" ondragstart="wDSCustom(\''+semId+'\',\''+c.id+'\',event)" ondragend="wDE()"';
   return `<div class="cc${c.done?' done':''}${isSel?' sel':''}" style="background:${cat.bg};border-color:${cat.brd}"${dragAttr}>
     <div class="chk" style="border-color:${chkBrd};background:${chkBg}" data-cid="${c.id}" role="checkbox" aria-checked="${c.done?'true':'false'}" title="Mark done"
@@ -2784,11 +2856,12 @@ function rCourse(semId,c){
       <span class="ccode" style="color:${cat.txt}">${esc(c.code)}</span>
       <span class="cname">${esc(c.name)}</span>
       ${c.prof?`<span class="cprof">${esc(c.prof)}</span>`:''}
-      ${dist?`<span class="cmeta">avg GPA ~${dist.avg} · ${dist.aPct}% A</span>`:''}
       ${c.note?`<span class="cnote">${esc(c.note)}</span>`:''}
+      ${c.userNote?`<span class="cuser-note">${esc(c.userNote)}</span>`:''}
       ${preIssue?`<span class="cwarn" title="Missing prereqs: ${esc(preIssue.missing.join(', '))}">⚠ prereq: ${esc(preIssue.missing.join(', '))}</span>`:''}
       ${c.meeting?`<span class="cmeta">${esc(c.meeting)}</span>`:''}
     </div>
+    ${diffPill}
     ${gradePill}
     <span class="crdt">${c.credits}cr</span>
     ${S.readOnly?'':`<div class="cacts">
@@ -2929,6 +3002,7 @@ function rCompareDiff(schA,schB){
       <div><b style="font-size:12px">Removed from A</b>${li(d.removed,c=>`<li><b>${esc(c.code)}</b> — ${esc(c.semLabel)}</li>`)}</div>
       <div><b style="font-size:12px">Moved</b>${li(d.moved,c=>`<li><b>${esc(c.code)}</b> ${esc(c.from)} → ${esc(c.to)}</li>`)}</div>
       <div><b style="font-size:12px">Grade changes</b>${li(d.gradeChanges,c=>`<li><b>${esc(c.code)}</b> ${esc(c.from)} → ${esc(c.to)}</li>`)}</div>
+      <div><b style="font-size:12px">Difficulty / notes</b>${li(d.metaChanges||[],c=>`<li><b>${esc(c.code)}</b> ${esc(c.detail)}</li>`)}</div>
     </div>
   </div>`;
 }
@@ -2967,6 +3041,9 @@ function rEP(){
   const semOpts=sems.map(s=>`<option value="${s.id}"${f.semId===s.id?' selected':''}>${esc(s.label)}</option>`).join('');
   const catOpts=Object.entries(CATS).map(([k,v])=>`<option value="${k}"${f.cat===k?' selected':''}>${v.name}</option>`).join('');
   const gradeOpts=GRADE_OPTS.map(g=>`<option value="${g}"${(f.grade||'')===g?' selected':''}>${g||'—'}</option>`).join('');
+  const diff=normalizeDifficulty(f.difficulty);
+  const diffBtns=[1,2,3,4,5].map(n=>`<button type="button" class="${diff===n?'on':''}" data-diff="${n}" title="${esc(DIFF_LABELS[n])}">${n}</button>`).join('')
+    +`<button type="button" class="clr" data-diff="0">Clear</button>`;
   return `<div class="ep">
     <h3>${S.edit.isNew?'Add Course':'Edit Course'}</h3>
     <div class="fg three">
@@ -2979,7 +3056,12 @@ function rEP(){
       <div class="fld"><label>Category</label><select id="f-cat">${catOpts}</select></div>
       <div class="fld"><label>Semester</label><select id="f-sem">${semOpts}</select></div>
     </div>
-    <div class="fld full"><label>Notes / Pre-reqs</label><input id="f-note" value="${esc(f.note||'')}" placeholder="e.g. Pre-req: ECE 302; Wr flag"></div>
+    <div class="fld full"><label>Difficulty (1 easy – 5 hard)</label>
+      <div class="diff-pick" id="f-diff-pick" data-diff="${diff||''}">${diffBtns}</div>
+      <input type="hidden" id="f-difficulty" value="${diff||''}">
+    </div>
+    <div class="fld full"><label>Your notes</label><textarea id="f-user-note" rows="2" placeholder="Personal notes — workload, tips, reminders…">${esc(f.userNote||'')}</textarea></div>
+    <div class="fld full"><label>Curriculum notes / Pre-reqs</label><input id="f-note" value="${esc(f.note||'')}" placeholder="e.g. Pre-req: ECE 302; Wr flag"></div>
     <div class="fg">
       <div class="fld"><label>Professor (optional)</label><input id="f-prof" value="${esc(f.prof||'')}" placeholder="Dr. Smith"></div>
       <div class="fld"><label>Meeting time (optional)</label><input id="f-meeting" value="${esc(f.meeting||'')}" placeholder="MWF 9-10"></div>
@@ -3419,7 +3501,7 @@ GOV 310L   AMERICAN GOVERNMENT   CR   16210   Credit by exam   3.0   0.00</pre>
     const val=planValidation();
     const pre=val.prereqs.map(i=>`<div class="tk-list"><div class="miss">⚠ ${esc(i.course.code)} in ${esc(i.semLabel)} — needs ${esc(i.missing.join(', '))}</div></div>`).join('');
     const loads=val.loads.map(l=>`<div class="tk-list"><div class="${l.over?'miss':'ok'}">${l.over?'⚠':'○'} ${esc(l.sem.label)}: ${l.cr}cr${l.over?' (over 18)':l.under?' (under 12)':''}</div></div>`).join('');
-    const flags=val.flags.map(f=>`<div class="tk-list"><div class="${f.ok?'ok':'miss'}">${f.ok?'✓':'○'} ${esc(f.label)}: ${f.hit.length}/${f.target}${f.courses.length?' — '+f.courses.map(c=>c.code).join(', '):''}</div></div>`).join('');
+    const flags=val.flags.map(f=>`<div class="tk-list"><div class="${f.ok?'ok':'miss'}">${f.ok?'✓':'○'} ${esc(f.label)}: ${f.hit}/${f.target}${f.courses.length?' — '+f.courses.map(c=>c.code).join(', '):''}</div></div>`).join('');
     const overlap=val.overlap.length?val.overlap.map(o=>`<div class="tk-list"><div class="ok">✓ ${esc(o.code)} counts for: ${esc(o.tags.join(' + '))}</div></div>`).join(''):'<p style="font-size:12px;color:var(--text3)">No double-counted courses detected.</p>';
     return`<div class="mbk" id="mbk"><div class="modal" style="max-width:620px">
       <div class="mhdr"><h3>✅ Plan health</h3><button class="mclose" data-a="close-modal">×</button></div>
@@ -3777,7 +3859,7 @@ function render(){
   const programsPill=planProg?`<div class="track-pill" onclick="S.modal='programs';render()" title="Minors &amp; Certificates">🎓 ${planProg.count} program${planProg.count===1?'':'s'} <span style="opacity:.7">${planProg.coreDone}/${planProg.coreTotal}c · ${planProg.electDone}/${planProg.electNeed}e</span></div>`:'';
   const val=planValidation();
   const healthPill=`<div class="track-pill val-pill${val.prereqs.length?' warn':' ok'}" onclick="S.modal='validation';render()" title="Plan health">✅ ${val.prereqs.length?val.prereqs.length+' issue'+(val.prereqs.length===1?'':'s'):'OK'}</div>`;
-  const flagPills=flagProgressSummary(sems).filter(f=>!f.ok).slice(0,3).map(f=>`<span class="val-pill warn" onclick="S.modal='validation';render()" title="Missing ${esc(f.label)} flag">${esc(f.label)} ${f.hit.length}/${f.target}</span>`).join('');
+  const flagPills=flagProgressSummary(sems).filter(f=>!f.ok).slice(0,3).map(f=>`<span class="val-pill warn" onclick="S.modal='validation';render()" title="Missing ${esc(f.label)} flag">${esc(f.label)} ${f.hit}/${f.target}</span>`).join('');
 
   document.getElementById('root').innerHTML=`
     ${S.readOnly?`<div class="readonly-banner">👁 Advising view — read only. <button onclick="S.readOnly=false;render()" style="margin-left:10px;padding:2px 8px;border:1px solid #fff;border-radius:4px;background:transparent;color:#fff;cursor:pointer;font-size:11px">Exit advising mode</button></div>`:''}
@@ -3907,7 +3989,7 @@ document.addEventListener('click',e=>{
   else if(a==='add'){
     e.stopPropagation();
     S.edit={semId:sem,isNew:true};
-    S.form={id:uid(),code:'',name:'',cat:getAct()?.kind==='business'?'BUSINESS':'ECE',credits:3,done:false,note:'',grade:'',semId:sem};
+    S.form={id:uid(),code:'',name:'',cat:getAct()?.kind==='business'?'BUSINESS':'ECE',credits:3,done:false,note:'',userNote:'',difficulty:0,grade:'',semId:sem};
     render();window.scrollTo(0,0);
   }
   else if(a==='cancel'){S.edit=null;S.form={};render();}
@@ -3919,10 +4001,15 @@ document.addEventListener('click',e=>{
     const cat=document.getElementById('f-cat').value;
     const toSem=document.getElementById('f-sem').value;
     const note=document.getElementById('f-note').value.trim();
+    const userNote=(document.getElementById('f-user-note')?.value||'').trim();
+    const difficulty=normalizeDifficulty(document.getElementById('f-difficulty')?.value);
     const grade=document.getElementById('f-grade').value;
     const prof=(document.getElementById('f-prof')?.value||'').trim();
     const meeting=(document.getElementById('f-meeting')?.value||'').trim();
-    const updated={id:S.form.id,code,name,credits,cat,done:S.form.done||false,note,grade};
+    const updated={...S.form,id:S.form.id,code,name,credits,cat,done:S.form.done||false,note,grade};
+    delete updated.semId;
+    if(userNote)updated.userNote=userNote;else delete updated.userNote;
+    if(difficulty)updated.difficulty=difficulty;else delete updated.difficulty;
     if(prof)updated.prof=prof;else delete updated.prof;
     if(meeting)updated.meeting=meeting;else delete updated.meeting;
     mutate(()=>{
@@ -4035,6 +4122,15 @@ window.startCmp=()=>{if(!S.cmpPickId)return;S.compareId=S.cmpPickId;S.compareMod
 // ─── GPA / track ──────────────────────────────────────────────────────────────
 window.setGrade=(semId,cid,g)=>mutate(()=>{
   setAS(getAS().map(s=>s.id!==semId?s:{...s,courses:s.courses.map(c=>c.id!==cid?c:{...c,grade:g})}));
+});
+window.setDifficulty=(semId,cid,d)=>mutate(()=>{
+  const difficulty=normalizeDifficulty(d);
+  setAS(getAS().map(s=>s.id!==semId?s:{...s,courses:s.courses.map(c=>{
+    if(c.id!==cid)return c;
+    const next={...c};
+    if(difficulty)next.difficulty=difficulty;else delete next.difficulty;
+    return next;
+  })}));
 });
 window.updateTarget=()=>{
   const el=document.getElementById('gpa-target-res');if(!el)return;
@@ -4279,7 +4375,7 @@ document.addEventListener('keydown',e=>{
     if(c){S.edit={semId,courseId:cid,isNew:false};S.form={...c,semId};render();window.scrollTo(0,0);}
     e.preventDefault();return;
   }
-  if(k==='n'){const sems=getAS().filter(s=>!s.isOff);const target=(S.selectionSem&&sems.some(s=>s.id===S.selectionSem))?sems.find(s=>s.id===S.selectionSem):sems[0];if(target){S.edit={semId:target.id,isNew:true};S.form={id:uid(),code:'',name:'',cat:getAct()?.kind==='business'?'BUSINESS':'ECE',credits:3,done:false,note:'',grade:'',semId:target.id};render();window.scrollTo(0,0);}e.preventDefault();}
+  if(k==='n'){const sems=getAS().filter(s=>!s.isOff);const target=(S.selectionSem&&sems.some(s=>s.id===S.selectionSem))?sems.find(s=>s.id===S.selectionSem):sems[0];if(target){S.edit={semId:target.id,isNew:true};S.form={id:uid(),code:'',name:'',cat:getAct()?.kind==='business'?'BUSINESS':'ECE',credits:3,done:false,note:'',userNote:'',difficulty:0,grade:'',semId:target.id};render();window.scrollTo(0,0);}e.preventDefault();}
   else if(k==='c'){S.cmpPickId=null;S.modal='compare-pick';render();e.preventDefault();}
   else if(k==='s'){S.modal='search';render();e.preventDefault();}
   else if(k==='g'){S.modal='gpa';render();e.preventDefault();}
@@ -4360,7 +4456,7 @@ document.addEventListener('click',e=>{if(_acOpen&&!e.target.closest('#ac-pop')&&
 // ─── Inline grade pill ───────────────────────────────────────────────────────
 window.cgClick=(semId,cid,e)=>{
   e.stopPropagation();
-  closeGradePop();
+  closeGradePop();closeDiffPop();
   const sems=getAS();const c=sems.find(s=>s.id===semId)?.courses.find(x=>x.id===cid);
   if(!c||!c.done)return;
   const pop=document.createElement('div');pop.id='cg-pop';pop.className='cgrade-pop';
@@ -4373,6 +4469,40 @@ window.cgClick=(semId,cid,e)=>{
 };
 function closeGradePop(){const p=document.getElementById('cg-pop');if(p)p.remove();}
 document.addEventListener('click',e=>{if(!e.target.closest('#cg-pop'))closeGradePop();});
+
+// ─── Inline difficulty pill ──────────────────────────────────────────────────
+window.diffClick=(semId,cid,e)=>{
+  e.stopPropagation();
+  if(S.readOnly)return;
+  closeGradePop();closeDiffPop();
+  const pop=document.createElement('div');pop.id='cd-pop';pop.className='cgrade-pop';
+  pop.innerHTML=[1,2,3,4,5].map(n=>`<button data-d="${n}" title="${DIFF_LABELS[n]}">${n}</button>`).join('')
+    +`<button class="clr" data-d="0">Clear difficulty</button>`;
+  pop.querySelectorAll('button').forEach(b=>{b.onclick=ev=>{ev.stopPropagation();setDifficulty(semId,cid,b.dataset.d);closeDiffPop();};});
+  document.body.appendChild(pop);
+  const r=e.target.getBoundingClientRect();
+  pop.style.left=Math.min(window.innerWidth-pop.offsetWidth-8,r.left+window.scrollX)+'px';
+  pop.style.top=(r.bottom+window.scrollY+3)+'px';
+};
+function closeDiffPop(){const p=document.getElementById('cd-pop');if(p)p.remove();}
+document.addEventListener('click',e=>{if(!e.target.closest('#cd-pop'))closeDiffPop();});
+
+// Edit-form difficulty picker (does not re-render; keeps other field values)
+document.addEventListener('click',e=>{
+  const btn=e.target.closest('#f-diff-pick button[data-diff]');
+  if(!btn)return;
+  e.preventDefault();
+  const pick=document.getElementById('f-diff-pick');
+  const hidden=document.getElementById('f-difficulty');
+  const val=btn.dataset.diff==='0'?'':btn.dataset.diff;
+  if(hidden)hidden.value=val;
+  if(pick){
+    pick.dataset.diff=val;
+    pick.querySelectorAll('button[data-diff]').forEach(b=>{
+      b.classList.toggle('on',b.dataset.diff===val&&val!=='');
+    });
+  }
+});
 
 // ─── File backup / restore ───────────────────────────────────────────────────
 window.downloadBackup=()=>{
@@ -4618,7 +4748,7 @@ window.applyCurriculum=key=>{
 // start, drag a ghost element, drop on the target semester card.
 let touchDrag=null;
 document.addEventListener('touchstart',e=>{
-  if(e.target.closest('.chk,.cacts,.cgrade,button'))return;
+  if(e.target.closest('.chk,.cacts,.cgrade,.cdiff,button'))return;
   const card=e.target.closest('.cc');if(!card)return;
   const semCard=card.closest('.sc');if(!semCard)return;
   const semId=semCard.id.replace(/^sc-/,'');
@@ -4679,7 +4809,7 @@ document.addEventListener('touchend',e=>{
 // ─── Custom drag preview ─────────────────────────────────────────────────────
 // Replaces the browser's default drag ghost with a small canvas-rendered chip.
 window.wDSCustom=(semId,courseId,e)=>{
-  if(e?.target?.closest?.('.chk,.cacts,.cgrade,button')){e.preventDefault();return false;}
+  if(e?.target?.closest?.('.chk,.cacts,.cgrade,.cdiff,button')){e.preventDefault();return false;}
   try{
     if(e&&e.dataTransfer&&e.dataTransfer.setDragImage){
       const sems=getAS();const c=sems.find(s=>s.id===semId)?.courses.find(x=>x.id===courseId);

@@ -1,43 +1,41 @@
 // Feature module — merged into college-course-planner.html
-// Prereq map (seed; notes also parsed at runtime)
+// Prereq map (catalog-verified seed; course notes also parsed at runtime).
+// Source: catalog.utexas.edu ECE / Mathematics course listings.
+// Old↔new ECE numbers (302/402, etc.) are equated in priorHas().
 const PREREQ_EXTRA={
-  'ECE 302':{requires:['ECE 202','ECE 230']},
-  'ECE 312':{requires:['ECE 202']},
+  'ECE 312':{requires:['ECE 306']},
   'ECE 316':{requires:['ECE 306']},
-  'ECE 325':{requires:['ECE 125','PHY 303L']},
-  'ECE 339':{requires:['ECE 325']},
-  'ECE 351M':{requires:['ECE 302']},
+  'ECE 325':{requires:['ECE 411','M 427J','PHY 303L']},
+  'ECE 339':{requires:['M 427J','PHY 303L']},
+  'ECE 351M':{requires:['ECE 313']},
   'ECE 360C':{requires:['ECE 312']},
-  'ECE 362K':{requires:['ECE 312']},
-  'ECE 411':{requires:['ECE 312']},
-  'ECE 422C':{requires:['ECE 422K']},
-  'ECE 445L':{requires:['ECE 316']},
-  'ECE 460N':{requires:['ECE 316']},
-  'M 408C':{requires:['M 408K']},
+  'ECE 362K':{requires:['ECE 313','M 340L']},
+  'ECE 411':{requires:['ECE 302']},
+  'ECE 422C':{requires:['ECE 312']},
+  'ECE 445L':{requires:['ECE 312','ECE 319K','ECE 411','ECE 313']},
+  'ECE 460N':{requires:['ECE 306','ECE 312','ECE 319K']},
   'M 408D':{requires:['M 408C']},
+  'M 427J':{requires:['M 408D']},
   'M 427L':{requires:['M 408D']},
+  'M 340L':{requires:['M 408D']},
 };
+const COURSE_EQUIV=[
+  ['ECE 302','ECE 402'],
+  ['ECE 306','ECE 406'],
+  ['ECE 312','ECE 412'],
+  ['ECE 319','ECE 419'],
+  ['ECE 319K','ECE 419K'],
+  ['PHY 303L','PHY 303E'],
+];
 const UT_FLAG_DEFS=[
   {key:'wr',label:'Writing',re:/\bwr(?:iting)?\s*flag\b/i},
   {key:'qr',label:'Quantitative Reasoning',re:/\bqr\b|quantitative reasoning/i},
   {key:'cd',label:'Cultural Diversity',re:/\bcd\b|cultural diversity/i},
   {key:'gc',label:'Global Cultures',re:/\bgc\b|global cultures/i},
-  {key:'e',label:'Ethics',re:/\bethics\b|\be\s*flag\b/i},
-  {key:'ii',label:'Independent Inquiry',re:/\bindependent inquiry\b|\bii\b/i},
+  {key:'e',label:'Ethics',re:/\be\s*flag\b|\bethics\s*flag\b/i},
+  {key:'ii',label:'Independent Inquiry',re:/\bindependent inquiry\b|\bii\s*flag\b/i},
 ];
 const UT_FLAG_TARGETS={wr:1,qr:1,cd:1,gc:1,e:1,ii:1};
-const GRADE_DIST={
-  'ECE 302':{avg:'3.1',aPct:18},
-  'ECE 312':{avg:'3.0',aPct:15},
-  'ECE 316':{avg:'2.9',aPct:12},
-  'ECE 325':{avg:'2.8',aPct:10},
-  'ECE 339':{avg:'3.0',aPct:14},
-  'ECE 351M':{avg:'3.2',aPct:20},
-  'ECE 360C':{avg:'3.1',aPct:17},
-  'ECE 411':{avg:'2.7',aPct:8},
-  'M 408C':{avg:'2.6',aPct:7},
-  'M 408D':{avg:'2.7',aPct:9},
-};
 const TERM_STARTS={y1f:'2025-08-25',y1s:'2026-01-12',y2f:'2026-08-24',y2s:'2027-01-11',y3f:'2027-08-23',y3s:'2028-01-10',y4f:'2028-08-28',y4s:'2029-01-08'};
 const GIST_PREFS_KEY='cp-gist-sync';
 const SCHOOL_REGISTRY={
@@ -50,25 +48,57 @@ const SCHOOL_REGISTRY={
 const SEM_ORDER=['ap','phy','y1f','y1s','y2f','y2s','y3f','y3s','y4f','y4s','lower','core','upper','human','major','canfield','electives'];
 
 function normCourseCode(code){return String(code||'').trim().toUpperCase().replace(/\s+/g,' ').replace(/H$/,'');}
-function parseCodesFromNote(note){
+function equivCodes(code){
+  const nc=normCourseCode(code);
+  for(const g of COURSE_EQUIV){
+    const ng=g.map(normCourseCode);
+    if(ng.includes(nc))return ng;
+  }
+  return[nc];
+}
+function priorHas(prior,req){
+  for(const alt of equivCodes(req)){
+    if(prior.has(alt)||prior.has(alt+'H'))return true;
+  }
+  return false;
+}
+function extractCourseCodes(fragment){
   const out=[];
-  const text=String(note||'');
-  const re=/(?:pre-?req|co-?req|prerequisite)s?:\s*([^.;]+)/gi;
-  let m;
-  while((m=re.exec(text))){
-    for(const part of m[1].split(/[,;]|\bor\b/i)){
-      const code=part.trim().toUpperCase().replace(/\s+/g,' ');
-      if(/^[A-Z]{2,4}\s*\d{3}/.test(code))out.push(code.replace(/\s+/,' '));
-    }
+  for(const part of String(fragment||'').split(/[,;&]|\bor\b/i)){
+    const code=part.trim().toUpperCase().replace(/\s+/g,' ');
+    const m=code.match(/^([A-Z]{1,4})\s*(\d{3}[A-Z]?)/);
+    if(m)out.push(`${m[1]} ${m[2]}`);
   }
   return out;
 }
+/** kind: 'pre' | 'co' — co-reqs are same-semester OK and are not validated as missing priors */
+function parseCodesFromNote(note,kind='pre'){
+  const out=[];
+  const text=String(note||'');
+  const re=kind==='co'
+    ?/co-?reqs?:\s*([^.;]+)/gi
+    :/(?:pre-?req|prerequisite)s?:\s*([^.;]+)/gi;
+  let m;
+  while((m=re.exec(text)))out.push(...extractCourseCodes(m[1]));
+  return out;
+}
+function prereqExtraFor(code){
+  const raw=String(code||'').trim().toUpperCase().replace(/\s+/g,' ');
+  for(const key of[raw,...equivCodes(code)]){
+    if(PREREQ_EXTRA[key])return PREREQ_EXTRA[key];
+  }
+  return null;
+}
 function prereqsForCourse(c){
-  const nc=normCourseCode(c.code);
-  const extra=PREREQ_EXTRA[nc]||PREREQ_EXTRA[c.code?.trim().toUpperCase()];
-  const fromNote=parseCodesFromNote(c.note);
+  const extra=prereqExtraFor(c.code);
+  const fromNote=parseCodesFromNote(c.note,'pre');
+  const fromCo=parseCodesFromNote(c.note,'co');
   const requires=[...(extra?.requires||[]),...fromNote];
-  return{requires:[...new Set(requires.map(normCourseCode))],coreqs:(extra?.coreqs||[]).map(normCourseCode)};
+  const coreqs=[...(extra?.coreqs||[]),...fromCo];
+  return{
+    requires:[...new Set(requires.map(normCourseCode))],
+    coreqs:[...new Set(coreqs.map(normCourseCode))],
+  };
 }
 function semesterOrderIndex(semId){
   const i=SEM_ORDER.indexOf(semId);
@@ -96,7 +126,7 @@ function validatePlanPrereqs(sems){
     for(const c of sem.courses||[]){
       if(isDegreePlaceholderCode(c.code))continue;
       const{requires}=prereqsForCourse(c);
-      const missing=requires.filter(r=>!prior.has(r)&&!prior.has(r+'H'));
+      const missing=requires.filter(r=>!priorHas(prior,r));
       if(missing.length)issues.push({semId:sem.id,semLabel:sem.label,course:c,missing});
     }
   }
@@ -167,17 +197,25 @@ function computePlanDiff(schA,schB){
     return m;
   };
   const a=byCode(schA?.sems),b=byCode(schB?.sems);
-  const added=[],removed=[],moved=[],gradeChanges=[];
+  const added=[],removed=[],moved=[],gradeChanges=[],metaChanges=[];
   for(const [code,c] of b){
     if(!a.has(code))added.push(c);
     else{
       const o=a.get(code);
       if(o.semId!==c.semId)moved.push({code,from:o.semLabel,to:c.semLabel});
       if((o.grade||'')!==(c.grade||''))gradeChanges.push({code,from:o.grade||'—',to:c.grade||'—'});
+      const od=Number(o.difficulty)||0,nd=Number(c.difficulty)||0;
+      const on=o.userNote||'',nn=c.userNote||'';
+      if(od!==nd||on!==nn){
+        const bits=[];
+        if(od!==nd)bits.push(`diff ${od||'—'}→${nd||'—'}`);
+        if(on!==nn)bits.push('notes updated');
+        metaChanges.push({code,detail:bits.join(', ')});
+      }
     }
   }
   for(const [code,c] of a)if(!b.has(code))removed.push(c);
-  return{added,removed,moved,gradeChanges};
+  return{added,removed,moved,gradeChanges,metaChanges};
 }
 function trackWhatIfMatrix(sch){
   const codes=new Set((sch?.sems||[]).flatMap(s=>s.courses||[]).map(c=>normCourseCode(c.code)));
@@ -244,10 +282,6 @@ function weeklyScheduleAnalysis(sems){
     }
   }
   return{courses,conflicts};
-}
-function gradeDistFor(code){
-  const nc=normCourseCode(code);
-  return GRADE_DIST[nc]||GRADE_DIST[code]||null;
 }
 function readGistPrefs(){
   try{return JSON.parse(localStorage.getItem(GIST_PREFS_KEY)||'{}');}catch(e){return{};}
