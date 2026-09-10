@@ -27,24 +27,8 @@ const COURSE_EQUIV=[
   ['ECE 319K','ECE 419K'],
   ['PHY 303L','PHY 303E'],
 ];
-const UT_FLAG_DEFS=[
-  {key:'wr',label:'Writing',re:/\bwr(?:iting)?\s*flag\b/i},
-  {key:'qr',label:'Quantitative Reasoning',re:/\bqr\b|quantitative reasoning/i},
-  {key:'cd',label:'Cultural Diversity',re:/\bcd\b|cultural diversity/i},
-  {key:'gc',label:'Global Cultures',re:/\bgc\b|global cultures/i},
-  {key:'e',label:'Ethics',re:/\be\s*flag\b|\bethics\s*flag\b/i},
-  {key:'ii',label:'Independent Inquiry',re:/\bindependent inquiry\b|\bii\s*flag\b/i},
-];
-const UT_FLAG_TARGETS={wr:1,qr:1,cd:1,gc:1,e:1,ii:1};
 const TERM_STARTS={y1f:'2025-08-25',y1s:'2026-01-12',y2f:'2026-08-24',y2s:'2027-01-11',y3f:'2027-08-23',y3s:'2028-01-10',y4f:'2028-08-28',y4s:'2029-01-08'};
 const GIST_PREFS_KEY='cp-gist-sync';
-const SCHOOL_REGISTRY={
-  ut:{id:'ut',name:'UT Austin',active:true,note:'Full support — ECE, BBA, minors'},
-  tamu:{id:'tamu',name:'Texas A&M',active:false,note:'Coming soon — contribute a curriculum JSON'},
-  rice:{id:'rice',name:'Rice University',active:false,note:'Coming soon'},
-  utd:{id:'utd',name:'UT Dallas',active:false,note:'Coming soon'},
-  txst:{id:'txst',name:'Texas State',active:false,note:'Coming soon'},
-};
 const SEM_ORDER=['ap','phy','y1f','y1s','y2f','y2s','y3f','y3s','y4f','y4s','lower','core','upper','human','major','canfield','electives'];
 
 function normCourseCode(code){return String(code||'').trim().toUpperCase().replace(/\s+/g,' ').replace(/H$/,'');}
@@ -133,32 +117,16 @@ function validatePlanPrereqs(sems){
   return issues;
 }
 function semCreditLoad(sem){
-  if(sem.isOff||sem.id==='ap'||sem.id==='phy')return null;
+  if(!sem||sem.isOff)return null;
+  const id=String(sem.id||'');
+  if(id==='ap'||id==='phy')return null;
+  if(String(id).startsWith('prog_'))return null;
+  if(['lower','core','upper','human','major','canfield','electives'].includes(id))return null;
   const cr=(sem.courses||[]).reduce((t,c)=>t+Number(c.credits||0),0);
   return{cr,over:cr>18,under:cr>0&&cr<12};
 }
 function checkSemesterLoads(sems){
   return(sems||[]).map(s=>{const l=semCreditLoad(s);return l?{sem:s,...l}:null;}).filter(Boolean);
-}
-function scanDegreeFlags(sems){
-  const found={};
-  for(const def of UT_FLAG_DEFS)found[def.key]=[];
-  for(const sem of sems||[]){
-    for(const c of sem.courses||[]){
-      const text=`${c.note||''} ${c.name||''}`;
-      for(const def of UT_FLAG_DEFS){
-        if(def.re.test(text))found[def.key].push({code:c.code,sem:sem.label});
-      }
-    }
-  }
-  return found;
-}
-function flagProgressSummary(sems){
-  const flags=scanDegreeFlags(sems);
-  return UT_FLAG_DEFS.map(def=>({
-    ...def,hit:flags[def.key].length,target:UT_FLAG_TARGETS[def.key]||1,courses:flags[def.key],
-    ok:flags[def.key].length>=(UT_FLAG_TARGETS[def.key]||1),
-  }));
 }
 function courseRequirementTags(sch,c){
   const nc=normCourseCode(c.code);
@@ -355,7 +323,7 @@ let _validationCache={rev:-1,val:null};
 function planValidation(){
   if(_validationCache.rev===_saveRev)return _validationCache.val;
   const sems=getAS();
-  const val={prereqs:validatePlanPrereqs(sems),loads:checkSemesterLoads(sems),flags:flagProgressSummary(sems),overlap:computeRequirementOverlap(getAct())};
+  const val={prereqs:validatePlanPrereqs(sems),loads:checkSemesterLoads(sems),overlap:computeRequirementOverlap(getAct())};
   _validationCache={rev:_saveRev,val};
   return val;
 }

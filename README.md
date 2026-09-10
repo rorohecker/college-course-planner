@@ -28,7 +28,6 @@ Releases on this repo always ship the latest planner as a downloadable asset, so
 
 - ECB students who want to see how their plan changes if they swap a semester or push a course back.
 - Anyone in any UT major who wants a faster, draggable degree audit.
-- Students at other schools who want a starting point. Replace the default layout in the `DS` array near the top of the script and you are most of the way there.
 
 ## Privacy
 

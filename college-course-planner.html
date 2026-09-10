@@ -526,7 +526,7 @@ body{font-family:-apple-system,'Segoe UI',system-ui,sans-serif;background:var(--
 </script>
 <script>
 // ─── Static data ──────────────────────────────────────────────────────────────
-const APP_VERSION='2026.09.08.5';
+const APP_VERSION='2026.09.10.1';
 // Bump when migrateFlowchartLayout rules change — migrations run once per schedule per version.
 const LAYOUT_MIGRATION_VERSION=22;
 // Raw URL is used only for parsing APP_VERSION on the live copy — never as a user link
@@ -1153,24 +1153,8 @@ const COURSE_EQUIV=[
   ['ECE 319K','ECE 419K'],
   ['PHY 303L','PHY 303E'],
 ];
-const UT_FLAG_DEFS=[
-  {key:'wr',label:'Writing',re:/\bwr(?:iting)?\s*flag\b/i},
-  {key:'qr',label:'Quantitative Reasoning',re:/\bqr\b|quantitative reasoning/i},
-  {key:'cd',label:'Cultural Diversity',re:/\bcd\b|cultural diversity/i},
-  {key:'gc',label:'Global Cultures',re:/\bgc\b|global cultures/i},
-  {key:'e',label:'Ethics',re:/\be\s*flag\b|\bethics\s*flag\b/i},
-  {key:'ii',label:'Independent Inquiry',re:/\bindependent inquiry\b|\bii\s*flag\b/i},
-];
-const UT_FLAG_TARGETS={wr:1,qr:1,cd:1,gc:1,e:1,ii:1};
 const TERM_STARTS={y1f:'2025-08-25',y1s:'2026-01-12',y2f:'2026-08-24',y2s:'2027-01-11',y3f:'2027-08-23',y3s:'2028-01-10',y4f:'2028-08-28',y4s:'2029-01-08'};
 const GIST_PREFS_KEY='cp-gist-sync';
-const SCHOOL_REGISTRY={
-  ut:{id:'ut',name:'UT Austin',active:true,note:'Full support — ECE, BBA, minors'},
-  tamu:{id:'tamu',name:'Texas A&M',active:false,note:'Coming soon — contribute a curriculum JSON'},
-  rice:{id:'rice',name:'Rice University',active:false,note:'Coming soon'},
-  utd:{id:'utd',name:'UT Dallas',active:false,note:'Coming soon'},
-  txst:{id:'txst',name:'Texas State',active:false,note:'Coming soon'},
-};
 const SEM_ORDER=['ap','phy','y1f','y1s','y2f','y2s','y3f','y3s','y4f','y4s','lower','core','upper','human','major','canfield','electives'];
 
 function normCourseCode(code){return String(code||'').trim().toUpperCase().replace(/\s+/g,' ').replace(/H$/,'');}
@@ -1258,33 +1242,21 @@ function validatePlanPrereqs(sems){
   }
   return issues;
 }
+function isCreditLoadSem(sem){
+  if(!sem||sem.isOff)return false;
+  const id=String(sem.id||'');
+  if(id==='ap'||id==='phy')return false;
+  if(isProgramSemId(id))return false;
+  if(['lower','core','upper','human','major','canfield','electives'].includes(id))return false;
+  return true;
+}
 function semCreditLoad(sem){
-  if(sem.isOff||sem.id==='ap'||sem.id==='phy')return null;
+  if(!isCreditLoadSem(sem))return null;
   const cr=(sem.courses||[]).reduce((t,c)=>t+Number(c.credits||0),0);
   return{cr,over:cr>18,under:cr>0&&cr<12};
 }
 function checkSemesterLoads(sems){
   return(sems||[]).map(s=>{const l=semCreditLoad(s);return l?{sem:s,...l}:null;}).filter(Boolean);
-}
-function scanDegreeFlags(sems){
-  const found={};
-  for(const def of UT_FLAG_DEFS)found[def.key]=[];
-  for(const sem of sems||[]){
-    for(const c of sem.courses||[]){
-      const text=`${c.note||''} ${c.name||''}`;
-      for(const def of UT_FLAG_DEFS){
-        if(def.re.test(text))found[def.key].push({code:c.code,sem:sem.label});
-      }
-    }
-  }
-  return found;
-}
-function flagProgressSummary(sems){
-  const flags=scanDegreeFlags(sems);
-  return UT_FLAG_DEFS.map(def=>({
-    ...def,hit:flags[def.key].length,target:UT_FLAG_TARGETS[def.key]||1,courses:flags[def.key],
-    ok:flags[def.key].length>=(UT_FLAG_TARGETS[def.key]||1),
-  }));
 }
 function courseRequirementTags(sch,c){
   const nc=normCourseCode(c.code);
@@ -1396,12 +1368,13 @@ function weeklyScheduleAnalysis(sems){
   const courses=[];
   for(const sem of sems||[]){
     for(const c of sem.courses||[]){
-      if(c.meeting){courses.push({...c,semLabel:sem.label,mtg:parseMeetingTime(c.meeting)});}
+      if(c.meeting){courses.push({...c,semId:sem.id,semLabel:sem.label,mtg:parseMeetingTime(c.meeting)});}
     }
   }
   const conflicts=[];
   for(let i=0;i<courses.length;i++){
     for(let j=i+1;j<courses.length;j++){
+      if(courses[i].semId!==courses[j].semId)continue;
       if(meetingsOverlap(courses[i].mtg,courses[j].mtg)){
         conflicts.push([courses[i],courses[j]]);
       }
@@ -1482,7 +1455,7 @@ let _preIssueByCid=null;
 function planValidation(){
   if(_validationCache.rev===_saveRev)return _validationCache.val;
   const sems=getAS();
-  const val={prereqs:validatePlanPrereqs(sems),loads:checkSemesterLoads(sems),flags:flagProgressSummary(sems),overlap:computeRequirementOverlap(getAct())};
+  const val={prereqs:validatePlanPrereqs(sems),loads:checkSemesterLoads(sems),overlap:computeRequirementOverlap(getAct())};
   _validationCache={rev:_saveRev,val};
   _preIssueByCid=new Map(val.prereqs.map(i=>[i.course.id,i]));
   return val;
@@ -1578,6 +1551,10 @@ function syncCourseCredits(c){
   if(!c||!c.code)return c;
   if(isDegreePlaceholderCode(c.code))return{...c,credits:defaultCreditsForPlaceholder(c.code)};
   if(!hasCourseNumber(c.code))return c;
+  const nc=normCourseCode(c.code);
+  const cat=typeof CATALOG!=='undefined'?CATALOG.find(e=>normCourseCode(e.code)===nc):null;
+  if(cat&&typeof cat.credits==='number')return{...c,credits:cat.credits};
+  if(typeof c.credits==='number'&&c.credits===0)return c;
   return{...c,credits:parseCreditsFromCode(c.code)};
 }
 function syncSemCredits(sems){
@@ -3122,6 +3099,14 @@ function rBanners(){
       <span class="grow">⚠ ${val.prereqs.length} prerequisite issue${val.prereqs.length===1?'':'s'} on your plan.</span>
       <button data-a="open-validation">Review</button>
     </div>`;
+  }else{
+    const overs=val.loads.filter(l=>l.over);
+    if(overs.length){
+      html+=`<div class="top-banner" style="background:#4A3010;border-color:#8A5020">
+        <span class="grow">⚠ ${overs.length} semester${overs.length===1?'':'s'} over 18 credits.</span>
+        <button data-a="open-validation">Review</button>
+      </div>`;
+    }
   }
   return html;
 }
@@ -3226,7 +3211,7 @@ function rModal(){
       <textarea class="sta" id="advise-url" readonly onclick="this.select()">${esc(adviseUrl)}</textarea>
       <span class="copied" id="copy-advise-badge">✓ Copied!</span>`;
     else if(tab==='ics')body=`<p style="font-size:12px;color:var(--text2);margin-bottom:10px">Export a semester to your calendar (.ics). Pick a semester:</p>
-      <div style="display:flex;flex-wrap:wrap;gap:8px">${getAS().filter(s=>!s.isOff&&s.courses.length).map(s=>`<button onclick="downloadSemesterICS('${s.id}')" style="padding:6px 10px;font-size:11px;border:1px solid var(--border2);border-radius:6px;cursor:pointer;background:var(--surface2)">${esc(s.label)}</button>`).join('')}</div>`;
+      <div style="display:flex;flex-wrap:wrap;gap:8px">${getAS().filter(s=>!s.isOff&&s.courses.length&&TERM_STARTS[s.id]).map(s=>`<button onclick="downloadSemesterICS('${s.id}')" style="padding:6px 10px;font-size:11px;border:1px solid var(--border2);border-radius:6px;cursor:pointer;background:var(--surface2)">${esc(s.label)}</button>`).join('')||'<span style="font-size:12px;color:var(--text3)">No year-term semesters with courses to export.</span>'}</div>`;
     else body=`<p style="font-size:12px;color:var(--text2);margin-bottom:10px">Opens a print-friendly view — use Save as PDF in the print dialog.</p>
       <button onclick="window.print()" style="padding:10px 14px;background:var(--accent);color:#fff;border:none;border-radius:7px;cursor:pointer;font-size:13px">🖨️ Print / Save as PDF</button>`;
     const tabBtn=(id,label)=>`<button class="share-tab${tab===id?' on':''}" onclick="S.modalTab='${id}';render()">${label}</button>`;
@@ -3474,11 +3459,6 @@ GOV 310L   AMERICAN GOVERNMENT   CR   16210   Credit by exam   3.0   0.00</pre>
   }
 
   if(S.modal==='curriculum'){
-    const schoolCards=Object.values(SCHOOL_REGISTRY).map(s=>`
-      <div class="tk-card${s.active?'':' disabled'}" ${s.active?'':'style="opacity:.55;cursor:default"'}>
-        <div class="tk-name">${esc(s.name)}</div>
-        <div class="tk-grad">${esc(s.note)}</div>
-      </div>`).join('');
     const cards=Object.entries(CURRICULUM_TEMPLATES).map(([k,t])=>`
       <div class="tk-card" onclick="applyCurriculum('${k}')">
         <div class="tk-name">${esc(t.label)}</div>
@@ -3488,8 +3468,6 @@ GOV 310L   AMERICAN GOVERNMENT   CR   16210   Credit by exam   3.0   0.00</pre>
       <div class="modal" style="max-width:560px">
         <div class="mhdr"><h3>📚 Curriculum templates</h3><button class="mclose" data-a="close-modal">×</button></div>
         <div class="mbody">
-          <div class="tk-h">Schools</div>
-          <div class="tk-grid" style="margin-bottom:14px">${schoolCards}</div>
           <div class="tk-h">UT Austin templates</div>
           <p style="font-size:12px;color:var(--text2);margin-bottom:10px">Swap the active plan for a different starting curriculum. A snapshot is saved first.</p>
           <div class="tk-grid">${cards}</div>
@@ -3502,15 +3480,14 @@ GOV 310L   AMERICAN GOVERNMENT   CR   16210   Credit by exam   3.0   0.00</pre>
   if(S.modal==='validation'){
     const val=planValidation();
     const pre=val.prereqs.map(i=>`<div class="tk-list"><div class="miss">⚠ ${esc(i.course.code)} in ${esc(i.semLabel)} — needs ${esc(i.missing.join(', '))}</div></div>`).join('');
-    const loads=val.loads.map(l=>`<div class="tk-list"><div class="${l.over?'miss':'ok'}">${l.over?'⚠':'○'} ${esc(l.sem.label)}: ${l.cr}cr${l.over?' (over 18)':l.under?' (under 12)':''}</div></div>`).join('');
-    const flags=val.flags.map(f=>`<div class="tk-list"><div class="${f.ok?'ok':'miss'}">${f.ok?'✓':'○'} ${esc(f.label)}: ${f.hit}/${f.target}${f.courses.length?' — '+f.courses.map(c=>c.code).join(', '):''}</div></div>`).join('');
+    const loadWarns=val.loads.filter(l=>l.over||l.under);
+    const loads=loadWarns.map(l=>`<div class="tk-list"><div class="${l.over?'miss':'ok'}">${l.over?'⚠':'○'} ${esc(l.sem.label)}: ${l.cr}cr${l.over?' (over 18)':l.under?' (under 12)':''}</div></div>`).join('');
     const overlap=val.overlap.length?val.overlap.map(o=>`<div class="tk-list"><div class="ok">✓ ${esc(o.code)} counts for: ${esc(o.tags.join(' + '))}</div></div>`).join(''):'<p style="font-size:12px;color:var(--text3)">No double-counted courses detected.</p>';
     return`<div class="mbk" id="mbk"><div class="modal" style="max-width:620px">
       <div class="mhdr"><h3>✅ Plan health</h3><button class="mclose" data-a="close-modal">×</button></div>
       <div class="mbody">
         <div class="tk-h">Prerequisites (${val.prereqs.length} issues)</div>${pre||'<p style="font-size:12px;color:var(--green)">No prereq issues detected.</p>'}
         <div class="tk-h">Credit load</div>${loads||'<p style="font-size:12px;color:var(--text3)">No semester warnings.</p>'}
-        <div class="tk-h">Degree flags</div>${flags}
         <div class="tk-h">Requirement overlap</div>${overlap}
       </div>
       <div class="mfooter"><button data-a="close-modal" style="padding:6px 14px;border:1px solid var(--border2);border-radius:6px;cursor:pointer;font-size:12px;background:var(--surface2);color:var(--text)">Close</button></div>
@@ -3519,12 +3496,16 @@ GOV 310L   AMERICAN GOVERNMENT   CR   16210   Credit by exam   3.0   0.00</pre>
 
   if(S.modal==='tools'){
     const weekly=weeklyScheduleAnalysis(getAS());
+    const act=getAct();
+    const whatIfCard=act?.kind==='business'
+      ?`<button class="tool-card" disabled style="opacity:.55;cursor:default"><b>What-if tracks</b><span>ECE tracks only — switch to an ECE plan</span></button>`
+      :`<button class="tool-card" onclick="S.modal='whatif';render()"><b>What-if tracks</b><span>Compare all ECE tracks at a glance</span></button>`;
     return`<div class="mbk" id="mbk"><div class="modal" style="max-width:640px">
       <div class="mhdr"><h3>🧰 Tools</h3><button class="mclose" data-a="close-modal">×</button></div>
       <div class="mbody">
         <div class="tools-grid">
-          <button class="tool-card" onclick="S.modal='validation';render()"><b>Plan health</b><span>Prereqs, credit load, flags, overlap</span></button>
-          <button class="tool-card" onclick="S.modal='whatif';render()"><b>What-if tracks</b><span>Compare all ECE tracks at a glance</span></button>
+          <button class="tool-card" onclick="S.modal='validation';render()"><b>Plan health</b><span>Prereqs, credit load, overlap</span></button>
+          ${whatIfCard}
           <button class="tool-card" onclick="S.modal='weekly';render()"><b>Weekly schedule</b><span>Time conflicts from meeting times</span></button>
           <button class="tool-card" onclick="S.modalTab='ics';S.modal='export';render()"><b>Calendar export</b><span>Download .ics for a semester</span></button>
         </div>
@@ -3537,6 +3518,13 @@ GOV 310L   AMERICAN GOVERNMENT   CR   16210   Credit by exam   3.0   0.00</pre>
   }
 
   if(S.modal==='whatif'){
+    if(getAct()?.kind==='business'){
+      return`<div class="mbk" id="mbk"><div class="modal" style="max-width:520px">
+        <div class="mhdr"><h3>🔮 What-if: ECE tracks</h3><button class="mclose" data-a="close-modal">×</button></div>
+        <div class="mbody"><p style="font-size:13px;color:var(--text2)">ECE track what-if is only available on ECE / ECB plans. Switch curriculum or pick an ECE schedule first.</p></div>
+        <div class="mfooter"><button data-a="close-modal" style="padding:6px 14px;border:1px solid var(--border2);border-radius:6px;cursor:pointer;font-size:12px;background:var(--surface2);color:var(--text)">Close</button></div>
+      </div></div>`;
+    }
     const rows=trackWhatIfMatrix(getAct());
     const cur=getAct()?.track;
     return`<div class="mbk" id="mbk"><div class="modal" style="max-width:720px">
@@ -3840,8 +3828,9 @@ function render(){
     </div>`:'';
   const programsPill=planProg?`<div class="track-pill" onclick="S.modal='programs';render()" title="Minors &amp; Certificates">🎓 ${planProg.count} program${planProg.count===1?'':'s'} <span style="opacity:.7">${planProg.coreDone}/${planProg.coreTotal}c · ${planProg.electDone}/${planProg.electNeed}e</span></div>`:'';
   const val=planValidation();
-  const healthPill=`<div class="track-pill val-pill${val.prereqs.length?' warn':' ok'}" onclick="S.modal='validation';render()" title="Plan health">✅ ${val.prereqs.length?val.prereqs.length+' issue'+(val.prereqs.length===1?'':'s'):'OK'}</div>`;
-  const flagPills=flagProgressSummary(sems).filter(f=>!f.ok).slice(0,3).map(f=>`<span class="val-pill warn" onclick="S.modal='validation';render()" title="Missing ${esc(f.label)} flag">${esc(f.label)} ${f.hit}/${f.target}</span>`).join('');
+  const loadOvers=val.loads.filter(l=>l.over).length;
+  const healthIssues=val.prereqs.length+loadOvers;
+  const healthPill=`<div class="track-pill val-pill${healthIssues?' warn':' ok'}" onclick="S.modal='validation';render()" title="Plan health">✅ ${healthIssues?healthIssues+' issue'+(healthIssues===1?'':'s'):'OK'}</div>`;
 
   document.getElementById('root').innerHTML=`
     ${S.readOnly?`<div class="readonly-banner">👁 Advising view — read only. <button onclick="S.readOnly=false;render()" style="margin-left:10px;padding:2px 8px;border:1px solid #fff;border-radius:4px;background:transparent;color:#fff;cursor:pointer;font-size:11px">Exit advising mode</button></div>`:''}
@@ -3863,7 +3852,6 @@ function render(){
             ${trackPill}
             ${programsPill}
             ${healthPill}
-            ${flagPills}
             ${S.schedules.length>1?`<span style="font-size:10px;opacity:.6">${S.schedules.length} schedules</span>`:''}
             <span id="saved-stamp" class="saved-stamp" title="Autosaved to this browser">${S.lastSaved?'saved '+esc(relTime(S.lastSaved)):''}</span>
           </div>
@@ -4143,6 +4131,7 @@ function flashTrackMsg(msg){
 window.setTrack=key=>mutate(()=>{
   S.schedules=S.schedules.map(s=>{
     if(s.id!==S.activeId)return s;
+    if(s.kind==='business')return s;
     const kind=eceTrackKind(s);
     if(!key)return{...s,track:null,kind,sems:removeTrackManagedCourses(s.sems)};
     return{...s,track:key,kind,sems:applyTrackToSems(s.sems,key,{reset:true})};
@@ -4748,7 +4737,7 @@ window.applyCurriculum=key=>{
   saveSnapshotNow('pre-curriculum-swap');
   mutate(()=>{
     const id=S.activeId;
-    S.schedules=S.schedules.map(s=>s.id!==id?s:normalizeSchedule({...s,sems:t.build(),kind:t.kind||key,track:null,bizTracks:[],updatedAt:Date.now()}));
+    S.schedules=S.schedules.map(s=>s.id!==id?s:normalizeSchedule({...s,sems:t.build(),kind:t.kind||key,track:null,bizTracks:[],programs:[],updatedAt:Date.now()}));
     S.modal=null;S.edit=null;S.form={};
   },{reason:'curriculum-swap'});
 };

@@ -7,7 +7,6 @@ Shipped features are marked ✅. Remaining items are future improvements.
 - **Auto-update** — periodic GitHub checks, remembered file apply, notifications
 - **Prerequisite validation** — warns when courses appear before prereqs (parsed from notes + seed map)
 - **Credit load warnings** — flags semesters over 18 or under 12 credits
-- **Degree flag tracking** — Writing, QR, CD, GC, Ethics, Independent Inquiry checklist
 - **Requirement overlap** — shows courses counting for multiple programs/tracks
 - **What-if ECE tracks** — compare all 8 tracks against your current plan
 - **Calendar export** — download `.ics` per semester
@@ -19,7 +18,6 @@ Shipped features are marked ✅. Remaining items are future improvements.
 - **PDF export** — print-optimized tab in Share modal
 - **Diff view** — textual add/remove/move/grade diff in Compare mode
 - **PWA basics** — web manifest + service worker when hosted on https/localhost
-- **Other schools framework** — school registry UI (UT active; others stubbed for community JSON)
 - **Minors & certificates** — 153 with catalog data; improved placeholders for the rest
 
 ## Near term (next improvements)
