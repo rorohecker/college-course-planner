@@ -22,8 +22,17 @@ Shipped features are marked ✅. Remaining items are future improvements.
 
 ## Near term (next improvements)
 
+### Catalog-year migration helper
+Side-by-side remap for students moving (or comparing) 24-26 → 26-28: auto-swap ECE 302↔402, 306↔406, 319K↔419K, 312↔412, PHY 303L+105N↔PHY 303E, and adjust free-elective hour targets (14 → 11).
+
+### Free-elective hour meter
+Track approved free-elective hours toward the catalog target (14 pre-2026 / 11 for 26-28) instead of only counting placeholder slots.
+
 ### Deeper catalog import
 Pull from the UT course schedule each semester so search/add uses live sections, not just the static snapshot.
+
+### Live tech-core packet sync
+Scrape / refresh TRACKS cores + electives from the Chandra tech-core packet so approved lists stay current without hand edits.
 
 ### Full schedule generator (IDA-style)
 Given real section times from the registrar, rank conflict-free weekly schedules by user preferences (no 8 AMs, no Friday, compact days).

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>College Course Planner — UT Austin ECE + Business Honors</title>
+<title>College Course Planner — UT Austin ECE (24-26 & 26-28) + Business Honors</title>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -420,15 +420,20 @@ body{font-family:-apple-system,'Segoe UI',system-ui,sans-serif;background:var(--
   {"code":"ECE 362K","name":"Intro to Automatic Control","credits":3,"cat":"ECE"},
   {"code":"ECE 362M","name":"Power Electronics II","credits":3,"cat":"ECE"},
   {"code":"ECE 362Q","name":"Power Quality and Harmonics","credits":3,"cat":"ECE"},
+  {"code":"ECE 362G","name":"Smart Grids","credits":3,"cat":"ECE"},
+  {"code":"ECE 362R","name":"Renewable Energy and Power Systems","credits":3,"cat":"ECE"},
+  {"code":"ECE 362S","name":"Development of a Solar-Powered Vehicle","credits":3,"cat":"ECE"},
   {"code":"ECE 363M","name":"Microwave and Radio Frequency Engineering","credits":3,"cat":"ECE"},
   {"code":"ECE 363N","name":"Engineering Acoustics","credits":3,"cat":"ECE"},
   {"code":"ECE 364D","name":"Intro to Engineering Design","credits":3,"cat":"ECE"},
   {"code":"ECE 368L","name":"Power Systems Apparatus & Lab","credits":3,"cat":"ECE"},
   {"code":"ECE 369","name":"Power Systems Engineering","credits":3,"cat":"ECE"},
   {"code":"ECE 371P","name":"Intro to Computer Vision","credits":3,"cat":"ECE"},
+  {"code":"ECE 371Q","name":"Digital Image Processing","credits":3,"cat":"ECE"},
   {"code":"ECE 371R","name":"Digital Image Processing","credits":3,"cat":"ECE"},
   {"code":"ECE 372N","name":"Telecommunication Networks","credits":3,"cat":"ECE"},
   {"code":"ECE 374K","name":"Biomedical Electronic Instrument Design","credits":3,"cat":"ECE"},
+  {"code":"ECE 374L","name":"Applications of Biomedical Engineering","credits":3,"cat":"ECE"},
   {"code":"ECE 374N","name":"Neural Engineering","credits":3,"cat":"ECE"},
   {"code":"ECE 379K","name":"Special Topics","credits":3,"cat":"ECE"},
   {"code":"ECE 411","name":"Circuit Theory","credits":4,"cat":"ECE"},
@@ -526,7 +531,7 @@ body{font-family:-apple-system,'Segoe UI',system-ui,sans-serif;background:var(--
 </script>
 <script>
 // ─── Static data ──────────────────────────────────────────────────────────────
-const APP_VERSION='2026.09.10.1';
+const APP_VERSION='2026.11.03.1';
 // Bump when migrateFlowchartLayout rules change — migrations run once per schedule per version.
 const LAYOUT_MIGRATION_VERSION=22;
 // Raw URL is used only for parsing APP_VERSION on the live copy — never as a user link
@@ -590,12 +595,23 @@ const ECE_HONORS_LAYOUT=[
 const ECE_HONORS_KNOWN=new Set(ECE_HONORS_LAYOUT.flatMap(l=>l.ids));
 function isEceHonorsSch(sch){
   const courses=(sch?.sems||[]).flatMap(s=>s.courses||[]);
-  if(courses.some(c=>/^eg\d+$/.test(String(c.id))))return false;
-  if(courses.some(c=>/^eh\d+$/.test(String(c.id))))return true;
+  // eg/ea = general (26-28 / pre-2026); eh/eb = honors (26-28 / pre-2026)
+  if(courses.some(c=>/^(eg|ea)\d+$/.test(String(c.id))))return false;
+  if(courses.some(c=>/^(eh|eb)\d+$/.test(String(c.id))))return true;
   return false;
 }
 function isEceStandaloneSch(sch){
-  return(sch?.sems||[]).some(s=>(s.courses||[]).some(c=>/^(eh|eg)\d+$/.test(String(c.id))));
+  return(sch?.sems||[]).some(s=>(s.courses||[]).some(c=>/^(eh|eg|ea|eb)\d+$/.test(String(c.id))));
+}
+function isEcePre2026Sch(sch){
+  const courses=(sch?.sems||[]).flatMap(s=>s.courses||[]);
+  if(courses.some(c=>/^(ea|eb)\d+$/.test(String(c.id))))return true;
+  // Legacy ECB prev uses p* ids / 302H without 402-series.
+  if(courses.some(c=>/^p\d+$/.test(String(c.id))))return true;
+  const codes=courses.map(c=>String(c.code||'').toUpperCase());
+  const hasOld=codes.some(c=>/^ECE 302H?$/.test(c)||/^ECE 306H?$/.test(c)||/^ECE 312H?$/.test(c)||/^ECE 319[KH]?$/.test(c));
+  const hasNew=codes.some(c=>/^ECE 402H?$/.test(c)||/^ECE 406H?$/.test(c)||/^ECE 412H?$/.test(c)||/^ECE 419[KH]?$/.test(c));
+  return hasOld&&!hasNew;
 }
 function isEcbSch(sch){
   return(sch?.sems||[]).some(s=>(s.courses||[]).some(c=>/^c\d+$/.test(String(c.id))));
@@ -779,7 +795,7 @@ const ECE_HONORS_DS=[
     {id:'eh40',code:'ECE 464H',name:'Honors Senior Design Project',cat:'ECE',credits:4,done:false,note:'Pre-req: ECE 364D; ATC-Lab also required'},
     {id:'eh41',code:'FREE-3',name:'Free Elective',cat:'OTHER',credits:3,done:false,note:''},
     {id:'eh42',code:'HIS',name:'US History',cat:'CORE',credits:3,done:false,note:'AP Credit'},
-    {id:'eh43',code:'ATC-6',name:'Advanced Tech Component',cat:'ADVANCED',credits:3,done:false,note:'Tech core (9 of 9)'},
+    {id:'eh43',code:'ATC-6',name:'Advanced Tech Component',cat:'ADVANCED',credits:3,done:false,note:'Tech core (8 of 8)'},
   ]},
 ];
 
@@ -840,12 +856,141 @@ const ECE_GENERAL_DS=[
     {id:'eg40',code:'FREE-3',name:'Free Elective',cat:'OTHER',credits:3,done:false,note:''},
     {id:'eg36',code:'GOV 312L/P',name:'American Government',cat:'CORE',credits:3,done:false,note:'Core govt part 2'},
     {id:'eg26',code:'HIS',name:'US History',cat:'CORE',credits:3,done:false,note:'AP Credit'},
-    {id:'eg42',code:'ATC-6',name:'Advanced Tech Component',cat:'ADVANCED',credits:3,done:false,note:'Tech core (9 of 9)'},
+    {id:'eg42',code:'ATC-6',name:'Advanced Tech Component',cat:'ADVANCED',credits:3,done:false,note:'Tech core (8 of 8)'},
   ]},
 ];
 
-// ─── ECE + Business Honors (ECB Dual Degree) · previous version ────────────────
-// Kept for reference/comparison. Uses the pre-2026 catalog course numbers.
+// ─── Electrical & Computer Engineering — General · 2024-2026 (pre-Fall 2026) ─
+// Source: ece.utexas.edu 2024-2026 Degree Flowchart (Box). Pre-2026 course numbers
+// (ECE 302/306/319K/312) and PHY 303L+105N (or PHY 303E in residence). Free electives: 14 hrs.
+const ECE_GENERAL_PREV_DS=[
+  {id:'y1f',label:'Year 1 Fall',courses:[
+    {id:'ea1',code:'M 408C',name:'Differential & Integral Calculus',cat:'MATH',credits:4,done:false,note:'AP Credit or Y1 Fall'},
+    {id:'ea2',code:'ECE 306',name:'Introduction to Computing',cat:'ECE',credits:3,done:false,note:'Co-req: M 408C'},
+    {id:'ea3',code:'ECE 302',name:'Intro to Electrical Engineering',cat:'ECE',credits:3,done:false,note:'Co-req: M 408C'},
+    {id:'ea4',code:'UGS 302/3',name:'First-Year Signature Course',cat:'CORE',credits:3,done:false,note:''},
+    {id:'ea5',code:'RHE 306',name:'Rhetoric & Writing',cat:'CORE',credits:3,done:false,note:'AP Credit or Y1 Fall'},
+    {id:'ea6',code:'UGS 016',name:'First-Year Interest Group',cat:'CORE',credits:0,done:false,note:''},
+  ]},
+  {id:'y1s',label:'Year 1 Spring',courses:[
+    {id:'ea7',code:'ECE 319K',name:'Intro to Embedded Systems',cat:'ECE',credits:3,done:false,note:'Pre-req: ECE 306'},
+    {id:'ea8',code:'M 408D',name:'Seq, Series & Multivariable Calculus',cat:'MATH',credits:4,done:false,note:'Pre-req: M 408C'},
+    {id:'ea9',code:'PHY 303K',name:'Engineering Physics 1',cat:'PHY',credits:3,done:false,note:'AP Credit or Y1 Spring; Co-req: M 408D'},
+    {id:'ea10',code:'PHY 105M',name:'Lab for PHY 303K',cat:'PHY',credits:1,done:false,note:'AP Credit or Y1 Spring'},
+    {id:'ea11',code:'VAPA',name:'Visual & Performing Arts',cat:'CORE',credits:3,done:false,note:'AP Credit'},
+  ]},
+  {id:'y2f',label:'Year 2 Fall',courses:[
+    {id:'ea12',code:'ECE 411',name:'Circuit Theory',cat:'ECE',credits:4,done:false,note:'Pre-req: ECE 302, PHY 303K, PHY 105M; Co-req: M 427J, PHY 303L/E, PHY 105N'},
+    {id:'ea13',code:'M 427J',name:'Differential Equations',cat:'MATH',credits:4,done:false,note:'Pre-req: M 408D; Co-req: ECE 411, PHY 303L/E'},
+    {id:'ea14',code:'PHY 303L',name:'Engineering Physics 2',cat:'PHY',credits:3,done:false,note:'Or PHY 303E in residence; AP credit for PHY 303L only; Pre-req: M 408C, PHY 303K, PHY 105M'},
+    {id:'ea15',code:'PHY 105N',name:'Lab for PHY 303L',cat:'PHY',credits:1,done:false,note:'Waived if PHY 303E completed in residence'},
+    {id:'ea16',code:'SBS',name:'Social & Behavioral Sciences',cat:'CORE',credits:3,done:false,note:'AP Credit'},
+  ]},
+  {id:'y2s',label:'Year 2 Spring',courses:[
+    {id:'ea17',code:'ECE 312',name:'Software Design & Implementation I',cat:'ECE',credits:3,done:false,note:'Pre-req: ECE 306, ECE 319K'},
+    {id:'ea18',code:'ECE 313',name:'Linear Systems & Signals',cat:'ECE',credits:3,done:false,note:'Pre-req: ECE 302, M 427J; Co-req: M 340L'},
+    {id:'ea19',code:'M 340L',name:'Matrices & Matrix Calculations',cat:'MATH',credits:3,done:false,note:'Pre-req: M 408C'},
+    {id:'ea20',code:'FREE-1',name:'Free Elective',cat:'OTHER',credits:3,done:false,note:'Part of 14 hrs free electives (pre-2026)'},
+    {id:'ea21',code:'E 316',name:'Humanities Credit (L, M, N or P)',cat:'CORE',credits:3,done:false,note:'AP Credit or Y2 Spring; Pre-req: RHE 306'},
+  ]},
+  {id:'y3f',label:'Year 3 Fall',courses:[
+    {id:'ea22',code:'ECE 333T',name:'Engineering Communications',cat:'ECE',credits:3,done:false,note:'Core 010; Wr flag; Pre-req: RHE 306, ECE 319K/H'},
+    {id:'ea23',code:'ECE 351K',name:'Probability / Random Processes',cat:'ECE',credits:3,done:false,note:'Pre-req: M 427J'},
+    {id:'ea24',code:'ATC-M',name:'Advanced Tech Component (Math)',cat:'ADVANCED',credits:3,done:false,note:'M 427L or M 325K'},
+    {id:'ea25',code:'ATC-1',name:'Advanced Tech Component',cat:'ADVANCED',credits:3,done:false,note:'Tech core'},
+    {id:'ea26',code:'GOV 310L',name:'American Government',cat:'CORE',credits:3,done:false,note:'AP Credit — core govt part 1'},
+  ]},
+  {id:'y3s',label:'Year 3 Spring',courses:[
+    {id:'ea27',code:'ATE',name:'Advanced Technical Elective',cat:'ADVANCED',credits:3,done:false,note:'3 hr UD ECE or ECE 316'},
+    {id:'ea28',code:'ATC-2',name:'Advanced Tech Component',cat:'ADVANCED',credits:3,done:false,note:'Tech core'},
+    {id:'ea29',code:'ATC-Lab',name:'Advanced Tech Component Lab',cat:'ADVANCED',credits:1,done:false,note:'Tech core'},
+    {id:'ea30',code:'ATC-3',name:'Advanced Tech Component',cat:'ADVANCED',credits:3,done:false,note:'Tech core'},
+    {id:'ea31',code:'FREE-MS',name:'Free Elective: Advanced Math or Basic Science',cat:'OTHER',credits:3,done:false,note:'Counts toward 14 hrs free electives'},
+  ]},
+  {id:'y4f',label:'Year 4 Fall',courses:[
+    {id:'ea32',code:'ECE 364D',name:'Intro to Engineering Design',cat:'ECE',credits:3,done:false,note:'Core 010; Wr flag; Pre-req: ECE 333T; Co-req: ATC-Lab'},
+    {id:'ea33',code:'ATC-4',name:'Advanced Tech Component',cat:'ADVANCED',credits:3,done:false,note:'Tech core'},
+    {id:'ea34',code:'ATC-5',name:'Advanced Tech Component',cat:'ADVANCED',credits:3,done:false,note:'Tech core'},
+    {id:'ea35',code:'FREE-2',name:'Free Elective',cat:'OTHER',credits:3,done:false,note:'Part of 14 hrs free electives (pre-2026)'},
+    {id:'ea36',code:'HIS',name:'US History',cat:'CORE',credits:3,done:false,note:'In-person if no AP'},
+  ]},
+  {id:'y4s',label:'Year 4 Spring',courses:[
+    {id:'ea37',code:'ECE 464K',name:'Senior Design Project',cat:'ECE',credits:4,done:false,note:'Or ECE 464H; Pre-req: ECE 364D; ATC-Lab also required'},
+    {id:'ea38',code:'ATC-6',name:'Advanced Tech Component',cat:'ADVANCED',credits:3,done:false,note:'Tech core (8 of 8)'},
+    {id:'ea39',code:'FREE-3',name:'Free Elective',cat:'OTHER',credits:3,done:false,note:'Part of 14 hrs free electives (pre-2026)'},
+    {id:'ea40',code:'HIS',name:'US History',cat:'CORE',credits:3,done:false,note:'AP Credit'},
+    {id:'ea41',code:'GOV 312L/P',name:'American Government',cat:'CORE',credits:3,done:false,note:'Core govt part 2'},
+  ]},
+];
+
+// ─── Electrical Engineering Honors · 2024-2026 (pre-Fall 2026) ────────────────
+// Source: ece.utexas.edu 2024-2026 ECE Honors Degree Flowchart (Box).
+const ECE_HONORS_PREV_DS=[
+  {id:'ap',label:'AP / IB / Pre-College Credits',courses:[
+    {id:'eb0',code:'M 408C',name:'Differential & Integral Calculus',cat:'MATH',credits:4,done:false,note:'AP / IB — complete before first semester'},
+  ]},
+  {id:'y1f',label:'Year 1 Fall',courses:[
+    {id:'eb1',code:'ECE 302H',name:'Intro to Electrical Engineering Honors',cat:'ECE',credits:3,done:false,note:'Fall only; Co-req: M 408D'},
+    {id:'eb2',code:'ECE 306H',name:'Introduction to Computing Honors',cat:'ECE',credits:3,done:false,note:'Pre-req: M 408C'},
+    {id:'eb3',code:'UGS 016',name:'FIG Seminar — ECE Honors',cat:'CORE',credits:0,done:false,note:'Before first semester'},
+    {id:'eb4',code:'M 408D',name:'Seq, Series & Multivariable Calculus',cat:'MATH',credits:4,done:false,note:'Pre-req: M 408C'},
+    {id:'eb5',code:'UGS 302/3',name:'First-Year Signature Course',cat:'CORE',credits:3,done:false,note:''},
+    {id:'eb6',code:'RHE 306',name:'Rhetoric & Writing',cat:'CORE',credits:3,done:false,note:'AP Credit or Y1 Fall'},
+  ]},
+  {id:'y1s',label:'Year 1 Spring',courses:[
+    {id:'eb7',code:'ECE 319H',name:'Intro to Embedded Systems',cat:'ECE',credits:3,done:false,note:'Spring only; Pre-req: ECE 306H; Co-req: ECE 312H'},
+    {id:'eb8',code:'ECE 312H',name:'Software Design & Implementation I',cat:'ECE',credits:3,done:false,note:'Spring only; Pre-req: ECE 306H; Co-req: ECE 319H'},
+    {id:'eb9',code:'ECE 107H',name:'Engineering Leadership: Honors',cat:'ECE',credits:1,done:false,note:'Spring only'},
+    {id:'eb10',code:'M 427J',name:'Differential Equations',cat:'MATH',credits:4,done:false,note:'Pre-req: M 408D'},
+    {id:'eb11',code:'PHY 303K',name:'Engineering Physics 1',cat:'PHY',credits:3,done:false,note:'AP Credit or Y1 Spring; Co-req: M 408D, PHY 105M'},
+    {id:'eb12',code:'PHY 105M',name:'Lab for PHY 303K',cat:'PHY',credits:1,done:false,note:'AP Credit or Y1 Spring'},
+  ]},
+  {id:'y2f',label:'Year 2 Fall',courses:[
+    {id:'eb13',code:'ECE 411H',name:'Circuit Theory',cat:'ECE',credits:4,done:false,note:'Fall only; Pre-req: ECE 302H, PHY 303K, PHY 105M; Co-req: M 427J, PHY 303L/E, PHY 105N'},
+    {id:'eb14',code:'ECE 313H',name:'Linear Systems & Signals',cat:'ECE',credits:3,done:false,note:'Fall only; Pre-req: ECE 302H, M 427J; Co-req: M 340L'},
+    {id:'eb15',code:'M 340L',name:'Matrices & Matrix Calculations',cat:'MATH',credits:3,done:false,note:'Pre-req: M 408C'},
+    {id:'eb16',code:'PHY 303L',name:'Engineering Physics 2',cat:'PHY',credits:3,done:false,note:'Or PHY 303E in residence; AP for PHY 303L only'},
+    {id:'eb17',code:'PHY 105N',name:'Lab for PHY 303L',cat:'PHY',credits:1,done:false,note:'Waived if PHY 303E completed in residence'},
+    {id:'eb18',code:'VAPA',name:'Visual & Performing Arts',cat:'CORE',credits:3,done:false,note:'AP Credit'},
+  ]},
+  {id:'y2s',label:'Year 2 Spring',courses:[
+    {id:'eb19',code:'ECE 351H',name:'Probability / Random Processes',cat:'ECE',credits:3,done:false,note:'Spring only; Pre-req: M 427J'},
+    {id:'eb20',code:'ATC-M',name:'Advanced Tech Component (Math)',cat:'ADVANCED',credits:3,done:false,note:'M 427L or M 325K'},
+    {id:'eb21',code:'FREE-1',name:'Free Elective',cat:'OTHER',credits:3,done:false,note:'Part of 14 hrs free electives (pre-2026)'},
+    {id:'eb22',code:'SBS',name:'Social & Behavioral Sciences',cat:'CORE',credits:3,done:false,note:'AP Credit'},
+    {id:'eb23',code:'E 316',name:'Humanities Credit (L, M, N or P)',cat:'CORE',credits:3,done:false,note:'AP Credit or Y2 Spring; Pre-req: RHE 306'},
+  ]},
+  {id:'y3f',label:'Year 3 Fall',courses:[
+    {id:'eb24',code:'ECE 333T',name:'Engineering Communications',cat:'ECE',credits:3,done:false,note:'Core 010; Wr flag; Pre-req: RHE 306, ECE 319K/H'},
+    {id:'eb25',code:'ATC-1',name:'Advanced Tech Component',cat:'ADVANCED',credits:3,done:false,note:'Tech core'},
+    {id:'eb26',code:'ATC-2',name:'Advanced Tech Component',cat:'ADVANCED',credits:3,done:false,note:'Tech core'},
+    {id:'eb27',code:'FREE-MS',name:'Free Elective: Advanced Math or Basic Science',cat:'OTHER',credits:3,done:false,note:'Counts toward 14 hrs free electives'},
+    {id:'eb28',code:'HIS',name:'US History',cat:'CORE',credits:3,done:false,note:'In-person if no AP'},
+  ]},
+  {id:'y3s',label:'Year 3 Spring',courses:[
+    {id:'eb29',code:'ATE',name:'Advanced Technical Elective',cat:'ADVANCED',credits:3,done:false,note:'3 hr UD ECE or ECE 316'},
+    {id:'eb30',code:'ATC-3',name:'Advanced Tech Component',cat:'ADVANCED',credits:3,done:false,note:'Tech core'},
+    {id:'eb31',code:'ATC-4',name:'Advanced Tech Component',cat:'ADVANCED',credits:3,done:false,note:'Tech core'},
+    {id:'eb32',code:'ATC-Lab',name:'Advanced Tech Component Lab',cat:'ADVANCED',credits:1,done:false,note:'Tech core'},
+    {id:'eb33',code:'GOV 310L',name:'American Government',cat:'CORE',credits:3,done:false,note:'AP Credit — core govt part 1'},
+  ]},
+  {id:'y4f',label:'Year 4 Fall',courses:[
+    {id:'eb34',code:'ECE 364D',name:'Intro to Engineering Design',cat:'ECE',credits:3,done:false,note:'Core 010; Wr flag; Pre-req: ECE 333T; Co-req: ATC-Lab'},
+    {id:'eb35',code:'ATC-5',name:'Advanced Tech Component',cat:'ADVANCED',credits:3,done:false,note:'Tech core'},
+    {id:'eb36',code:'FREE-2',name:'Free Elective',cat:'OTHER',credits:3,done:false,note:'Part of 14 hrs free electives (pre-2026)'},
+    {id:'eb37',code:'FREE-3',name:'Free Elective',cat:'OTHER',credits:3,done:false,note:'Part of 14 hrs free electives (pre-2026)'},
+    {id:'eb38',code:'HIS',name:'US History',cat:'CORE',credits:3,done:false,note:'AP Credit'},
+  ]},
+  {id:'y4s',label:'Year 4 Spring',courses:[
+    {id:'eb39',code:'ECE 464H',name:'Honors Senior Design Project',cat:'ECE',credits:4,done:false,note:'Pre-req: ECE 364D; ATC-Lab also required'},
+    {id:'eb40',code:'ATC-6',name:'Advanced Tech Component',cat:'ADVANCED',credits:3,done:false,note:'Tech core (8 of 8)'},
+    {id:'eb41',code:'FREE-4',name:'Free Elective',cat:'OTHER',credits:3,done:false,note:'Part of 14 hrs free electives (pre-2026)'},
+    {id:'eb42',code:'GOV 312L/P',name:'American Government',cat:'CORE',credits:3,done:false,note:'Core govt part 2'},
+  ]},
+];
+
+// ─── ECE + Business Honors (ECB Dual Degree) · 2024-2026 / previous ────────────
+// Kept for students on the pre-Fall 2026 catalog. Uses pre-2026 course numbers.
 const ECB_PREV_DS=[
   {id:'ap',label:'AP / IB / Pre-College Credits',courses:[
     {id:'p1',code:'M 408C',name:'Differential & Integral Calculus',cat:'MATH',credits:4,done:false,note:'AP Credit'},
@@ -1479,12 +1624,14 @@ const CATALOG=JSON.parse(document.getElementById('catalog-data').textContent);
 
 // Curriculum templates. Active schedule can be reset to any of these.
 const CURRICULUM_TEMPLATES={
-  ecb:{label:'ECE + Canfield Business Honors (ECB Dual Degree · 26-28)',short:'ECB',kind:'ecb',build:()=>dc(DS)},
-  ecbPrev:{label:'ECE + Business Honors (ECB Dual Degree · previous)',short:'ECB (prev)',kind:'ecb',build:()=>dc(ECB_PREV_DS)},
-  business:{label:'Undeclared Business (BBA)',short:'Business',kind:'business',build:()=>dc(BUSINESS_DS)},
-  eceHonors:{label:'Electrical Engineering Honors (26-28)',short:'ECE Honors',kind:'general',build:()=>dc(ECE_HONORS_DS)},
-  eceGeneral:{label:'Electrical & Computer Engineering — General (26-28)',short:'ECE General',kind:'general',build:()=>dc(ECE_GENERAL_DS)},
-  blank:{label:'Blank slate (only AP credits + physics)',short:'Blank',kind:'ecb',build:()=>{
+  ecb:{label:'ECE + Canfield Business Honors (ECB Dual Degree)',short:'ECB 26-28',kind:'ecb',catalog:'2026-2028',build:()=>dc(DS)},
+  eceHonors:{label:'Electrical Engineering Honors',short:'ECE Honors 26-28',kind:'general',catalog:'2026-2028',build:()=>dc(ECE_HONORS_DS)},
+  eceGeneral:{label:'Electrical & Computer Engineering — General',short:'ECE General 26-28',kind:'general',catalog:'2026-2028',build:()=>dc(ECE_GENERAL_DS)},
+  ecbPrev:{label:'ECE + Business Honors (ECB Dual Degree)',short:'ECB 24-26',kind:'ecb',catalog:'2024-2026',build:()=>dc(ECB_PREV_DS)},
+  eceHonorsPrev:{label:'Electrical Engineering Honors',short:'ECE Honors 24-26',kind:'general',catalog:'2024-2026',build:()=>dc(ECE_HONORS_PREV_DS)},
+  eceGeneralPrev:{label:'Electrical & Computer Engineering — General',short:'ECE General 24-26',kind:'general',catalog:'2024-2026',build:()=>dc(ECE_GENERAL_PREV_DS)},
+  business:{label:'Undeclared Business (BBA)',short:'Business',kind:'business',catalog:'BBA',build:()=>dc(BUSINESS_DS)},
+  blank:{label:'Blank slate (only AP credits + physics)',short:'Blank',kind:'ecb',catalog:'other',build:()=>{
     const s=dc(DS);
     return s.map(sem=>{
       if(sem.id==='ap'||sem.id==='phy')return sem;
@@ -1510,10 +1657,11 @@ function isRequired(c){
   const id=String(c?.id||'');
   if(id.startsWith('biz_')||id.startsWith('prog_'))return true;
   if(/^b\d+$/.test(id))return true;
-  // Template ECE courses: c* (ECB), eh* (honors), eg* (general), p* (ECB prev).
+  // Template ECE courses: c* (ECB 26-28), eh*/eg* (honors/general 26-28),
+  // ea*/eb* (general/honors pre-2026), p* (ECB prev).
   const m=/^c(\d+)$/.exec(id);
   if(m)return parseInt(m[1],10)<=100;
-  if(/^(eh|eg|ea|p)\d+$/.test(id))return true;
+  if(/^(eh|eg|ea|eb|p)\d+$/.test(id))return true;
   return false;
 }
 const sid=()=>'s'+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
@@ -1599,6 +1747,7 @@ const S={
   exportSnoozedUntil:0,
   exportReminder:false,
   trackMsg:'',
+  trackElectFilter:'',
   programTab:'minors',
   programQ:'',
   programFocus:null,
@@ -2307,7 +2456,12 @@ function eceKindLocked(sch){
 function trackElectiveName(code){
   const nc=normTrackCode(code);
   const hit=CATALOG.find(e=>normTrackCode(e.code)===nc);
-  return hit?.name||code;
+  if(hit?.name)return hit.name;
+  for(const t of Object.values(TRACKS)){
+    const core=t.cores.find(c=>normTrackCode(c.code)===nc);
+    if(core?.name)return core.name;
+  }
+  return code;
 }
 function inferEceKind(sch){
   if(sch?.kind==='business')return 'business';
@@ -2322,13 +2476,15 @@ function resolveTemplateSems(sch){
   if(sch?.kind==='business')return CURRICULUM_TEMPLATES.business.build();
   const kind=inferEceKind(sch);
   const courses=(sch.sems||[]).flatMap(s=>s.courses||[]);
+  const pre=isEcePre2026Sch(sch);
   if(kind==='general'){
-    if(courses.some(c=>/^eh\d+$/.test(String(c.id))||String(c.code||'').includes('402H')))
-      return CURRICULUM_TEMPLATES.eceHonors.build();
-    return CURRICULUM_TEMPLATES.eceGeneral.build();
+    const honors=isEceHonorsSch(sch)
+      ||courses.some(c=>/^(eh|eb)\d+$/.test(String(c.id)))
+      ||courses.some(c=>/^ECE\s*(302H|306H|312H|319H|402H|406H|412H|419H)$/i.test(String(c.code||'').trim()));
+    if(honors)return(pre?CURRICULUM_TEMPLATES.eceHonorsPrev:CURRICULUM_TEMPLATES.eceHonors).build();
+    return(pre?CURRICULUM_TEMPLATES.eceGeneralPrev:CURRICULUM_TEMPLATES.eceGeneral).build();
   }
-  if(courses.some(c=>String(c.code||'').startsWith('ECE 302H')))
-    return CURRICULUM_TEMPLATES.ecbPrev.build();
+  if(pre)return CURRICULUM_TEMPLATES.ecbPrev.build();
   return CURRICULUM_TEMPLATES.ecb.build();
 }
 function mergeMissingTemplateCourses(sems,templateSems){
@@ -2505,7 +2661,8 @@ function isHonorsApSlot(code){
 }
 // ECE Honors only: M 408C lives in the ap row; strip duplicates from semester columns.
 function syncHonorsApSection(sems){
-  const tmplAp=CURRICULUM_TEMPLATES.eceHonors.build().find(s=>s.id==='ap');
+  const pre=(sems||[]).some(s=>(s.courses||[]).some(c=>/^eb\d+$/.test(String(c.id))));
+  const tmplAp=(pre?CURRICULUM_TEMPLATES.eceHonorsPrev:CURRICULUM_TEMPLATES.eceHonors).build().find(s=>s.id==='ap');
   if(!tmplAp)return sems;
   let plan=dc(sems||[]);
   if(!plan.some(s=>s.id==='ap'))plan=[dc(tmplAp),...plan];
@@ -3459,18 +3616,34 @@ GOV 310L   AMERICAN GOVERNMENT   CR   16210   Credit by exam   3.0   0.00</pre>
   }
 
   if(S.modal==='curriculum'){
-    const cards=Object.entries(CURRICULUM_TEMPLATES).map(([k,t])=>`
-      <div class="tk-card" onclick="applyCurriculum('${k}')">
-        <div class="tk-name">${esc(t.label)}</div>
-        <div class="tk-grad">Click to replace the active plan with this template.</div>
-      </div>`).join('');
+    const groups=[
+      {key:'2026-2028',title:'2026–2028 catalog (start Fall 2026+)',hint:'New 4-hour ECE 402/406/419/412 sequence and PHY 303E.'},
+      {key:'2024-2026',title:'2024–2026 catalog (enrolled before Fall 2026)',hint:'Pre-2026 numbers: ECE 302/306/319K/312 and PHY 303L + 105N (14 hrs free electives).'},
+      {key:'BBA',title:'Business',hint:null},
+      {key:'other',title:'Other',hint:null},
+    ];
+    const byCat={};
+    for(const [k,t] of Object.entries(CURRICULUM_TEMPLATES)){
+      const cat=t.catalog||'other';
+      (byCat[cat]||(byCat[cat]=[])).push([k,t]);
+    }
+    const sections=groups.map(g=>{
+      const items=byCat[g.key];if(!items?.length)return'';
+      const cards=items.map(([k,t])=>`
+        <div class="tk-card" onclick="applyCurriculum('${k}')">
+          <div class="tk-name">${esc(t.label)}</div>
+          <div class="tk-grad">${esc(t.short)} · replace active plan</div>
+        </div>`).join('');
+      return`<div class="tk-h" style="margin-top:14px">${esc(g.title)}</div>
+        ${g.hint?`<p style="font-size:11px;color:var(--text3);margin:-4px 0 8px">${esc(g.hint)}</p>`:''}
+        <div class="tk-grid">${cards}</div>`;
+    }).join('');
     return`<div class="mbk" id="mbk">
-      <div class="modal" style="max-width:560px">
+      <div class="modal" style="max-width:640px">
         <div class="mhdr"><h3>📚 Curriculum templates</h3><button class="mclose" data-a="close-modal">×</button></div>
         <div class="mbody">
-          <div class="tk-h">UT Austin templates</div>
-          <p style="font-size:12px;color:var(--text2);margin-bottom:10px">Swap the active plan for a different starting curriculum. A snapshot is saved first.</p>
-          <div class="tk-grid">${cards}</div>
+          <p style="font-size:12px;color:var(--text2);margin-bottom:4px">Swap the active plan for a different starting curriculum. A snapshot is saved first. Pulled from <a href="https://ece.utexas.edu/academics/undergraduate/curriculum" target="_blank" rel="noopener" style="color:var(--accent)">Texas ECE curriculum flowcharts</a>.</p>
+          ${sections}
         </div>
         <div class="mfooter"><button data-a="close-modal" style="padding:6px 14px;border:1px solid var(--border2);border-radius:6px;cursor:pointer;font-size:12px;background:var(--surface2);color:var(--text)">Close</button></div>
       </div>
@@ -3727,16 +3900,11 @@ GOV 310L   AMERICAN GOVERNMENT   CR   16210   Credit by exam   3.0   0.00</pre>
         </div>
         <div class="tk-limit ${electAtMax?'full':'ok'}">${electAtMax?`Elective limit reached (${prog.need} max). Deselect one to choose another.`:`${electRemain} elective slot${electRemain===1?'':'s'} remaining — click to toggle.`}</div>
         ${S.trackMsg?`<div class="tk-flash">${esc(S.trackMsg)}</div>`:''}
-        <div class="tk-list" style="columns:2;column-gap:18px">${prog.track.electives.map(e=>{
-          const on=isTrackElectiveOnPlan(planSems,e,sel);
-          const dim=!on&&electAtMax;
-          const cls=on?'ok pick':dim?'miss dim':'miss pick';
-          const click=dim&&!on?'':`onclick="event.stopPropagation();toggleTrackElective('${esc(e)}')" title="${on?'Click to remove':dim?'Limit reached — deselect one first':'Click to add'}"`;
-          return`<div class="${cls}" ${click}>${on?'✓':'＋'} ${esc(e)}</div>`;
-        }).join('')}</div>
+        <div style="margin:6px 0 8px"><input type="search" id="track-elect-filter" placeholder="Filter electives by code or name…" value="${esc(S.trackElectFilter||'')}" oninput="onTrackElectFilter(this.value)" style="width:100%;padding:6px 10px;border:1px solid var(--border2);border-radius:6px;background:var(--surface);color:var(--text);font-size:12px"></div>
+        <div id="track-elect-results" class="tk-list" style="display:flex;flex-direction:column;gap:2px">${computeTrackElectivesHtml(planSems,sel,electAtMax)}</div>
       </div>`:'';
     return`<div class="mbk" id="mbk">
-      <div class="modal" style="max-width:720px">
+      <div class="modal" style="max-width:780px">
         <div class="mhdr"><h3>🎯 ECE Technical Component Track</h3><button class="mclose" data-a="close-modal">×</button></div>
         <div class="mbody">
           <div style="display:flex;gap:10px;align-items:center;margin-bottom:12px;font-size:12px;color:var(--text2);flex-wrap:wrap">
@@ -3841,8 +4009,8 @@ function render(){
     <div class="hdr">
       <div class="hdr-top">
         <div>
-          <div class="hdr-sub">UT Austin · ${act?.kind==='business'?'McCombs BBA':act?.kind==='general'?'ECE Honors / General':'ECE + Business Honors'}</div>
-          <h1>College Course Planner <span style="font-size:11px;opacity:.5;font-weight:400">2024–2026</span></h1>
+          <div class="hdr-sub">UT Austin · ${act?.kind==='business'?'McCombs BBA':act?.kind==='general'?(isEceHonorsSch(act)?'ECE Honors':'ECE General'):'ECE + Business Honors'}</div>
+          <h1>College Course Planner <span style="font-size:11px;opacity:.5;font-weight:400">${act?.kind==='business'?'BBA':isEcePre2026Sch(act)?'2024–2026 catalog':'2026–2028 catalog'}</span></h1>
           <div style="margin-top:4px;display:flex;align-items:center;gap:7px;flex-wrap:wrap">
             <div class="sched-pill" onclick="S.modal='schedules';render()">
               <div class="sched-dot" style="background:${act?.color||'#FFF'}"></div>
@@ -3898,6 +4066,7 @@ function render(){
   if(S.renamingId&&S.modal==='schedules')setTimeout(()=>{const el=document.getElementById('ren-inp');if(el){el.focus();el.select();}},50);
   if(S.modal==='search')setTimeout(()=>{const i=document.getElementById('search-inp');if(i&&document.activeElement!==i)i.focus();},0);
   if(S.modal==='programs')setTimeout(()=>{const i=document.getElementById('program-inp');if(i&&document.activeElement!==i)i.focus();},0);
+  if(S.modal==='track')setTimeout(()=>{const i=document.getElementById('track-elect-filter');if(i&&document.activeElement!==i&&S.trackElectFilter)i.focus();},0);
   // Restore modal scroll so picking a grade in a long GPA list doesn't jump
   // the user back to the top of the modal.
   if(S.modal&&prevModalScroll){const mb=document.querySelector('.mbody');if(mb)mb.scrollTop=prevModalScroll;}
@@ -4198,6 +4367,37 @@ window.onProgramSearch=v=>{
   if(host){host.innerHTML=computeProgramResultsHtml();return;}
   render();
 };
+window.onTrackElectFilter=v=>{
+  S.trackElectFilter=v;
+  const host=document.getElementById('track-elect-results');
+  if(host){
+    const sch=getAct();
+    const need=trackElectiveNeed(sch,sch?.track);
+    const electHit=countTrackElectives(getAS(),sch?.track);
+    host.innerHTML=computeTrackElectivesHtml(getAS(),sch?.track,electHit>=need);
+    return;
+  }
+  render();
+};
+function computeTrackElectivesHtml(planSems,trackKey,electAtMax){
+  const t=TRACKS[trackKey];
+  if(!t)return'';
+  const q=String(S.trackElectFilter||'').trim().toLowerCase();
+  const list=t.electives.filter(e=>{
+    if(!q)return true;
+    const name=trackElectiveName(e).toLowerCase();
+    return e.toLowerCase().includes(q)||name.includes(q);
+  });
+  if(!list.length)return'<div class="miss" style="opacity:.7">No electives match that filter.</div>';
+  return list.map(e=>{
+    const on=isTrackElectiveOnPlan(planSems,e,trackKey);
+    const dim=!on&&electAtMax;
+    const cls=on?'ok pick':dim?'miss dim':'miss pick';
+    const name=trackElectiveName(e);
+    const click=dim&&!on?'':`onclick="event.stopPropagation();toggleTrackElective('${esc(e)}')" title="${on?'Click to remove':dim?'Limit reached — deselect one first':'Click to add'}"`;
+    return`<div class="${cls}" ${click} style="break-inside:avoid">${on?'✓':'＋'} <span style="font-weight:600">${esc(e)}</span>${name&&name!==e?` <span style="color:var(--text3);font-weight:400">— ${esc(name)}</span>`:''}</div>`;
+  }).join('');
+}
 let _programMsgTimer=null;
 function flashProgramMsg(msg){
   S.programMsg=msg;
