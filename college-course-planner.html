@@ -531,7 +531,7 @@ body{font-family:-apple-system,'Segoe UI',system-ui,sans-serif;background:var(--
 </script>
 <script>
 // ─── Static data ──────────────────────────────────────────────────────────────
-const APP_VERSION='2026.11.03.1';
+const APP_VERSION='2026.11.03.2';
 // Bump when migrateFlowchartLayout rules change — migrations run once per schedule per version.
 const LAYOUT_MIGRATION_VERSION=22;
 // Raw URL is used only for parsing APP_VERSION on the live copy — never as a user link
@@ -541,6 +541,9 @@ const REPO_URL='https://github.com/rorohecker/college-course-planner';
 // Releases asset URL — GitHub sends Content-Disposition: attachment, so this downloads the file.
 const DOWNLOAD_URL='https://github.com/rorohecker/college-course-planner/releases/latest/download/college-course-planner.html';
 const RELEASES_URL='https://github.com/rorohecker/college-course-planner/releases/latest';
+// Texas ECE tech-core resources (shown only on ECE / ECB plans, not BBA).
+const TECH_CORE_PAGE_URL='https://ece.utexas.edu/academics/undergraduate/techcore';
+const TECH_CORE_PACKET_URL='https://utexas.box.com/s/m75ly671ces3z5mgjwpfyt3f5o8woj25';
 const START_SEEN_KEY='cp-start-seen';
 const LAST_EXPORT_KEY='cp-last-export';
 const EXPORT_SNOOZE_KEY='cp-export-snooze';
@@ -3919,7 +3922,7 @@ GOV 310L   AMERICAN GOVERNMENT   CR   16210   Credit by exam   3.0   0.00</pre>
           ${sel?`<button onclick="setTrack('')" style="margin-top:8px;padding:5px 11px;font-size:11px;background:transparent;border:1px solid var(--border2);border-radius:6px;color:var(--text2);cursor:pointer">Clear track</button>`:''}
         </div>
         <div class="mfooter">
-          <span class="left">Data from Chandra Dept Tech Core Packet (Dec 2025). Always confirm with your faculty advisor.</span>
+          <span class="left">Data from <a href="${TECH_CORE_PACKET_URL}" target="_blank" rel="noopener noreferrer" style="color:var(--accent)">Tech Core Packet</a> · <a href="${TECH_CORE_PAGE_URL}" target="_blank" rel="noopener noreferrer" style="color:var(--accent)">declare / mentors</a>. Always confirm with your faculty advisor.</span>
           <button data-a="close-modal" style="padding:6px 14px;border:1px solid var(--border2);border-radius:6px;cursor:pointer;font-size:12px;background:var(--surface2);color:var(--text)">Close</button>
         </div>
       </div>
@@ -3994,6 +3997,9 @@ function render(){
         ?`${esc(bizProg?.label||'Undeclared Business')} <span style="opacity:.7">${bizProg?.done||0}/${bizProg?.total||0}</span>`
         :prog?`${esc(prog.track.short)} <span style="opacity:.7">${prog.coreHit}/${prog.coreTotal}c · ${prog.electHit}/${prog.need}e</span>`:'Pick a track'}
     </div>`:'';
+  const techCorePill=act&&act.kind!=='business'
+    ?`<a class="track-pill" href="${TECH_CORE_PACKET_URL}" target="_blank" rel="noopener noreferrer" title="Open the official Texas ECE Tech Core Packet (Box)" style="text-decoration:none;color:inherit">📄 Tech Core Packet</a>`
+    :'';
   const programsPill=planProg?`<div class="track-pill" onclick="S.modal='programs';render()" title="Minors &amp; Certificates">🎓 ${planProg.count} program${planProg.count===1?'':'s'} <span style="opacity:.7">${planProg.coreDone}/${planProg.coreTotal}c · ${planProg.electDone}/${planProg.electNeed}e</span></div>`:'';
   const val=planValidation();
   const loadOvers=val.loads.filter(l=>l.over).length;
@@ -4018,6 +4024,7 @@ function render(){
               <span style="opacity:.7;font-size:10px">▾</span>
             </div>
             ${trackPill}
+            ${techCorePill}
             ${programsPill}
             ${healthPill}
             ${S.schedules.length>1?`<span style="font-size:10px;opacity:.6">${S.schedules.length} schedules</span>`:''}
