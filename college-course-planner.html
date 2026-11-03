@@ -107,6 +107,21 @@ body{font-family:-apple-system,'Segoe UI',system-ui,sans-serif;background:var(--
 .tool-card:hover{border-color:var(--accent)}
 .tool-card b{display:block;font-size:12px;margin-bottom:3px}
 .tool-card span{font-size:10px;color:var(--text3)}
+.hdr-more{position:relative}
+.hdr-more summary{list-style:none;cursor:pointer}
+.hdr-more summary::-webkit-details-marker{display:none}
+.hdr-more-menu{position:absolute;right:0;top:calc(100% + 6px);min-width:200px;background:var(--surface);color:var(--text);border:1px solid var(--border2);border-radius:10px;box-shadow:0 12px 28px rgba(0,0,0,.22);padding:6px;z-index:40;display:flex;flex-direction:column;gap:2px}
+.hdr-more-menu button,.hdr-more-menu a{display:flex;align-items:center;gap:8px;width:100%;text-align:left;padding:7px 10px;border:none;border-radius:7px;background:transparent;color:var(--text);font-size:12px;cursor:pointer;text-decoration:none}
+.hdr-more-menu button:hover,.hdr-more-menu a:hover{background:var(--surface2)}
+.hdr-more-menu .sep{height:1px;background:var(--border);margin:4px 2px}
+.meter-pill{font-variant-numeric:tabular-nums}
+.meter-pill.ok{border-color:rgba(255,255,255,.55)}
+.meter-pill.warn{border-color:#FFC862;background:rgba(255,200,98,.18)}
+.mig-map{font-size:11px;line-height:1.55;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin:8px 0}
+.mig-map code{font-size:10px}
+.free-meter{margin-top:10px;padding:10px 12px;border:1px solid var(--border);border-radius:8px;background:var(--surface2)}
+.free-meter .bar{height:6px;background:var(--border);border-radius:99px;overflow:hidden;margin-top:6px}
+.free-meter .fill{height:100%;background:var(--accent);border-radius:99px}
 .readonly-banner{background:#1A2A4A;color:#fff;padding:8px 14px;font-size:12px;text-align:center}
 .diff-list{font-size:12px;line-height:1.5}
 .diff-list li{margin-bottom:4px}
@@ -531,7 +546,7 @@ body{font-family:-apple-system,'Segoe UI',system-ui,sans-serif;background:var(--
 </script>
 <script>
 // ─── Static data ──────────────────────────────────────────────────────────────
-const APP_VERSION='2026.11.03.2';
+const APP_VERSION='2026.11.03.3';
 // Bump when migrateFlowchartLayout rules change — migrations run once per schedule per version.
 const LAYOUT_MIGRATION_VERSION=22;
 // Raw URL is used only for parsing APP_VERSION on the live copy — never as a user link
@@ -544,6 +559,8 @@ const RELEASES_URL='https://github.com/rorohecker/college-course-planner/release
 // Texas ECE tech-core resources (shown only on ECE / ECB plans, not BBA).
 const TECH_CORE_PAGE_URL='https://ece.utexas.edu/academics/undergraduate/techcore';
 const TECH_CORE_PACKET_URL='https://utexas.box.com/s/m75ly671ces3z5mgjwpfyt3f5o8woj25';
+const TECH_CORE_PACKET_DATE='2025-09-29'; // stamped on official packet PDF
+const TECH_ELECTIVE_SCHEDULE_URL='https://utexas.box.com/s/nrd65po4uy95d2772vke1gtx9dxxs00u';
 const START_SEEN_KEY='cp-start-seen';
 const LAST_EXPORT_KEY='cp-last-export';
 const EXPORT_SNOOZE_KEY='cp-export-snooze';
@@ -608,13 +625,14 @@ function isEceStandaloneSch(sch){
 }
 function isEcePre2026Sch(sch){
   const courses=(sch?.sems||[]).flatMap(s=>s.courses||[]);
-  if(courses.some(c=>/^(ea|eb)\d+$/.test(String(c.id))))return true;
-  // Legacy ECB prev uses p* ids / 302H without 402-series.
-  if(courses.some(c=>/^p\d+$/.test(String(c.id))))return true;
   const codes=courses.map(c=>String(c.code||'').toUpperCase());
   const hasOld=codes.some(c=>/^ECE 302H?$/.test(c)||/^ECE 306H?$/.test(c)||/^ECE 312H?$/.test(c)||/^ECE 319[KH]?$/.test(c));
   const hasNew=codes.some(c=>/^ECE 402H?$/.test(c)||/^ECE 406H?$/.test(c)||/^ECE 412H?$/.test(c)||/^ECE 419[KH]?$/.test(c));
-  return hasOld&&!hasNew;
+  // Prefer live course numbers after catalog migrate (ids may still be ea*/eb*/p*).
+  if(hasNew&&!hasOld)return false;
+  if(hasOld&&!hasNew)return true;
+  if(courses.some(c=>/^(ea|eb|p)\d+$/.test(String(c.id))))return true;
+  return false;
 }
 function isEcbSch(sch){
   return(sch?.sems||[]).some(s=>(s.courses||[]).some(c=>/^c\d+$/.test(String(c.id))));
@@ -796,7 +814,7 @@ const ECE_HONORS_DS=[
   ]},
   {id:'y4s',label:'Year 4 Spring',courses:[
     {id:'eh40',code:'ECE 464H',name:'Honors Senior Design Project',cat:'ECE',credits:4,done:false,note:'Pre-req: ECE 364D; ATC-Lab also required'},
-    {id:'eh41',code:'FREE-3',name:'Free Elective',cat:'OTHER',credits:3,done:false,note:''},
+    {id:'eh41',code:'FREE-3',name:'Free Elective',cat:'OTHER',credits:2,done:false,note:'Part of 11 hrs free electives (26-28)'},
     {id:'eh42',code:'HIS',name:'US History',cat:'CORE',credits:3,done:false,note:'AP Credit'},
     {id:'eh43',code:'ATC-6',name:'Advanced Tech Component',cat:'ADVANCED',credits:3,done:false,note:'Tech core (8 of 8)'},
   ]},
@@ -831,7 +849,7 @@ const ECE_GENERAL_DS=[
     {id:'eg5',code:'E 316',name:'Humanities Credit (L, M, N or P)',cat:'CORE',credits:3,done:false,note:'AP Credit or Y2 Spring'},
     {id:'eg16',code:'ECE 412',name:'Software Design & Implementation I',cat:'ECE',credits:4,done:false,note:'Pre-req: ECE 406, ECE 419K'},
     {id:'eg20',code:'ECE 313',name:'Linear Systems & Signals',cat:'ECE',credits:3,done:false,note:'Pre-req: ECE 411, M 427J; Co-req: M 340L'},
-    {id:'eg38',code:'FREE-2',name:'Free Elective',cat:'OTHER',credits:3,done:false,note:''},
+    {id:'eg38',code:'FREE-2',name:'Free Elective',cat:'OTHER',credits:3,done:false,note:'Part of 11 hrs free electives (26-28)'},
   ]},
   {id:'y3f',label:'Year 3 Fall',courses:[
     {id:'eg27',code:'ATC-2',name:'Advanced Tech Component',cat:'ADVANCED',credits:3,done:false,note:'Tech core'},
@@ -851,12 +869,12 @@ const ECE_GENERAL_DS=[
     {id:'eg25',code:'ATC-1',name:'Advanced Tech Component',cat:'ADVANCED',credits:3,done:false,note:'Tech core'},
     {id:'eg28',code:'ATC-3',name:'Advanced Tech Component',cat:'ADVANCED',credits:3,done:false,note:'Tech core'},
     {id:'eg31',code:'ECE 364D',name:'Intro to Engineering Design',cat:'ECE',credits:3,done:false,note:'Core 010; Wr flag'},
-    {id:'eg37',code:'FREE-1',name:'Free Elective',cat:'OTHER',credits:3,done:false,note:''},
+    {id:'eg37',code:'FREE-1',name:'Free Elective',cat:'OTHER',credits:3,done:false,note:'Part of 11 hrs free electives (26-28)'},
     {id:'eg41',code:'HIS',name:'US History',cat:'CORE',credits:3,done:false,note:'In-person if no AP'},
   ]},
   {id:'y4s',label:'Year 4 Spring',courses:[
     {id:'eg39',code:'ECE 464K',name:'Senior Design Project',cat:'ECE',credits:4,done:false,note:'Pre-req: ECE 364D; ATC-Lab also required'},
-    {id:'eg40',code:'FREE-3',name:'Free Elective',cat:'OTHER',credits:3,done:false,note:''},
+    {id:'eg40',code:'FREE-3',name:'Free Elective',cat:'OTHER',credits:2,done:false,note:'Part of 11 hrs free electives (26-28)'},
     {id:'eg36',code:'GOV 312L/P',name:'American Government',cat:'CORE',credits:3,done:false,note:'Core govt part 2'},
     {id:'eg26',code:'HIS',name:'US History',cat:'CORE',credits:3,done:false,note:'AP Credit'},
     {id:'eg42',code:'ATC-6',name:'Advanced Tech Component',cat:'ADVANCED',credits:3,done:false,note:'Tech core (8 of 8)'},
@@ -893,7 +911,7 @@ const ECE_GENERAL_PREV_DS=[
     {id:'ea17',code:'ECE 312',name:'Software Design & Implementation I',cat:'ECE',credits:3,done:false,note:'Pre-req: ECE 306, ECE 319K'},
     {id:'ea18',code:'ECE 313',name:'Linear Systems & Signals',cat:'ECE',credits:3,done:false,note:'Pre-req: ECE 302, M 427J; Co-req: M 340L'},
     {id:'ea19',code:'M 340L',name:'Matrices & Matrix Calculations',cat:'MATH',credits:3,done:false,note:'Pre-req: M 408C'},
-    {id:'ea20',code:'FREE-1',name:'Free Elective',cat:'OTHER',credits:3,done:false,note:'Part of 14 hrs free electives (pre-2026)'},
+    {id:'ea20',code:'FREE-1',name:'Free Elective',cat:'OTHER',credits:2,done:false,note:'Part of 14 hrs free electives (pre-2026)'},
     {id:'ea21',code:'E 316',name:'Humanities Credit (L, M, N or P)',cat:'CORE',credits:3,done:false,note:'AP Credit or Y2 Spring; Pre-req: RHE 306'},
   ]},
   {id:'y3f',label:'Year 3 Fall',courses:[
@@ -908,19 +926,19 @@ const ECE_GENERAL_PREV_DS=[
     {id:'ea28',code:'ATC-2',name:'Advanced Tech Component',cat:'ADVANCED',credits:3,done:false,note:'Tech core'},
     {id:'ea29',code:'ATC-Lab',name:'Advanced Tech Component Lab',cat:'ADVANCED',credits:1,done:false,note:'Tech core'},
     {id:'ea30',code:'ATC-3',name:'Advanced Tech Component',cat:'ADVANCED',credits:3,done:false,note:'Tech core'},
-    {id:'ea31',code:'FREE-MS',name:'Free Elective: Advanced Math or Basic Science',cat:'OTHER',credits:3,done:false,note:'Counts toward 14 hrs free electives'},
+    {id:'ea31',code:'FREE-MS',name:'Free Elective: Advanced Math or Basic Science',cat:'OTHER',credits:4,done:false,note:'Counts toward 14 hrs free electives'},
   ]},
   {id:'y4f',label:'Year 4 Fall',courses:[
     {id:'ea32',code:'ECE 364D',name:'Intro to Engineering Design',cat:'ECE',credits:3,done:false,note:'Core 010; Wr flag; Pre-req: ECE 333T; Co-req: ATC-Lab'},
     {id:'ea33',code:'ATC-4',name:'Advanced Tech Component',cat:'ADVANCED',credits:3,done:false,note:'Tech core'},
     {id:'ea34',code:'ATC-5',name:'Advanced Tech Component',cat:'ADVANCED',credits:3,done:false,note:'Tech core'},
-    {id:'ea35',code:'FREE-2',name:'Free Elective',cat:'OTHER',credits:3,done:false,note:'Part of 14 hrs free electives (pre-2026)'},
+    {id:'ea35',code:'FREE-2',name:'Free Elective',cat:'OTHER',credits:4,done:false,note:'Part of 14 hrs free electives (pre-2026)'},
     {id:'ea36',code:'HIS',name:'US History',cat:'CORE',credits:3,done:false,note:'In-person if no AP'},
   ]},
   {id:'y4s',label:'Year 4 Spring',courses:[
     {id:'ea37',code:'ECE 464K',name:'Senior Design Project',cat:'ECE',credits:4,done:false,note:'Or ECE 464H; Pre-req: ECE 364D; ATC-Lab also required'},
     {id:'ea38',code:'ATC-6',name:'Advanced Tech Component',cat:'ADVANCED',credits:3,done:false,note:'Tech core (8 of 8)'},
-    {id:'ea39',code:'FREE-3',name:'Free Elective',cat:'OTHER',credits:3,done:false,note:'Part of 14 hrs free electives (pre-2026)'},
+    {id:'ea39',code:'FREE-3',name:'Free Elective',cat:'OTHER',credits:4,done:false,note:'Part of 14 hrs free electives (pre-2026)'},
     {id:'ea40',code:'HIS',name:'US History',cat:'CORE',credits:3,done:false,note:'AP Credit'},
     {id:'ea41',code:'GOV 312L/P',name:'American Government',cat:'CORE',credits:3,done:false,note:'Core govt part 2'},
   ]},
@@ -987,7 +1005,7 @@ const ECE_HONORS_PREV_DS=[
   {id:'y4s',label:'Year 4 Spring',courses:[
     {id:'eb39',code:'ECE 464H',name:'Honors Senior Design Project',cat:'ECE',credits:4,done:false,note:'Pre-req: ECE 364D; ATC-Lab also required'},
     {id:'eb40',code:'ATC-6',name:'Advanced Tech Component',cat:'ADVANCED',credits:3,done:false,note:'Tech core (8 of 8)'},
-    {id:'eb41',code:'FREE-4',name:'Free Elective',cat:'OTHER',credits:3,done:false,note:'Part of 14 hrs free electives (pre-2026)'},
+    {id:'eb41',code:'FREE-4',name:'Free Elective',cat:'OTHER',credits:2,done:false,note:'Part of 14 hrs free electives (pre-2026)'},
     {id:'eb42',code:'GOV 312L/P',name:'American Government',cat:'CORE',credits:3,done:false,note:'Core govt part 2'},
   ]},
 ];
@@ -1603,7 +1621,7 @@ let _preIssueByCid=null;
 function planValidation(){
   if(_validationCache.rev===_saveRev)return _validationCache.val;
   const sems=getAS();
-  const val={prereqs:validatePlanPrereqs(sems),loads:checkSemesterLoads(sems),overlap:computeRequirementOverlap(getAct())};
+  const val={prereqs:validatePlanPrereqs(sems),loads:checkSemesterLoads(sems),overlap:computeRequirementOverlap(getAct()),freeElectives:freeElectiveProgress(getAct())};
   _validationCache={rev:_saveRev,val};
   _preIssueByCid=new Map(val.prereqs.map(i=>[i.course.id,i]));
   return val;
@@ -2466,6 +2484,99 @@ function trackElectiveName(code){
   }
   return code;
 }
+// Catalog-year course remaps (24-26 ↔ 26-28). Honors H-suffix preserved.
+const CATALOG_MIGRATE_UP={
+  'ECE 302':'ECE 402','ECE 302H':'ECE 402H',
+  'ECE 306':'ECE 406','ECE 306H':'ECE 406H',
+  'ECE 312':'ECE 412','ECE 312H':'ECE 412H',
+  'ECE 319K':'ECE 419K','ECE 319H':'ECE 419H',
+  'PHY 303L':'PHY 303E',
+};
+const CATALOG_MIGRATE_DOWN=Object.fromEntries(Object.entries(CATALOG_MIGRATE_UP).map(([a,b])=>[b,a]));
+function freeElectiveTargetHours(sch){
+  if(!sch||sch.kind==='business')return 0;
+  return isEcePre2026Sch(sch)?14:11;
+}
+function isFreeElectiveCourse(c){
+  if(!c)return false;
+  if(isFreeElectivePlaceholder(c.code))return true;
+  const blob=`${c.code||''} ${c.name||''} ${c.note||''}`.toLowerCase();
+  return blob.includes('free elective')||/^free[\s_-]*elec/i.test(String(c.code||''));
+}
+function freeElectiveProgress(sch=getAct()){
+  const target=freeElectiveTargetHours(sch);
+  if(!target)return null;
+  let planned=0,done=0,slots=0;
+  for(const sem of sch?.sems||[]){
+    for(const c of sem.courses||[]){
+      if(!isFreeElectiveCourse(c))continue;
+      const cr=Number(c.credits)||0;
+      planned+=cr;slots++;
+      if(c.done)done+=cr;
+    }
+  }
+  return{target,planned,done,slots,met:planned>=target};
+}
+function migrateCourseCode(code,dir){
+  const raw=String(code||'').trim();
+  const map=dir==='up'?CATALOG_MIGRATE_UP:CATALOG_MIGRATE_DOWN;
+  // Exact first
+  if(map[raw])return map[raw];
+  const up=raw.toUpperCase().replace(/\s+/g,' ');
+  if(map[up])return map[up];
+  return null;
+}
+function previewCatalogMigration(sch,dir){
+  const changes=[];
+  let drop105N=0;
+  for(const sem of sch?.sems||[]){
+    for(const c of sem.courses||[]){
+      const next=migrateCourseCode(c.code,dir);
+      if(next&&next!==c.code)changes.push({from:c.code,to:next,sem:sem.label,id:c.id});
+      if(dir==='up'&&normCourseCode(c.code)==='PHY 105N')drop105N++;
+    }
+  }
+  return{changes,drop105N};
+}
+function applyCatalogMigration(dir){
+  const sch=getAct();
+  if(!sch||sch.kind==='business')return;
+  const prev=previewCatalogMigration(sch,dir);
+  if(!prev.changes.length&&!(dir==='up'&&prev.drop105N)){
+    alert('No 24-26 / 26-28 course numbers to remap on this plan.');
+    return;
+  }
+  const label=dir==='up'?'24-26 → 26-28':'26-28 → 24-26';
+  if(!confirm(`Remap course numbers (${label})?\n${prev.changes.length} course(s) will update${dir==='up'&&prev.drop105N?`, and ${prev.drop105N} PHY 105N lab row(s) will be removed (waived with PHY 303E).`:'.'}\nA snapshot is saved first.`))return;
+  saveSnapshotNow('pre-catalog-migrate');
+  mutate(()=>{
+    S.schedules=S.schedules.map(s=>{
+      if(s.id!==S.activeId)return s;
+      let sems=(s.sems||[]).map(sem=>({
+        ...sem,
+        courses:(sem.courses||[]).map(c=>{
+          const next=migrateCourseCode(c.code,dir);
+          if(!next||next===c.code)return c;
+          const hit=CATALOG.find(e=>normTrackCode(e.code)===normTrackCode(next));
+          const credits=hit?.credits??parseCreditsFromCode(next);
+          const name=hit?.name||c.name;
+          let note=c.note||'';
+          // Soft-update common prereq note fragments for remapped codes.
+          for(const [a,b] of Object.entries(dir==='up'?CATALOG_MIGRATE_UP:CATALOG_MIGRATE_DOWN)){
+            note=note.split(a).join(b);
+          }
+          return syncCourseCredits({...c,code:next,name,credits,note});
+        }).filter(c=>{
+          if(dir==='up'&&normCourseCode(c.code)==='PHY 105N')return false;
+          return true;
+        }),
+      }));
+      return normalizeSchedule({...s,sems,updatedAt:Date.now()});
+    });
+    S.modal='tools';
+  },{reason:'catalog-migrate'});
+}
+
 function inferEceKind(sch){
   if(sch?.kind==='business')return 'business';
   if(isEceStandaloneSch(sch))return 'general';
@@ -3659,11 +3770,19 @@ GOV 310L   AMERICAN GOVERNMENT   CR   16210   Credit by exam   3.0   0.00</pre>
     const loadWarns=val.loads.filter(l=>l.over||l.under);
     const loads=loadWarns.map(l=>`<div class="tk-list"><div class="${l.over?'miss':'ok'}">${l.over?'⚠':'○'} ${esc(l.sem.label)}: ${l.cr}cr${l.over?' (over 18)':l.under?' (under 12)':''}</div></div>`).join('');
     const overlap=val.overlap.length?val.overlap.map(o=>`<div class="tk-list"><div class="ok">✓ ${esc(o.code)} counts for: ${esc(o.tags.join(' + '))}</div></div>`).join(''):'<p style="font-size:12px;color:var(--text3)">No double-counted courses detected.</p>';
+    const fe=val.freeElectives;
+    const feNeed=fe?Math.max(0,fe.target-fe.planned):0;
+    const feBox=fe?`<div class="free-meter">
+      <div style="display:flex;justify-content:space-between;gap:8px;font-size:12px"><b>Free electives</b><span style="color:${fe.met?'var(--green)':'var(--text2)'}">${fe.planned}/${fe.target} hrs planned · ${fe.done} done</span></div>
+      <div class="bar"><div class="fill" style="width:${Math.min(100,fe.target?fe.planned/fe.target*100:0)}%"></div></div>
+      <div style="font-size:11px;color:var(--text3);margin-top:6px">${fe.met?'On track for catalog free-elective hours.':`Need ${feNeed} more free-elective hour(s) (catalog target ${fe.target}).`} AP credit never counts — confirm courses in the free-elective database.</div>
+    </div>`:'';
     return`<div class="mbk" id="mbk"><div class="modal" style="max-width:620px">
       <div class="mhdr"><h3>✅ Plan health</h3><button class="mclose" data-a="close-modal">×</button></div>
       <div class="mbody">
         <div class="tk-h">Prerequisites (${val.prereqs.length} issues)</div>${pre||'<p style="font-size:12px;color:var(--green)">No prereq issues detected.</p>'}
         <div class="tk-h">Credit load</div>${loads||'<p style="font-size:12px;color:var(--text3)">No semester warnings.</p>'}
+        <div class="tk-h">Free electives</div>${feBox||'<p style="font-size:12px;color:var(--text3)">No free-elective hour target on this plan (BBA).</p>'}
         <div class="tk-h">Requirement overlap</div>${overlap}
       </div>
       <div class="mfooter"><button data-a="close-modal" style="padding:6px 14px;border:1px solid var(--border2);border-radius:6px;cursor:pointer;font-size:12px;background:var(--surface2);color:var(--text)">Close</button></div>
@@ -3673,23 +3792,64 @@ GOV 310L   AMERICAN GOVERNMENT   CR   16210   Credit by exam   3.0   0.00</pre>
   if(S.modal==='tools'){
     const weekly=weeklyScheduleAnalysis(getAS());
     const act=getAct();
-    const whatIfCard=act?.kind==='business'
+    const fe=freeElectiveProgress(act);
+    const isBiz=act?.kind==='business';
+    const whatIfCard=isBiz
       ?`<button class="tool-card" disabled style="opacity:.55;cursor:default"><b>What-if tracks</b><span>ECE tracks only — switch to an ECE plan</span></button>`
       :`<button class="tool-card" onclick="S.modal='whatif';render()"><b>What-if tracks</b><span>Compare all ECE tracks at a glance</span></button>`;
+    const migUp=previewCatalogMigration(act,'up');
+    const migDown=previewCatalogMigration(act,'down');
+    const migrateCard=isBiz
+      ?`<button class="tool-card" disabled style="opacity:.55;cursor:default"><b>Catalog migrate</b><span>ECE plans only</span></button>`
+      :`<button class="tool-card" onclick="S.modal='migrate';render()"><b>Catalog migrate</b><span>Remap 24-26 ↔ 26-28 course numbers</span></button>`;
     return`<div class="mbk" id="mbk"><div class="modal" style="max-width:640px">
       <div class="mhdr"><h3>🧰 Tools</h3><button class="mclose" data-a="close-modal">×</button></div>
       <div class="mbody">
         <div class="tools-grid">
-          <button class="tool-card" onclick="S.modal='validation';render()"><b>Plan health</b><span>Prereqs, credit load, overlap</span></button>
+          <button class="tool-card" onclick="S.modal='validation';render()"><b>Plan health</b><span>Prereqs, credit load, free electives, overlap</span></button>
           ${whatIfCard}
+          ${migrateCard}
           <button class="tool-card" onclick="S.modal='weekly';render()"><b>Weekly schedule</b><span>Time conflicts from meeting times</span></button>
           <button class="tool-card" onclick="S.modalTab='ics';S.modal='export';render()"><b>Calendar export</b><span>Download .ics for a semester</span></button>
+          ${isBiz?'':`<a class="tool-card" href="${TECH_CORE_PACKET_URL}" target="_blank" rel="noopener noreferrer" style="text-decoration:none;color:inherit"><b>Tech Core Packet</b><span>Official packet (${TECH_CORE_PACKET_DATE}) · opens Box</span></a>
+          <a class="tool-card" href="${TECH_ELECTIVE_SCHEDULE_URL}" target="_blank" rel="noopener noreferrer" style="text-decoration:none;color:inherit"><b>Elective schedule</b><span>Upcoming tech elective offerings</span></a>`}
         </div>
         <div style="margin-top:14px;font-size:12px;color:var(--text2)">
-          <b>Quick stats:</b> ${weekly.courses.length} courses with meeting times · ${weekly.conflicts.length} conflict${weekly.conflicts.length===1?'':'s'}
+          <b>Quick stats:</b> ${weekly.courses.length} courses with meeting times · ${weekly.conflicts.length} conflict${weekly.conflicts.length===1?'':'s'}${fe?` · free electives ${fe.planned}/${fe.target} hrs`:''}${!isBiz?` · migrate candidates ↑${migUp.changes.length} ↓${migDown.changes.length}`:''}
         </div>
       </div>
       <div class="mfooter"><button data-a="close-modal" style="padding:6px 14px;border:1px solid var(--border2);border-radius:6px;cursor:pointer;font-size:12px;background:var(--surface2);color:var(--text)">Close</button></div>
+    </div></div>`;
+  }
+
+  if(S.modal==='migrate'){
+    const act=getAct();
+    if(act?.kind==='business'){
+      return`<div class="mbk" id="mbk"><div class="modal" style="max-width:520px">
+        <div class="mhdr"><h3>🔁 Catalog migrate</h3><button class="mclose" data-a="close-modal">×</button></div>
+        <div class="mbody"><p style="font-size:13px;color:var(--text2)">Catalog migration is for ECE / ECB plans only.</p></div>
+        <div class="mfooter"><button data-a="close-modal" style="padding:6px 14px;border:1px solid var(--border2);border-radius:6px;cursor:pointer;font-size:12px;background:var(--surface2);color:var(--text)">Close</button></div>
+      </div></div>`;
+    }
+    const up=previewCatalogMigration(act,'up');
+    const down=previewCatalogMigration(act,'down');
+    const list=(arr)=>arr.length?`<div class="mig-map">${arr.slice(0,12).map(c=>`<div><code>${esc(c.from)}</code> → <code>${esc(c.to)}</code> <span style="color:var(--text3)">(${esc(c.sem)})</span></div>`).join('')}${arr.length>12?`<div style="color:var(--text3)">…and ${arr.length-12} more</div>`:''}</div>`:'<p style="font-size:12px;color:var(--text3)">No matching course numbers on this plan.</p>';
+    return`<div class="mbk" id="mbk"><div class="modal" style="max-width:640px">
+      <div class="mhdr"><h3>🔁 Catalog migrate</h3><button class="mclose" data-a="close-modal">×</button></div>
+      <div class="mbody">
+        <p style="font-size:12px;color:var(--text2);margin-bottom:10px">Remap ECE intro sequence numbers between the <b>2024–2026</b> catalog (302/306/319K/312, PHY 303L+105N) and <b>2026–2028</b> (402/406/419K/412, PHY 303E). Snapshot saved before changes. Confirm with your advisor — this does not change UT's official catalog assignment.</p>
+        <div class="tk-h">Upgrade to 26-28 (${up.changes.length})</div>
+        ${list(up.changes)}
+        ${up.drop105N?`<p style="font-size:11px;color:var(--text3);margin-bottom:8px">Also removes ${up.drop105N} PHY 105N row(s) when moving to PHY 303E.</p>`:''}
+        <button class="bsave" ${up.changes.length||up.drop105N?'':'disabled style="opacity:.45;cursor:not-allowed"'} onclick="applyCatalogMigration('up')">Apply 24-26 → 26-28</button>
+        <div class="tk-h" style="margin-top:18px">Downgrade to 24-26 (${down.changes.length})</div>
+        ${list(down.changes)}
+        <button class="bsave" ${down.changes.length?'':'disabled style="opacity:.45;cursor:not-allowed"'} onclick="applyCatalogMigration('down')" style="margin-top:4px">Apply 26-28 → 24-26</button>
+      </div>
+      <div class="mfooter">
+        <span class="left"><a href="https://ece.utexas.edu/academics/undergraduate/admissions" target="_blank" rel="noopener" style="color:var(--accent)">26-28 admissions notes</a></span>
+        <button data-a="close-modal" style="padding:6px 14px;border:1px solid var(--border2);border-radius:6px;cursor:pointer;font-size:12px;background:var(--surface2);color:var(--text)">Close</button>
+      </div>
     </div></div>`;
   }
 
@@ -3922,7 +4082,7 @@ GOV 310L   AMERICAN GOVERNMENT   CR   16210   Credit by exam   3.0   0.00</pre>
           ${sel?`<button onclick="setTrack('')" style="margin-top:8px;padding:5px 11px;font-size:11px;background:transparent;border:1px solid var(--border2);border-radius:6px;color:var(--text2);cursor:pointer">Clear track</button>`:''}
         </div>
         <div class="mfooter">
-          <span class="left">Data from <a href="${TECH_CORE_PACKET_URL}" target="_blank" rel="noopener noreferrer" style="color:var(--accent)">Tech Core Packet</a> · <a href="${TECH_CORE_PAGE_URL}" target="_blank" rel="noopener noreferrer" style="color:var(--accent)">declare / mentors</a>. Always confirm with your faculty advisor.</span>
+          <span class="left">Lists from <a href="${TECH_CORE_PACKET_URL}" target="_blank" rel="noopener noreferrer" style="color:var(--accent)">Tech Core Packet</a> (${TECH_CORE_PACKET_DATE}) · <a href="${TECH_CORE_PAGE_URL}" target="_blank" rel="noopener noreferrer" style="color:var(--accent)">declare / mentors</a> · <a href="${TECH_ELECTIVE_SCHEDULE_URL}" target="_blank" rel="noopener noreferrer" style="color:var(--accent)">elective schedule</a>. Confirm with your advisor.</span>
           <button data-a="close-modal" style="padding:6px 14px;border:1px solid var(--border2);border-radius:6px;cursor:pointer;font-size:12px;background:var(--surface2);color:var(--text)">Close</button>
         </div>
       </div>
@@ -4003,8 +4163,11 @@ function render(){
   const programsPill=planProg?`<div class="track-pill" onclick="S.modal='programs';render()" title="Minors &amp; Certificates">🎓 ${planProg.count} program${planProg.count===1?'':'s'} <span style="opacity:.7">${planProg.coreDone}/${planProg.coreTotal}c · ${planProg.electDone}/${planProg.electNeed}e</span></div>`:'';
   const val=planValidation();
   const loadOvers=val.loads.filter(l=>l.over).length;
-  const healthIssues=val.prereqs.length+loadOvers;
+  const fe=val.freeElectives;
+  const feShort=fe?`${fe.planned}/${fe.target} free`:'';
+  const healthIssues=val.prereqs.length+loadOvers+(fe&&!fe.met?1:0);
   const healthPill=`<div class="track-pill val-pill${healthIssues?' warn':' ok'}" onclick="S.modal='validation';render()" title="Plan health">✅ ${healthIssues?healthIssues+' issue'+(healthIssues===1?'':'s'):'OK'}</div>`;
+  const freePill=fe?`<div class="track-pill meter-pill${fe.met?' ok':' warn'}" onclick="S.modal='validation';render()" title="Free elective hours toward catalog target">${feShort}</div>`:'';
 
   document.getElementById('root').innerHTML=`
     ${S.readOnly?`<div class="readonly-banner">👁 Advising view — read only. <button onclick="S.readOnly=false;render()" style="margin-left:10px;padding:2px 8px;border:1px solid #fff;border-radius:4px;background:transparent;color:#fff;cursor:pointer;font-size:11px">Exit advising mode</button></div>`:''}
@@ -4025,6 +4188,7 @@ function render(){
             </div>
             ${trackPill}
             ${techCorePill}
+            ${freePill}
             ${programsPill}
             ${healthPill}
             ${S.schedules.length>1?`<span style="font-size:10px;opacity:.6">${S.schedules.length} schedules</span>`:''}
@@ -4039,24 +4203,30 @@ function render(){
           </div>
           <div class="hdr-btns">
             <button class="hbtn" onclick="S.modal='schedules';render()" title="Saved schedules (L)">📋 Schedules</button>
-            <button class="hbtn" onclick="S.modal='tools';render()" title="Tools: validation, what-if, weekly schedule">🧰 Tools</button>
-            <button class="hbtn" onclick="S.cmpPickId=null;S.modal='compare-pick';render()" title="Compare (C)">⇄ Compare</button>
-            <button class="hbtn" onclick="S.modal='gpa';render()" title="GPA calculator (G)">📊 GPA</button>
-            <button class="hbtn" onclick="S.modal='programs';render()" title="Minors &amp; Certificates">🎓 Programs</button>
+            <button class="hbtn" onclick="S.modal='tools';render()" title="Tools: validation, what-if, migrate, weekly">🧰 Tools</button>
             <button class="hbtn" onclick="S.modal='track';render()" title="Track (T)">🎯 Track</button>
-            <button class="hbtn" onclick="S.modal='search';render()" title="Search (S)">🔎 Search</button>
-            <button class="hbtn" onclick="S.modal='history';render()" title="Version history (H)">🕒 History</button>
-            <button class="hbtn" onclick="window.print()" title="Print or save as PDF (P)">🖨️ Print</button>
-            <button class="hbtn" onclick="S.modal='transcript';render()" title="Paste UT Direct transcript to auto-fill grades">📝 Transcript</button>
             <button class="hbtn" onclick="S.modal='curriculum';render()" title="Swap curriculum template">📚 Curriculum</button>
+            <button class="hbtn" onclick="S.modal='search';render()" title="Search (S)">🔎 Search</button>
             <button class="hbtn" onclick="S.modal='backup';render()" title="Download or restore backup file">💾 Backup</button>
-            <button class="hbtn" onclick="S.modalTab='code';S.modal='export';render()" title="Share">📤 Share</button>
-            <button class="hbtn" onclick="S.modal='import';render()" title="Import">📥 Import</button>
             <button class="hbtn" onclick="checkForUpdates(true)" title="Check for updates">Update</button>
             <button class="hbtn ghost" onclick="undo()" title="Undo (Ctrl+Z)" ${HISTORY.past.length?'':'disabled'}>↶</button>
             <button class="hbtn ghost" onclick="redo()" title="Redo (Ctrl+Shift+Z)" ${HISTORY.future.length?'':'disabled'}>↷</button>
-            <button class="hbtn ghost" onclick="S.modal='kbhelp';render()" title="Keyboard shortcuts">?</button>
-            <button class="hbtn ghost" onclick="S.modal='reset';render()" title="Reset">↺</button>
+            <details class="hdr-more">
+              <summary class="hbtn" title="More actions">More ▾</summary>
+              <div class="hdr-more-menu">
+                <button type="button" onclick="S.cmpPickId=null;S.modal='compare-pick';render()">⇄ Compare</button>
+                <button type="button" onclick="S.modal='gpa';render()">📊 GPA</button>
+                <button type="button" onclick="S.modal='programs';render()">🎓 Programs</button>
+                <button type="button" onclick="S.modal='history';render()">🕒 History</button>
+                <button type="button" onclick="S.modal='transcript';render()">📝 Transcript</button>
+                <button type="button" onclick="window.print()">🖨️ Print</button>
+                <button type="button" onclick="S.modalTab='code';S.modal='export';render()">📤 Share</button>
+                <button type="button" onclick="S.modal='import';render()">📥 Import</button>
+                <div class="sep"></div>
+                <button type="button" onclick="S.modal='kbhelp';render()">? Shortcuts</button>
+                <button type="button" onclick="S.modal='reset';render()">↺ Reset plan</button>
+              </div>
+            </details>
           </div>
         </div>
       </div>
@@ -4078,7 +4248,13 @@ function render(){
   // the user back to the top of the modal.
   if(S.modal&&prevModalScroll){const mb=document.querySelector('.mbody');if(mb)mb.scrollTop=prevModalScroll;}
   document.body.style.overflow=S.modal?'hidden':'';
+  document.querySelectorAll('details.hdr-more[open]').forEach(d=>{if(S.modal)d.open=false;});
 }
+document.addEventListener('click',e=>{
+  document.querySelectorAll('details.hdr-more[open]').forEach(d=>{
+    if(!d.contains(e.target))d.open=false;
+  });
+});
 
 // ─── Event delegation ─────────────────────────────────────────────────────────
 function actionTarget(target){
