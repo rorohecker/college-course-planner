@@ -24,6 +24,8 @@ Shipped features are marked ✅. Remaining items are future improvements.
 - **Tech Core Packet quick link** — ECE/ECB header pill + Tools links (packet, elective schedule)
 - **Catalog-year migration helper** — remap 24-26 ↔ 26-28 course numbers (Tools → Catalog migrate)
 - **Free-elective hour meter** — progress toward 14 hrs (pre-2026) or 11 hrs (26-28) in header + plan health
+- **First-open tutorial** — short natural-language walkthrough; replay from More ▾
+- **Programs in primary header** — Minors & Certificates button + always-visible Programs pill
 
 ## Near term (next improvements)
 

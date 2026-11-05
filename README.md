@@ -10,6 +10,8 @@ If you have ever wished UT IDA could let you build and compare what-if schedules
 - Curriculum picker covers both catalog eras from the Texas ECE flowcharts: **2026–2028** (ECE 402/406/419/412 + PHY 303E) and **2024–2026 / pre-Fall 2026** (ECE 302/306/319K/312 + PHY 303L/105N, 14 hrs free electives) for ECB, ECE Honors, and ECE General.
 - ECE technical-component track picker shows approved elective **course names** next to codes, with a filter box.
 - ECE/ECB header quick link to the official Tech Core Packet; Tools include catalog migrate (24-26 ↔ 26-28) and a free-elective hour meter (14 / 11).
+- **Programs** header button for UT minors and certificates (catalog cores + elective picker).
+- First-open tutorial that walks through plan editing, Track/Programs, and Backup in plain language (replay from More ▾).
 - Swap to an Undeclared Business BBA template at any time from the curriculum picker, with McCombs major tracks (Finance, Accounting, MIS, Marketing, BAX, IB Skills, iMPA) and Canfield Business Honors layered on top.
 - Auto-checks GitHub on startup so you know when a newer version is published, with one click to grab the latest copy.
 - Build multiple schedule plans side by side and compare them. The compare view highlights which courses you share between plans and which ones are unique to each.

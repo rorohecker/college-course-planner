@@ -259,6 +259,13 @@ body{font-family:-apple-system,'Segoe UI',system-ui,sans-serif;background:var(--
 .start-update{font-size:11px;color:var(--text3);padding:8px 10px;border-radius:7px;background:var(--surface2);margin-top:8px}
 .start-actions{display:flex;gap:8px;justify-content:flex-end;align-items:center;margin-top:14px;flex-wrap:wrap}
 .start-check{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text2);margin-right:auto;cursor:pointer;user-select:none}
+.tut-step-label{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px}
+.tut-dots{display:flex;gap:6px;margin-bottom:12px}
+.tut-dot{width:8px;height:8px;border-radius:50%;background:var(--border2);border:none;padding:0;cursor:pointer}
+.tut-dot.on{background:var(--accent)}
+.tut-dot.done{background:var(--green)}
+.tut-tip{font-size:12px;color:var(--text);line-height:1.5;padding:10px 12px;border-radius:8px;background:var(--surface2);border:1px solid var(--border);margin-bottom:10px}
+.tut-tip b{font-weight:600}
 .update-settings{margin-top:14px;padding-top:12px;border-top:1px solid var(--border2)}
 .update-settings .tk-h{margin-bottom:8px}
 .update-pref{display:flex;align-items:flex-start;gap:7px;font-size:12px;color:var(--text2);line-height:1.4;margin-bottom:7px;cursor:pointer;user-select:none}
@@ -546,7 +553,7 @@ body{font-family:-apple-system,'Segoe UI',system-ui,sans-serif;background:var(--
 </script>
 <script>
 // ─── Static data ──────────────────────────────────────────────────────────────
-const APP_VERSION='2026.11.03.3';
+const APP_VERSION='2026.11.05.1';
 // Bump when migrateFlowchartLayout rules change — migrations run once per schedule per version.
 const LAYOUT_MIGRATION_VERSION=22;
 // Raw URL is used only for parsing APP_VERSION on the live copy — never as a user link
@@ -562,6 +569,7 @@ const TECH_CORE_PACKET_URL='https://utexas.box.com/s/m75ly671ces3z5mgjwpfyt3f5o8
 const TECH_CORE_PACKET_DATE='2025-09-29'; // stamped on official packet PDF
 const TECH_ELECTIVE_SCHEDULE_URL='https://utexas.box.com/s/nrd65po4uy95d2772vke1gtx9dxxs00u';
 const START_SEEN_KEY='cp-start-seen';
+const TUTORIAL_SEEN_KEY='cp-tutorial-v2';
 const LAST_EXPORT_KEY='cp-last-export';
 const EXPORT_SNOOZE_KEY='cp-export-snooze';
 const UPDATE_DISMISS_KEY='cp-update-dismissed';
@@ -1760,6 +1768,7 @@ const S={
   lastPct:0,
   tabConflict:false,
   startNote:true,
+  tutorialStep:0,
   update:{state:'idle',latest:null,checkedAt:null,error:null},
   updateDismissed:false,
   updateRememberedFile:null,
@@ -2124,6 +2133,46 @@ function setupAutoUpdateScheduler(){
 
 function readStartSeen(){try{return localStorage.getItem(START_SEEN_KEY)==='1';}catch(e){return false;}}
 function markStartSeen(){try{localStorage.setItem(START_SEEN_KEY,'1');}catch(e){}}
+function readTutorialSeen(){
+  try{
+    if(localStorage.getItem(TUTORIAL_SEEN_KEY)==='1')return true;
+    // Older installs only saw the backup tip — still show the new walkthrough once.
+    return false;
+  }catch(e){return false;}
+}
+function markTutorialSeen(){
+  try{
+    localStorage.setItem(TUTORIAL_SEEN_KEY,'1');
+    localStorage.setItem(START_SEEN_KEY,'1');
+  }catch(e){}
+}
+const TUTORIAL_STEPS=[
+  {
+    title:'Welcome to your planner',
+    body:`This page is your degree plan. Each box is a semester. <b>Drag courses</b> between semesters, click a course to edit it, and tick the checkbox when you finish it.`,
+  },
+  {
+    title:'Set up your path',
+    body:`Start with <b>Curriculum</b> to pick ECE, ECB, or BBA. Use <b>Track</b> for your ECE tech core. Use <b>Programs</b> to add UT minors and certificates — required courses drop onto your plan automatically.`,
+  },
+  {
+    title:'Keep your work safe',
+    body:`Edits <b>autosave in this browser</b>, but clearing site data or moving the file can wipe them. Bookmark this file, and use <b>Backup</b> now and then to download a JSON copy you can restore later.`,
+  },
+];
+function finishTutorial(forceMark){
+  const cb=document.getElementById('start-suppress');
+  if(forceMark||!cb||cb.checked)markTutorialSeen();
+  S.startNote=false;
+  S.tutorialStep=0;
+  render();
+}
+function openTutorial(){
+  S.modal=null;S.modalTab=null;
+  S.tutorialStep=0;
+  S.startNote=true;
+  render();
+}
 function readLastExport(){try{return parseInt(localStorage.getItem(LAST_EXPORT_KEY)||'0',10)||0;}catch(e){return 0;}}
 function writeLastExport(ts){try{localStorage.setItem(LAST_EXPORT_KEY,String(ts));}catch(e){}S.lastExportAt=ts;}
 function readExportSnooze(){try{return parseInt(localStorage.getItem(EXPORT_SNOOZE_KEY)||'0',10)||0;}catch(e){return 0;}}
@@ -3383,20 +3432,31 @@ function rBanners(){
 }
 
 function rStartNote(){
-  const updateAction=S.update?.state==='available'
-    ?`<button class="linkbtn p" data-a="open-update-modal">${canUseFilePicker()?'Apply update':'Download update'}</button>`
-    :`<button class="linkbtn" data-a="manual-update">Check updates</button>`;
-  return `<div class="mbk">
-    <div class="modal" style="max-width:470px">
+  const steps=TUTORIAL_STEPS;
+  const step=Math.max(0,Math.min(S.tutorialStep|0,steps.length-1));
+  const cur=steps[step];
+  const isLast=step===steps.length-1;
+  const dots=steps.map((_,i)=>`<button type="button" class="tut-dot${i===step?' on':i<step?' done':''}" data-a="tutorial-goto" data-step="${i}" title="Step ${i+1}" aria-label="Go to step ${i+1}"></button>`).join('');
+  const updateAction=isLast
+    ?(S.update?.state==='available'
+      ?`<button class="linkbtn" data-a="open-update-modal">${canUseFilePicker()?'Apply update':'Download update'}</button>`
+      :`<button class="linkbtn" data-a="manual-update">Check updates</button>`)
+    :'';
+  return `<div class="mbk" id="mbk-tutorial">
+    <div class="modal" style="max-width:500px">
       <div class="mbody">
-        <div class="start-title">Save this somewhere you'll remember</div>
-        <p class="start-copy"><b>Save this planner somewhere easy to access</b> so you don't waste time redownloading it. Bookmark the file, drop it on your desktop, or pin the tab.</p>
-        <p class="start-copy">Your edits autosave in this browser, but moving folders or clearing site data will wipe them — use the <b>Backup</b> button now and then to keep a JSON copy.</p>
-        <div class="start-update">${updateLine()}</div>
+        <div class="tut-step-label">Quick tour · ${step+1} of ${steps.length}</div>
+        <div class="tut-dots">${dots}</div>
+        <div class="start-title">${esc(cur.title)}</div>
+        <div class="tut-tip">${cur.body}</div>
+        ${isLast?`<div class="start-update">${updateLine()}</div>`:''}
         <div class="start-actions">
           <label class="start-check"><input type="checkbox" id="start-suppress" checked> Don't show this again</label>
+          ${step>0?`<button class="linkbtn" data-a="tutorial-back">Back</button>`:`<button class="linkbtn" data-a="hide-start-note">Skip</button>`}
           ${updateAction}
-          <button class="linkbtn p" data-a="hide-start-note">Got it</button>
+          ${isLast
+            ?`<button class="linkbtn p" data-a="hide-start-note">Got it</button>`
+            :`<button class="linkbtn p" data-a="tutorial-next">Next</button>`}
         </div>
       </div>
     </div>
@@ -3807,6 +3867,7 @@ GOV 310L   AMERICAN GOVERNMENT   CR   16210   Credit by exam   3.0   0.00</pre>
       <div class="mbody">
         <div class="tools-grid">
           <button class="tool-card" onclick="S.modal='validation';render()"><b>Plan health</b><span>Prereqs, credit load, free electives, overlap</span></button>
+          <button class="tool-card" onclick="S.modal='programs';render()"><b>Minors &amp; certificates</b><span>Add UT programs; cores and electives auto-fill</span></button>
           ${whatIfCard}
           ${migrateCard}
           <button class="tool-card" onclick="S.modal='weekly';render()"><b>Weekly schedule</b><span>Time conflicts from meeting times</span></button>
@@ -4096,6 +4157,7 @@ GOV 310L   AMERICAN GOVERNMENT   CR   16210   Credit by exam   3.0   0.00</pre>
       ['S','Search across schedules'],
       ['G','Open GPA calculator'],
       ['T','Track picker'],
+      ['M','Minors & certificates (Programs)'],
       ['V','Tools (validation, what-if, weekly)'],
       ['H','Version history'],
       ['L','Saved schedules list'],
@@ -4109,7 +4171,7 @@ GOV 310L   AMERICAN GOVERNMENT   CR   16210   Credit by exam   3.0   0.00</pre>
       ['E','Edit selected course'],
       ['Delete / Backspace','Delete selected courses (or open course in editor)'],
       ['1 to 4','Jump to year section'],
-      ['Esc','Close modal or clear selection'],
+      ['Esc','Close modal, tutorial, or clear selection'],
       ['?','Show this help'],
     ];
     return`<div class="mbk" id="mbk">
@@ -4160,7 +4222,9 @@ function render(){
   const techCorePill=act&&act.kind!=='business'
     ?`<a class="track-pill" href="${TECH_CORE_PACKET_URL}" target="_blank" rel="noopener noreferrer" title="Open the official Texas ECE Tech Core Packet (Box)" style="text-decoration:none;color:inherit">📄 Tech Core Packet</a>`
     :'';
-  const programsPill=planProg?`<div class="track-pill" onclick="S.modal='programs';render()" title="Minors &amp; Certificates">🎓 ${planProg.count} program${planProg.count===1?'':'s'} <span style="opacity:.7">${planProg.coreDone}/${planProg.coreTotal}c · ${planProg.electDone}/${planProg.electNeed}e</span></div>`:'';
+  const programsPill=`<div class="track-pill" onclick="S.modal='programs';render()" title="Minors &amp; Certificates">🎓 ${planProg
+    ?`${planProg.count} program${planProg.count===1?'':'s'} <span style="opacity:.7">${planProg.coreDone}/${planProg.coreTotal}c · ${planProg.electDone}/${planProg.electNeed}e</span>`
+    :'Programs'}</div>`;
   const val=planValidation();
   const loadOvers=val.loads.filter(l=>l.over).length;
   const fe=val.freeElectives;
@@ -4205,6 +4269,7 @@ function render(){
             <button class="hbtn" onclick="S.modal='schedules';render()" title="Saved schedules (L)">📋 Schedules</button>
             <button class="hbtn" onclick="S.modal='tools';render()" title="Tools: validation, what-if, migrate, weekly">🧰 Tools</button>
             <button class="hbtn" onclick="S.modal='track';render()" title="Track (T)">🎯 Track</button>
+            <button class="hbtn" onclick="S.modal='programs';render()" title="Minors &amp; Certificates (M)">🎓 Programs</button>
             <button class="hbtn" onclick="S.modal='curriculum';render()" title="Swap curriculum template">📚 Curriculum</button>
             <button class="hbtn" onclick="S.modal='search';render()" title="Search (S)">🔎 Search</button>
             <button class="hbtn" onclick="S.modal='backup';render()" title="Download or restore backup file">💾 Backup</button>
@@ -4216,13 +4281,13 @@ function render(){
               <div class="hdr-more-menu">
                 <button type="button" onclick="S.cmpPickId=null;S.modal='compare-pick';render()">⇄ Compare</button>
                 <button type="button" onclick="S.modal='gpa';render()">📊 GPA</button>
-                <button type="button" onclick="S.modal='programs';render()">🎓 Programs</button>
                 <button type="button" onclick="S.modal='history';render()">🕒 History</button>
                 <button type="button" onclick="S.modal='transcript';render()">📝 Transcript</button>
                 <button type="button" onclick="window.print()">🖨️ Print</button>
                 <button type="button" onclick="S.modalTab='code';S.modal='export';render()">📤 Share</button>
                 <button type="button" onclick="S.modal='import';render()">📥 Import</button>
                 <div class="sep"></div>
+                <button type="button" onclick="openTutorial()">👋 Tutorial</button>
                 <button type="button" onclick="S.modal='kbhelp';render()">? Shortcuts</button>
                 <button type="button" onclick="S.modal='reset';render()">↺ Reset plan</button>
               </div>
@@ -4247,8 +4312,8 @@ function render(){
   // Restore modal scroll so picking a grade in a long GPA list doesn't jump
   // the user back to the top of the modal.
   if(S.modal&&prevModalScroll){const mb=document.querySelector('.mbody');if(mb)mb.scrollTop=prevModalScroll;}
-  document.body.style.overflow=S.modal?'hidden':'';
-  document.querySelectorAll('details.hdr-more[open]').forEach(d=>{if(S.modal)d.open=false;});
+  document.body.style.overflow=(S.modal||S.startNote)?'hidden':'';
+  document.querySelectorAll('details.hdr-more[open]').forEach(d=>{if(S.modal||S.startNote)d.open=false;});
 }
 document.addEventListener('click',e=>{
   document.querySelectorAll('details.hdr-more[open]').forEach(d=>{
@@ -4272,13 +4337,22 @@ function mutate(fn,opts){
 
 document.addEventListener('click',e=>{
   if(e.target.id==='mbk'){S.modal=null;S.modalTab=null;S.renamingId=null;render();return;}
+  if(e.target.id==='mbk-tutorial'){finishTutorial(false);return;}
   const el=actionTarget(e.target);if(!el)return;
   const a=el.dataset.a,sem=el.dataset.sem,cid=el.dataset.cid;
   if(a==='filter'){S.filter=el.dataset.cat||null;render();}
-  else if(a==='hide-start-note'){
-    const cb=document.getElementById('start-suppress');
-    if(!cb||cb.checked)markStartSeen();
-    S.startNote=false;render();
+  else if(a==='hide-start-note'){finishTutorial(false);}
+  else if(a==='tutorial-next'){
+    S.tutorialStep=Math.min((S.tutorialStep|0)+1,TUTORIAL_STEPS.length-1);
+    render();
+  }
+  else if(a==='tutorial-back'){
+    S.tutorialStep=Math.max((S.tutorialStep|0)-1,0);
+    render();
+  }
+  else if(a==='tutorial-goto'){
+    const n=parseInt(el.dataset.step,10);
+    if(!isNaN(n)){S.tutorialStep=Math.max(0,Math.min(n,TUTORIAL_STEPS.length-1));render();}
   }
   else if(a==='manual-update'){checkForUpdates(!S.startNote);}
   else if(a==='open-update-modal'){S.modal='update';render();}
@@ -4726,10 +4800,25 @@ document.addEventListener('keydown',e=>{
     if(document.getElementById('cd-pop')){closeDiffPop();e.preventDefault();return;}
     if(document.getElementById('ac-pop')){closeAutocomplete();e.preventDefault();return;}
     if(S.renamingId){S.renamingId=null;render();e.preventDefault();return;}
+    if(S.startNote){finishTutorial(false);e.preventDefault();return;}
     if(S.modal){S.modal=null;S.modalTab=null;S.renamingId=null;render();}
     else if(S.selection.size)clearSel();
     else if(S.edit){S.edit=null;S.form={};render();}
     return;
+  }
+  if(S.startNote&&!inField){
+    if(e.key==='ArrowRight'||e.key==='Enter'){
+      e.preventDefault();
+      if((S.tutorialStep|0)>=TUTORIAL_STEPS.length-1)finishTutorial(false);
+      else{S.tutorialStep=(S.tutorialStep|0)+1;render();}
+      return;
+    }
+    if(e.key==='ArrowLeft'){
+      e.preventDefault();
+      S.tutorialStep=Math.max((S.tutorialStep|0)-1,0);
+      render();
+      return;
+    }
   }
   if((e.key==='Delete'||e.key==='Backspace')&&!inField){
     if(S.selection.size){bulkDelete();e.preventDefault();return;}
@@ -4742,7 +4831,7 @@ document.addEventListener('keydown',e=>{
   if(inField)return;
   if((e.ctrlKey||e.metaKey)&&!e.shiftKey&&e.key.toLowerCase()==='z'){e.preventDefault();undo();return;}
   if((e.ctrlKey||e.metaKey)&&(e.key.toLowerCase()==='y'||(e.shiftKey&&e.key.toLowerCase()==='z'))){e.preventDefault();redo();return;}
-  if(S.modal||S.edit)return;
+  if(S.modal||S.edit||S.startNote)return;
   const k=e.key.toLowerCase();
   if((e.key===' '||e.code==='Space')&&S.selection.size===1&&S.selectionSem){
     applyToggleDone(S.selectionSem,[...S.selection][0]);
@@ -4759,6 +4848,7 @@ document.addEventListener('keydown',e=>{
   else if(k==='s'){S.modal='search';render();e.preventDefault();}
   else if(k==='g'){S.modal='gpa';render();e.preventDefault();}
   else if(k==='t'){S.modal='track';render();e.preventDefault();}
+  else if(k==='m'){S.modal='programs';render();e.preventDefault();}
   else if(k==='v'){S.modal='tools';render();e.preventDefault();}
   else if(k==='h'){S.modal='history';render();e.preventDefault();}
   else if(k==='l'){S.modal='schedules';render();e.preventDefault();}
@@ -5300,7 +5390,8 @@ function prewarmModals(){
     if(!ok)initDefault();
   }
   S.schedules=S.schedules.map(s=>normalizeSchedule(s));
-  if(readStartSeen())S.startNote=false;
+  if(fromAdvise||S.readOnly||readTutorialSeen())S.startNote=false;
+  else{S.startNote=true;S.tutorialStep=0;}
   S.lastExportAt=readLastExport();
   if(!S.lastExportAt){writeLastExport(Date.now());}
   S.exportSnoozedUntil=readExportSnooze();
